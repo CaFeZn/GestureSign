@@ -98,6 +98,7 @@ Gesture and trigger notes:
 - Touchscreen, touchpad, pen, and mouse input are separate source devices. Check the action's ignored-device settings if a gesture works from one device but not another.
 - Pen gestures require `Options` > `Pen Gesture`, one HID pen activation state (barrel/right-click button or inverted pen), and one draw mode (tip or hover). If a stylus driver exposes its button as a normal mouse right-click instead of HID pen input, try `Mouse Gesture` with the right mouse button.
 - Continuous gestures run while fingers are still moving, but only after movement crosses `Options` > `Continuous Gesture Distance`. If a short swipe releases before that distance, the matching normal gesture can still run first.
+- `Drawing Start Timeout` cancels only gestures that do not start drawing quickly enough. `Whole Gesture Timeout` cancels the full capture after the configured duration and is exclusive with drawing-start timeout. `Composite Gesture Timeout` only controls how long GestureSign waits for the next segment of a composite gesture.
 - Precision touchpad gestures depend on the touchpad driver exposing raw HID touchpad input. If a touchpad or third-party driver is not detected, first disable conflicting Windows touchpad gestures and confirm the device appears as a precision touchpad, not only as mouse wheel or vendor-specific input.
 - `Block Touch Input` is available only in UIAccess builds and is configured per matched application. It starts blocking after GestureSign has enough touch contacts to identify a gesture, so very early touch frames may still reach the target app.
 - If the touch keyboard or a browser's native touch behavior breaks while touch blocking is enabled, lower that app's block threshold or disable blocking for that app first.
@@ -142,6 +143,7 @@ Implemented or covered:
 | [#93](https://github.com/TransposonY/GestureSign/issues/93), [#92](https://github.com/TransposonY/GestureSign/issues/92) | `Key Down/Up` supports held modifiers, and side-specific Hot Key modifiers are documented in the UI and README. |
 | [#84](https://github.com/TransposonY/GestureSign/issues/84), [#65](https://github.com/TransposonY/GestureSign/issues/65), [#118](https://github.com/TransposonY/GestureSign/issues/118) | This README now replaces the unavailable external guide for setup, usage, troubleshooting, and build notes. |
 | [#76](https://github.com/TransposonY/GestureSign/issues/76) | Composite gesture timeout is configurable. |
+| [#30](https://github.com/TransposonY/GestureSign/issues/30) | Added an optional whole-gesture timeout that cancels a capture after the configured duration and is mutually exclusive with drawing-start timeout. |
 | [#75](https://github.com/TransposonY/GestureSign/issues/75), [#32](https://github.com/TransposonY/GestureSign/issues/32) | Trigger conditions support touch-coordinate variables and multi-condition expressions. |
 | [#74](https://github.com/TransposonY/GestureSign/issues/74) | Re-injected touch `UP` frames preserve `INRANGE` for the final contact. |
 | [#73](https://github.com/TransposonY/GestureSign/issues/73), [#56](https://github.com/TransposonY/GestureSign/issues/56) | Touch Keyboard command behavior and TabTip path lookup have been hardened for Windows 10/11. |
@@ -167,7 +169,6 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#130](https://github.com/TransposonY/GestureSign/issues/130), [#87](https://github.com/TransposonY/GestureSign/issues/87), [#45](https://github.com/TransposonY/GestureSign/issues/45) | Hold-to-drag workflows need an explicit hold/release feature to avoid stuck mouse buttons. |
 | [#66](https://github.com/TransposonY/GestureSign/issues/66), [#24](https://github.com/TransposonY/GestureSign/issues/24), [#52](https://github.com/TransposonY/GestureSign/issues/52) | Modifier-key conditions and held-key actions are partly supported, but arbitrary-key gesture conditions and keyboard-triggered mouse drawing are not implemented. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | Portable builds can run from a chosen folder, but installer-directory selection is not implemented in this repository. |
-| [#30](https://github.com/TransposonY/GestureSign/issues/30) | Drawing-start and composite gesture timeouts are configurable, but a separate whole-gesture global timeout still needs feature design. |
 
 ## Build
 

@@ -268,6 +268,8 @@ QQ交流群：576981420
     <Hover>保持悬空画出手势</Hover>
     <InitialTimeoutTitle>手势起始超时</InitialTimeoutTitle>
     <InitialTimeout>{0:F1} 秒后超时</InitialTimeout>
+    <GestureTimeoutTitle>整段手势超时</GestureTimeoutTitle>
+    <GestureTimeout>{0:F1} 秒后取消手势</GestureTimeout>
     <CompositeGestureTimeoutTitle>组合手势等待时间</CompositeGestureTimeoutTitle>
     <CompositeGestureTimeout>等待下一段手势 {0:F1} 秒</CompositeGestureTimeout>
     <ErrorLogPrompt>错误日志提示</ErrorLogPrompt>

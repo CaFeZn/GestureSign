@@ -225,6 +225,18 @@ namespace GestureSign.Common.Configuration
             }
         }
 
+        public static int GestureTimeout
+        {
+            get
+            {
+                return (int)GetValue(nameof(GestureTimeout), 0);
+            }
+            set
+            {
+                SetValue(nameof(GestureTimeout), value);
+            }
+        }
+
         public static int CompositeGestureTimeout
         {
             get

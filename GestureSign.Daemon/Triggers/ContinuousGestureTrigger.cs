@@ -27,6 +27,7 @@ namespace GestureSign.Daemon.Triggers
             PointCapture.Instance.PointCaptured += PointCapture_PointCaptured;
             PointCapture.Instance.BeforePointsCaptured += PointCapture_BeforePointsCaptured;
             PointCapture.Instance.CaptureEnded += PointCapture_CaptureEnded;
+            PointCapture.Instance.CaptureCanceled += PointCapture_CaptureCanceled;
         }
 
         private void PointCapture_CaptureStarted(object sender, PointsCapturedEventArgs e)
@@ -45,8 +46,19 @@ namespace GestureSign.Daemon.Triggers
 
         private void PointCapture_CaptureEnded(object sender, System.EventArgs e)
         {
+            Reset();
+        }
+
+        private void PointCapture_CaptureCanceled(object sender, PointsCapturedEventArgs e)
+        {
+            Reset();
+        }
+
+        private void Reset()
+        {
             _stopwatch.Stop();
             _lastPoints = null;
+            _continuousGestureFired = false;
         }
 
         private void PointCapture_PointCaptured(object sender, PointsCapturedEventArgs e)

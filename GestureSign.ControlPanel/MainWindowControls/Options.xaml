@@ -262,6 +262,23 @@
                     TickFrequency="0.1"
                     IsSnapToTickEnabled="True"
                     ValueChanged="InitialTimeoutSlider_ValueChanged" />
+            <controls:ToggleSwitch x:Name="GestureTimeoutSwitch"
+                                   Header="{localization:LocalisedText Options.GestureTimeoutTitle}"
+                                   OnLabel="{localization:LocalisedText Options.OnLabel}"
+                                   OffLabel="{localization:LocalisedText Options.OffLabel}"
+                                   Click="GestureTimeoutSwitch_Click" />
+            <TextBlock HorizontalAlignment="Center"
+                       Visibility="{Binding ElementName=GestureTimeoutSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
+                       Text="{Binding ElementName=GestureTimeoutSlider, Path=Value, StringFormat={localization:LocalisedText Options.GestureTimeout}}"
+                       FontSize="14"
+                       Margin="0,5,0,0" />
+            <Slider x:Name="GestureTimeoutSlider"
+                    Visibility="{Binding ElementName=GestureTimeoutSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Maximum="10"
+                    Minimum="0"
+                    TickFrequency="0.5"
+                    IsSnapToTickEnabled="True"
+                    ValueChanged="GestureTimeoutSlider_ValueChanged" />
             <controls:ToggleSwitch x:Name="CompositeGestureTimeoutSwitch"
                                    Header="{localization:LocalisedText Options.CompositeGestureTimeoutTitle}"
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"

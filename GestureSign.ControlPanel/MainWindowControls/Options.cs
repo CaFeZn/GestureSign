@@ -68,7 +68,13 @@ namespace GestureSign.ControlPanel.MainWindowControls
 
                 LanguageComboBox.ItemsSource = LocalizationProvider.Instance.GetLanguageList("ControlPanel");
                 LanguageComboBox.SelectedValue = AppConfig.CultureName;
-                if (AppConfig.InitialTimeout > 0)
+                if (AppConfig.GestureTimeout > 0)
+                {
+                    InitialTimeoutSwitch.IsChecked = false;
+                    GestureTimeoutSwitch.IsChecked = true;
+                    GestureTimeoutSlider.Value = AppConfig.GestureTimeout / 1000f;
+                }
+                else if (AppConfig.InitialTimeout > 0)
                 {
                     InitialTimeoutSwitch.IsChecked = true;
                     InitialTimeoutSlider.Value = AppConfig.InitialTimeout / 1000f;
@@ -459,6 +465,8 @@ namespace GestureSign.ControlPanel.MainWindowControls
         {
             if (InitialTimeoutSwitch.IsChecked.GetValueOrDefault())
             {
+                GestureTimeoutSwitch.IsChecked = false;
+                GestureTimeoutSlider.Value = 0;
                 InitialTimeoutSlider.Value = 0.6;
             }
             else
@@ -472,6 +480,27 @@ namespace GestureSign.ControlPanel.MainWindowControls
             var newValue = (int)Math.Round(e.NewValue * 1000);
             if (newValue == AppConfig.InitialTimeout) return;
             AppConfig.InitialTimeout = newValue;
+        }
+
+        private void GestureTimeoutSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            if (GestureTimeoutSwitch.IsChecked.GetValueOrDefault())
+            {
+                InitialTimeoutSwitch.IsChecked = false;
+                InitialTimeoutSlider.Value = 0;
+                GestureTimeoutSlider.Value = 3;
+            }
+            else
+            {
+                GestureTimeoutSlider.Value = 0;
+            }
+        }
+
+        private void GestureTimeoutSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            var newValue = (int)Math.Round(e.NewValue * 1000);
+            if (newValue == AppConfig.GestureTimeout) return;
+            AppConfig.GestureTimeout = newValue;
         }
 
         private void CompositeGestureTimeoutSwitch_Click(object sender, RoutedEventArgs e)

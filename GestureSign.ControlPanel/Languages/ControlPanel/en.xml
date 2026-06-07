@@ -264,6 +264,8 @@ Email:ccfyzh@gmail.com
     <Hover>Hover over the screen</Hover>
     <InitialTimeoutTitle>Drawing Start Timeout</InitialTimeoutTitle>
     <InitialTimeout>Timeout after {0:F1} Second</InitialTimeout>
+    <GestureTimeoutTitle>Whole Gesture Timeout</GestureTimeoutTitle>
+    <GestureTimeout>Cancel gesture after {0:F1} Seconds</GestureTimeout>
     <CompositeGestureTimeoutTitle>Composite Gesture Timeout</CompositeGestureTimeoutTitle>
     <CompositeGestureTimeout>Wait {0:F1} Second for next gesture</CompositeGestureTimeout>
     <ErrorLogPrompt>Error Log Prompt</ErrorLogPrompt>

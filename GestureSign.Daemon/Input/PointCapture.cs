@@ -42,6 +42,7 @@ namespace GestureSign.Daemon.Input
         private SurfaceForm _surfaceForm;
 
         private System.Threading.Timer _initialTimeoutTimer;
+        private System.Threading.Timer _gestureTimeoutTimer;
         SynchronizationContext _currentContext;
 
         private Dictionary<int, List<Point>> _pointsCaptured;
@@ -262,6 +263,7 @@ namespace GestureSign.Daemon.Input
                 if (disposing)
                 {
                     _initialTimeoutTimer?.Dispose();
+                    _gestureTimeoutTimer?.Dispose();
                     _blockTouchDelayTimer?.Dispose();
                     _pointerInputTargetWindow?.Dispose();
                     _inputProvider?.Dispose();
@@ -359,7 +361,7 @@ namespace GestureSign.Daemon.Input
 
                 var stateBeforePointDown = State;
                 var timeout = AppConfig.InitialTimeout;
-                if (timeout > 0 && ShouldStartInitialTimeout(e.PointSource, stateBeforePointDown))
+                if (AppConfig.GestureTimeout <= 0 && timeout > 0 && ShouldStartInitialTimeout(e.PointSource, stateBeforePointDown))
                 {
                     if (_initialTimeoutTimer == null)
                     {
@@ -445,6 +447,8 @@ namespace GestureSign.Daemon.Input
             UpdateBlockTouchInputThreshold();
             if (_initialTimeoutTimer != null)
                 _initialTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            if (_gestureTimeoutTimer != null)
+                _gestureTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
         #endregion
@@ -494,6 +498,39 @@ namespace GestureSign.Daemon.Input
                         _ignoreTouchPadUntilPointUp = true;
                     }
                     CancelCaptureByInitialTimeout();
+                }
+                catch
+                {
+                    State = CaptureState.Ready;
+                    Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
+                }
+            });
+        }
+
+        private void GestureTimeoutCallback(object o)
+        {
+            PostToCurrentContext(() =>
+            {
+                if (State != CaptureState.Capturing &&
+                    State != CaptureState.CapturingInvalid &&
+                    State != CaptureState.TriggerFired) return;
+
+                try
+                {
+                    if (SourceDevice == Devices.TouchScreen && _pointerInputTargetWindow != null)
+                    {
+                        if (_pointerInputTargetWindow.BlockTouchInputThreshold > 1)
+                            _pointerInputTargetWindow.TemporarilyDisable();
+                    }
+                    else if (SourceDevice == Devices.Mouse)
+                    {
+                        PressMouseButton(_pointEventTranslator.CurrentDrawingButton);
+                    }
+                    else if (SourceDevice == Devices.TouchPad)
+                    {
+                        _ignoreTouchPadUntilPointUp = true;
+                    }
+                    CancelCaptureByGestureTimeout();
                 }
                 catch
                 {
@@ -587,6 +624,26 @@ namespace GestureSign.Daemon.Input
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
         }
 
+        private void CancelCaptureByGestureTimeout()
+        {
+            if (_pointsCaptured != null && _pointsCaptured.Count != 0)
+            {
+                var points = new List<List<Point>>(_pointsCaptured.Values);
+                var firstPoints = SourceDevice == Devices.TouchPad
+                    ? new List<Point>() { _touchPadStartPoint }
+                    : points.Select(p => p.FirstOrDefault()).ToList();
+                OnCaptureCanceled(new PointsCapturedEventArgs(points, firstPoints));
+                _pointsCaptured.Clear();
+            }
+            else
+            {
+                OnCaptureEnded();
+            }
+
+            State = CaptureState.Ready;
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
+        }
+
         private bool TryBeginCapture(List<InputPoint> firstPoint)
         {
             // Create capture args so we can notify subscribers that capture has started and allow them to cancel if they want.
@@ -628,11 +685,27 @@ namespace GestureSign.Daemon.Input
                 }
             }
             AddPoint(firstPoint);
+            StartGestureTimeout();
             return true;
+        }
+
+        private void StartGestureTimeout()
+        {
+            var gestureTimeout = AppConfig.GestureTimeout;
+            if (gestureTimeout <= 0)
+                return;
+
+            if (_gestureTimeoutTimer == null)
+            {
+                _gestureTimeoutTimer = new System.Threading.Timer(GestureTimeoutCallback, null, Timeout.Infinite, Timeout.Infinite);
+            }
+            _gestureTimeoutTimer.Change(gestureTimeout, Timeout.Infinite);
         }
 
         private void EndCapture()
         {
+            if (_gestureTimeoutTimer != null)
+                _gestureTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
             // Create points capture event args, to be used to send off to event subscribers or to simulate original Point event
             PointsCapturedEventArgs pointsInformation = SourceDevice == Devices.TouchPad ?
