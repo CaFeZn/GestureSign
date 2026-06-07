@@ -79,6 +79,7 @@ Common command examples:
 - `Key Down/Up` can hold or release keys such as `Left Shift`; pair one hold action with another release action when you need to select text or keep a modifier down temporarily.
 - `Launch Windows Store App`, `Open Default Browser`, `Open File`, and `Run Command or Program` start applications or files.
 - `Mouse Actions` can send clicks, wheel actions, and other mouse input.
+- `Add Current Application to Ignored List` adds the current foreground application to the ignored-app list, which is useful when a gesture conflicts with one app's native input.
 - `Open GestureSign Control Panel` opens the settings window from a gesture.
 - `Repeat Last Command` replays the last command that completed successfully.
 - `Next Virtual Desktop` and `Previous Virtual Desktop` switch Windows virtual desktops.
@@ -111,6 +112,7 @@ Gesture and trigger notes:
 - If mouse drawing does not start, confirm `Options` > `Mouse Gesture` is on and at least one drawing button is selected.
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
 - If a configured action does not run in one app, check whether that app is in the ignored list or whether the action is configured only for a different application.
+- If GestureSign interferes with one app, bind `Add Current Application to Ignored List` to a gesture and run it while that app is active.
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
 - Use `Options` > `Backup User Data` before testing large configuration changes.
 
