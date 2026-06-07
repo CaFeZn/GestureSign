@@ -203,26 +203,28 @@ namespace GestureSign.ControlPanel.MainWindowControls
         {
             if (StartupHelper.IsRunAsAdmin)
             {
-                StartupSwitch.IsChecked = RunAsAdminCheckBox.IsChecked = true;
-            }
-            else
-            {
-                RunAsAdminCheckBox.IsChecked = false;
-
-#if ConvertedDesktopApp
-                StartupHelper.CheckStoreAppStartupStatus().ContinueWith(t =>
+                if (StartupHelper.GetHighPrivilegeStartupStatus())
                 {
-                    bool result = t.Result;
-                    Dispatcher.Invoke(() =>
-                    {
-                        StartupSwitch.IsChecked = result;
-                    }, System.Windows.Threading.DispatcherPriority.Background);
-                });
-#else
-                StartupSwitch.IsChecked = StartupHelper.GetStartupStatus();
-#endif
+                    StartupSwitch.IsChecked = RunAsAdminCheckBox.IsChecked = true;
+                    return;
+                }
 
+                AppConfig.RunAsAdmin = false;
             }
+
+            RunAsAdminCheckBox.IsChecked = false;
+#if ConvertedDesktopApp
+            StartupHelper.CheckStoreAppStartupStatus().ContinueWith(t =>
+            {
+                bool result = t.Result;
+                Dispatcher.Invoke(() =>
+                {
+                    StartupSwitch.IsChecked = result;
+                }, System.Windows.Threading.DispatcherPriority.Background);
+            });
+#else
+            StartupSwitch.IsChecked = StartupHelper.GetStartupStatus();
+#endif
         }
 
         private void EnableStartup()

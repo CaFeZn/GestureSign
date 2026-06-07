@@ -25,11 +25,37 @@ namespace GestureSign.ControlPanel.Common
 
         public static bool IsRunAsAdmin => AppConfig.RunAsAdmin;
 
+        private static bool AreSamePath(string left, string right)
+        {
+            if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+                return false;
+
+            try
+            {
+                string normalizedLeft = Path.GetFullPath(left.Trim('"')).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string normalizedRight = Path.GetFullPath(right.Trim('"')).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                return string.Equals(normalizedLeft, normalizedRight, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception exception)
+            {
+                GestureSign.Common.Log.Logging.LogException(exception);
+                return false;
+            }
+        }
+
         private static string GetLnkTargetPath(string filepath)
         {
             WshShell shell = new WshShell();
             IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(filepath);
             return shortcut.TargetPath;
+        }
+
+        private static string GetLnkWorkingDirectory(string filepath)
+        {
+            WshShell shell = new WshShell();
+            IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(filepath);
+            return shortcut.WorkingDirectory;
         }
 
         private static void CreateLnk(string lnkPath, string targetPath)
@@ -41,75 +67,152 @@ namespace GestureSign.ControlPanel.Common
             shortCut.WindowStyle = 7;
             shortCut.Arguments = "";
             shortCut.Description = Application.ResourceAssembly.GetName().Version.ToString();
+            shortCut.WorkingDirectory = Path.GetDirectoryName(targetPath);
             // Application.ProductName + Application.ProductVersion;
             //shortCut.IconLocation = Application.ResourceAssembly.Location;// Application.ExecutablePath;
             //shortCut.WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory;// Application.ResourceAssembly.;
             shortCut.Save();
         }
 
-        private static bool AddStartupTask(string filePath)
+        private static bool IsStartupShortcutCurrent(string startupLnkPath)
+        {
+            return File.Exists(startupLnkPath) &&
+                   AreSamePath(GetLnkTargetPath(startupLnkPath), DaemonPath) &&
+                   AreSamePath(GetLnkWorkingDirectory(startupLnkPath), DaemonDirectory);
+        }
+
+        private static bool RunSchtasks(string arguments, bool runAsAdministrator)
+        {
+            using (Process schtasks = new Process())
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo("schtasks.exe", arguments)
+                {
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    UseShellExecute = runAsAdministrator,
+                };
+
+                if (runAsAdministrator)
+                    startInfo.Verb = "runas";
+
+                schtasks.StartInfo = startInfo;
+                schtasks.Start();
+                schtasks.WaitForExit();
+
+                if (schtasks.ExitCode == 0)
+                    return true;
+
+                GestureSign.Common.Log.Logging.LogMessage($"schtasks.exe {arguments} exited with code {schtasks.ExitCode}.");
+                return false;
+            }
+        }
+
+        private static string QueryStartupTaskXml()
+        {
+            using (Process schtasks = new Process())
+            {
+                schtasks.StartInfo = new ProcessStartInfo("schtasks.exe", $" /query /tn \"{StartupTaskName}\" /xml")
+                {
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                };
+
+                schtasks.Start();
+                string output = schtasks.StandardOutput.ReadToEnd();
+                string error = schtasks.StandardError.ReadToEnd();
+                schtasks.WaitForExit();
+
+                if (schtasks.ExitCode == 0)
+                    return output;
+
+                if (!string.IsNullOrWhiteSpace(error))
+                    GestureSign.Common.Log.Logging.LogMessage(error);
+
+                GestureSign.Common.Log.Logging.LogMessage($"schtasks.exe /query exited with code {schtasks.ExitCode}.");
+                return null;
+            }
+        }
+
+        private static bool IsStartupTaskCurrent()
         {
             try
             {
+                string taskXml = QueryStartupTaskXml();
+                if (string.IsNullOrWhiteSpace(taskXml))
+                    return false;
+
+                XmlDocument taskDocument = new XmlDocument();
+                taskDocument.LoadXml(taskXml);
+
+                XmlNamespaceManager namespaceManager = new XmlNamespaceManager(taskDocument.NameTable);
+                namespaceManager.AddNamespace("task", TaskSchedulerNamespace);
+
+                string enabled = taskDocument.SelectSingleNode("/task:Task/task:Settings/task:Enabled", namespaceManager)?.InnerText;
+                string command = taskDocument.SelectSingleNode("/task:Task/task:Actions/task:Exec/task:Command", namespaceManager)?.InnerText;
+                string workingDirectory = taskDocument.SelectSingleNode("/task:Task/task:Actions/task:Exec/task:WorkingDirectory", namespaceManager)?.InnerText;
+
+                bool isEnabled;
+                return bool.TryParse(enabled, out isEnabled) &&
+                       isEnabled &&
+                       AreSamePath(command, DaemonPath) &&
+                       (string.IsNullOrWhiteSpace(workingDirectory) || AreSamePath(workingDirectory, DaemonDirectory));
+            }
+            catch (Exception exception)
+            {
+                GestureSign.Common.Log.Logging.LogException(exception);
+                return false;
+            }
+        }
+
+        private static bool AddStartupTask(string filePath)
+        {
+            string xmlFilePath = Path.Combine(AppConfig.LocalApplicationDataPath, "StartGestureSignTask.xml");
+
+            try
+            {
+                string escapedFilePath = SecurityElement.Escape(filePath);
+                string escapedWorkingDirectory = SecurityElement.Escape(Path.GetDirectoryName(filePath));
                 string taskXml = Properties.Resources.StartGestureSignTask
-                    .Replace("\"GestureSignFilePath\"", filePath)
-                    .Replace("GestureSignFilePath", filePath);
-                string xmlFilePath = Path.Combine(AppConfig.LocalApplicationDataPath, "StartGestureSignTask.xml");
+                    .Replace("\"GestureSignFilePath\"", escapedFilePath)
+                    .Replace("GestureSignFilePath", escapedFilePath)
+                    .Replace("GestureSignWorkingDirectory", escapedWorkingDirectory);
+                if (!taskXml.Contains("<WorkingDirectory>"))
+                {
+                    taskXml = taskXml.Replace("</Exec>", $"  <WorkingDirectory>{escapedWorkingDirectory}</WorkingDirectory>{Environment.NewLine}    </Exec>");
+                }
                 File.WriteAllText(xmlFilePath, taskXml, System.Text.Encoding.Unicode);
 
-                using (Process schtasks = new Process())
-                {
-                    string arguments = string.Format(" /create /tn StartGestureSign /f /xml \"{0}\"", xmlFilePath);
-                    schtasks.StartInfo = new ProcessStartInfo("schtasks.exe", arguments)
-                    {
-                        CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Hidden,
-                        UseShellExecute = true,
-                        Verb = "runas",
-                    };
-                    schtasks.Start();
-                    schtasks.WaitForExit();
-                    if (schtasks.ExitCode != 0)
-                    {
-                        return false;
-                    }
-                }
-                if (File.Exists(xmlFilePath))
-                    File.Delete(xmlFilePath);
+                string arguments = string.Format(" /create /tn \"{0}\" /f /xml \"{1}\"", StartupTaskName, xmlFilePath);
+                return RunSchtasks(arguments, true) && IsStartupTaskCurrent();
             }
             catch (Exception exception)
             {
                 GestureSign.Common.Log.Logging.LogAndNotice(exception);
                 return false;
             }
-
-            return true;
+            finally
+            {
+                if (File.Exists(xmlFilePath))
+                    File.Delete(xmlFilePath);
+            }
         }
 
         private static bool DelStartupTask()
         {
             try
             {
-                using (Process schtasks = new Process())
-                {
-                    schtasks.StartInfo = new ProcessStartInfo("schtasks.exe", " /delete /tn StartGestureSign /f")
-                    {
-                        CreateNoWindow = true,
-                        WindowStyle = ProcessWindowStyle.Hidden,
-                        UseShellExecute = true,
-                        Verb = "runas",
-                    };
-                    schtasks.Start();
-                    schtasks.WaitForExit();
-                }
+                string arguments = string.Format(" /delete /tn \"{0}\" /f", StartupTaskName);
+                RunSchtasks(arguments, true);
+                return !IsStartupTaskCurrent();
             }
             catch (Exception exception)
             {
                 GestureSign.Common.Log.Logging.LogAndNotice(exception);
                 return false;
             }
-
-            return true;
         }
 
         public static async Task<bool> CheckStoreAppStartupStatus()
@@ -158,20 +261,18 @@ namespace GestureSign.ControlPanel.Common
             try
             {
                 string startupLnkPath = StartupLnkPath;
-                if (File.Exists(startupLnkPath))
+                if (IsStartupShortcutCurrent(startupLnkPath))
                 {
-                    var targetPath = GetLnkTargetPath(startupLnkPath);
-                    var daemonPath = DaemonPath;
-                    if (!File.Exists(targetPath) || !daemonPath.Equals(targetPath, StringComparison.OrdinalIgnoreCase))
-                    {
-                        CreateLnk(startupLnkPath, daemonPath);
-                    }
                     return true;
                 }
-                else
+
+                if (File.Exists(startupLnkPath))
                 {
-                    return false;
+                    CreateLnk(startupLnkPath, DaemonPath);
+                    return IsStartupShortcutCurrent(startupLnkPath);
                 }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -182,8 +283,16 @@ namespace GestureSign.ControlPanel.Common
 
         public static bool EnableNormalStartup()
         {
-            CreateLnk(StartupLnkPath, DaemonPath);
-            return true;
+            try
+            {
+                CreateLnk(StartupLnkPath, DaemonPath);
+                return IsStartupShortcutCurrent(StartupLnkPath);
+            }
+            catch (Exception exception)
+            {
+                GestureSign.Common.Log.Logging.LogAndNotice(exception);
+                return false;
+            }
         }
 
         public static bool DisableNormalStartup()
@@ -206,6 +315,11 @@ namespace GestureSign.ControlPanel.Common
         public static bool EnableHighPrivilegeStartup()
         {
             return AddStartupTask(DaemonPath);
+        }
+
+        public static bool GetHighPrivilegeStartupStatus()
+        {
+            return IsStartupTaskCurrent();
         }
 
         public static bool DisableHighPrivilegeStartup()
