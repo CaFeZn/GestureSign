@@ -10,6 +10,7 @@ namespace GestureSign.Daemon.Input
     public class PointEventTranslator
     {
         private int _lastPointsCount;
+        private readonly HashSet<int> _activeTouchContacts = new HashSet<int>();
         private HashSet<MouseActions> _pressedMouseButton;
 
         internal Devices SourceDevice { get; private set; }
@@ -99,35 +100,7 @@ namespace GestureSign.Daemon.Input
         {
             if ((e.SourceDevice & Devices.TouchDevice) != 0)
             {
-                int releaseCount = e.RawData.Count(rtd => rtd.State == 0);
-
-                if (e.RawData.Count == _lastPointsCount)
-                {
-                    if (releaseCount != 0)
-                    {
-                        OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
-                        _lastPointsCount -= releaseCount;
-                        return;
-                    }
-                    OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice));
-                }
-                else if (e.RawData.Count > _lastPointsCount)
-                {
-                    if (releaseCount != 0)
-                        return;
-                    if (PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
-                    {
-                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice));
-                        return;
-                    }
-                    _lastPointsCount = e.RawData.Count;
-                    OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice));
-                }
-                else
-                {
-                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
-                    _lastPointsCount = _lastPointsCount - e.RawData.Count > releaseCount ? e.RawData.Count : _lastPointsCount - releaseCount;
-                }
+                TranslateTouchDeviceEvent(e);
             }
             else if (e.SourceDevice == Devices.Pen)
             {
@@ -205,6 +178,79 @@ namespace GestureSign.Daemon.Input
                     }
                 }
             }
+        }
+
+        private void TranslateTouchDeviceEvent(RawPointsDataMessageEventArgs e)
+        {
+            var activeRawData = e.RawData.Where(IsActiveTouchContact).ToList();
+            var activeContactIdentifiers = new HashSet<int>(activeRawData.Select(rd => rd.ContactIdentifier));
+            var releasedContactIdentifiers = e.RawData
+                .Where(rd => !IsActiveTouchContact(rd))
+                .Select(rd => rd.ContactIdentifier)
+                .ToList();
+
+            if (_activeTouchContacts.Count != 0 && releasedContactIdentifiers.Count != 0)
+                _activeTouchContacts.ExceptWith(releasedContactIdentifiers);
+
+            if (activeRawData.Count == 0)
+            {
+                if (_activeTouchContacts.Count == 0 && SourceDevice == e.SourceDevice)
+                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                _lastPointsCount = _activeTouchContacts.Count;
+                return;
+            }
+
+            if (_activeTouchContacts.Count == 0)
+            {
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
+                if (SourceDevice == e.SourceDevice)
+                    SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                return;
+            }
+
+            var trackedActiveRawData = activeRawData
+                .Where(rd => _activeTouchContacts.Contains(rd.ContactIdentifier))
+                .ToList();
+
+            if (trackedActiveRawData.Count == 0)
+            {
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                ClearActiveTouchContacts();
+                return;
+            }
+
+            bool hasNewContacts = activeRawData.Count > _lastPointsCount ||
+                activeContactIdentifiers.Any(id => !_activeTouchContacts.Contains(id));
+
+            if (hasNewContacts && !PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
+            {
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
+                if (SourceDevice == e.SourceDevice)
+                    SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                return;
+            }
+
+            _activeTouchContacts.IntersectWith(activeContactIdentifiers);
+            _lastPointsCount = trackedActiveRawData.Count;
+            OnPointMove(new InputPointsEventArgs(trackedActiveRawData, e.SourceDevice));
+        }
+
+        private static bool IsActiveTouchContact(RawData rawData)
+        {
+            return rawData.State != DeviceStates.None;
+        }
+
+        private void SetActiveTouchContacts(IEnumerable<int> contactIdentifiers, int pointCount)
+        {
+            _activeTouchContacts.Clear();
+            _activeTouchContacts.UnionWith(contactIdentifiers);
+            _lastPointsCount = pointCount;
+        }
+
+        private void ClearActiveTouchContacts()
+        {
+            _activeTouchContacts.Clear();
+            _lastPointsCount = 0;
         }
 
         #endregion
