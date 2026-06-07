@@ -243,7 +243,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
 - Every push to `master` also updates the `continuous` prerelease with the latest portable build for manual testing.
 - The workflow builds `Release|Any CPU` for the installer and `Portable|Any CPU` for the zip, creates or updates the GitHub Release, and uploads both `GestureSign-<tag>-setup-win-anycpu.exe` and `GestureSign-<tag>-portable-win-anycpu.zip`.
-- The release workflow uses Node 24-compatible checkout and release actions where upstream support is available; `actions/upload-artifact` still needs an upstream Node 24-compatible major before the Actions warning can be fully removed.
+- The release workflow uses Node 24-compatible checkout, artifact upload, and release actions to avoid GitHub Actions Node 20 deprecation warnings.
 - You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; use `continuous` for a prerelease test build, or a semver-like tag for a formal release. By default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
 - Use the setup `.exe` for normal installation. Use the portable `.zip` for manual testing or a no-install run; after extracting it, start `GestureSign.ControlPanel.exe`. `GestureSign.exe` is the background daemon.
 - The releases page may be empty until the first `master` push, matching tag push, or manual workflow run completes successfully.
