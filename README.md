@@ -34,7 +34,7 @@ The current codebase remains a Windows desktop app targeting `.NET Framework 4.8
 
 - Upstream installer package: `winget install --id TransposonY.GestureSign -e`
 - Update upstream installer package: `winget upgrade --id TransposonY.GestureSign -e`
-- Fork installer: download `GestureSign-<tag>-setup-win-anycpu.exe` from the [releases page](https://github.com/CaFeZn/GestureSign/releases) and run it.
+- Fork installer: download `GestureSign-<tag>-setup-win-anycpu.exe` from the [releases page](https://github.com/CaFeZn/GestureSign/releases) and run it. The installer shows a destination-folder page; silent installs can pass `/DIR="D:\Tools\GestureSign"`.
 - Fork portable edition: download `GestureSign-<tag>-portable-win-anycpu.zip`, extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
 - If this fork has no published release asset yet, use the upstream installer package above or build locally with `.\scripts\build.ps1 -Configuration Portable`.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
@@ -170,6 +170,7 @@ Implemented or covered:
 | [#133](https://github.com/TransposonY/GestureSign/issues/133), [#111](https://github.com/TransposonY/GestureSign/issues/111) | Build scripts and docs cover Windows 11 on Arm64 and optional native Arm64 output. |
 | [#132](https://github.com/TransposonY/GestureSign/issues/132), [#125](https://github.com/TransposonY/GestureSign/issues/125) | The `Fn` limitation is documented, and F1-F24/media/function keys are easier to choose from the Hot Key UI. |
 | [#117](https://github.com/TransposonY/GestureSign/issues/117) | Installer installation and update commands are documented for the current winget package. |
+| [#121](https://github.com/TransposonY/GestureSign/issues/121) | The setup `.exe` now exposes the destination-folder page, and silent installs can use Inno Setup's `/DIR=` override. |
 | [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | Virtual desktop switching actions are available and can be assigned to normal or continuous gestures. |
 | [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. |
 | [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | Shell/taskbar activation and modifier-key cleanup around switch-window and switch-desktop actions have been hardened. |
@@ -225,7 +226,6 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome plus hovering pen/side-button behavior depends on whether the driver exposes HID pen state or mouse input, and needs validation with the affected browser and stylus driver. |
 | [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox detached-tab windows should match by browser executable/default browser rules, but remaining failures require per-window validation on the affected Firefox version. |
 | [#46](https://github.com/TransposonY/GestureSign/issues/46) | Full whitelist mode is not implemented; use ignored applications for whole-app exclusion or app-specific disabled-command actions for one-gesture exclusions. |
-| [#121](https://github.com/TransposonY/GestureSign/issues/121) | Portable builds can run from a chosen folder, but installer-directory selection is not implemented in this repository. |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | Actions can be scoped to multiple source devices, including touchscreen and touchpad, but compatible raw HID touchpad input is still driver-dependent. |
 | [#53](https://github.com/TransposonY/GestureSign/issues/53) | Browser matching guidance now calls out Chromium Edge `msedge.exe`; Edge-specific failures still need per-rule and per-window validation. |
 
