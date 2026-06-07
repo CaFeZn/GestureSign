@@ -53,7 +53,15 @@ jobs:
             throw "Release tag must look like v8.1.0 or v8.1.0-beta.1."
           }
 
-          $artifact = "GestureSign-$tag-win-anycpu.zip"
+          $portableArtifact = "GestureSign-$tag-portable-win-anycpu.zip"
+          $installerArtifact = "GestureSign-$tag-setup-win-anycpu.exe"
+          $version = $tag
+          if ($version.StartsWith("v")) {
+            $version = $version.Substring(1)
+          }
+          if ($tag -eq "continuous") {
+            $version = "8.1.0-continuous"
+          }
 
           if ([string]::IsNullOrWhiteSpace($buildRef)) {
             if ($isContinuous) {
@@ -65,7 +73,9 @@ jobs:
 
           "release_tag=$tag" >> $env:GITHUB_OUTPUT
           "build_ref=$buildRef" >> $env:GITHUB_OUTPUT
-          "artifact=$artifact" >> $env:GITHUB_OUTPUT
+          "portable_artifact=$portableArtifact" >> $env:GITHUB_OUTPUT
+          "installer_artifact=$installerArtifact" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
           "prerelease=$($isContinuous.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Checkout
@@ -82,36 +92,81 @@ jobs:
 
       - name: Clean release output
         shell: pwsh
-        run: Remove-Item -Recurse -Force .\bin\Portable -ErrorAction SilentlyContinue
+        run: |
+          Remove-Item -Recurse -Force .\bin\Release -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force .\bin\Portable -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force .\artifacts -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force .\artifacts | Out-Null
+
+      - name: Build Release
+        shell: pwsh
+        run: .\scripts\build.ps1 -Configuration Release -Platform "Any CPU"
 
       - name: Build Portable
         shell: pwsh
-        run: .\scripts\build.ps1 -Configuration Portable -Platform "Any CPU"
+        run: .\scripts\build.ps1 -Configuration Portable -Platform "Any CPU" -SkipRestore
 
-      - name: Package binaries
+      - name: Validate build outputs
         shell: pwsh
         run: |
-          $requiredFiles = @(
+          $requiredReleaseFiles = @(
+            ".\bin\Release\GestureSign.ControlPanel.exe",
+            ".\bin\Release\GestureSign.exe",
+            ".\bin\Release\GestureSign.CorePlugins.dll"
+          )
+          $requiredPortableFiles = @(
             ".\bin\Portable\GestureSign.ControlPanel.exe",
             ".\bin\Portable\GestureSign.exe",
             ".\bin\Portable\GestureSign.CorePlugins.dll"
           )
 
-          foreach ($file in $requiredFiles) {
+          foreach ($file in $requiredReleaseFiles + $requiredPortableFiles) {
             if (-not (Test-Path $file)) {
               throw "Required release build output was not found: $file"
             }
           }
 
-          Compress-Archive -Path .\bin\Portable\* -DestinationPath $env:ARTIFACT -Force
+      - name: Package portable zip
+        shell: pwsh
+        run: Compress-Archive -Path .\bin\Portable\* -DestinationPath $env:PORTABLE_ARTIFACT -Force
         env:
-          ARTIFACT: ${{ steps.resolve.outputs.artifact }}
+          PORTABLE_ARTIFACT: ${{ steps.resolve.outputs.portable_artifact }}
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Package installer
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            $iscc = (Get-Command ISCC.exe -ErrorAction Stop).Source
+          }
+
+          $sourceDir = (Resolve-Path .\bin\Release).Path
+          $outputDir = (Resolve-Path .\artifacts).Path
+          $outputBaseFilename = [IO.Path]::GetFileNameWithoutExtension("${{ steps.resolve.outputs.installer_artifact }}")
+
+          & $iscc `
+            .\installer\GestureSign.iss `
+            "/DSourceDir=$sourceDir" `
+            "/DOutputDir=$outputDir" `
+            "/DOutputBaseFilename=$outputBaseFilename" `
+            "/DReleaseTag=${{ steps.resolve.outputs.release_tag }}" `
+            "/DAppVersion=${{ steps.resolve.outputs.version }}"
+
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: GestureSign-${{ steps.resolve.outputs.release_tag }}-win-anycpu
-          path: ${{ steps.resolve.outputs.artifact }}
+          path: |
+            ${{ steps.resolve.outputs.portable_artifact }}
+            artifacts/${{ steps.resolve.outputs.installer_artifact }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -122,4 +177,6 @@ jobs:
           prerelease: ${{ steps.resolve.outputs.prerelease }}
           make_latest: ${{ steps.resolve.outputs.prerelease == 'true' && 'false' || 'legacy' }}
           generate_release_notes: true
-          files: ${{ steps.resolve.outputs.artifact }}
+          files: |
+            ${{ steps.resolve.outputs.portable_artifact }}
+            artifacts/${{ steps.resolve.outputs.installer_artifact }}
