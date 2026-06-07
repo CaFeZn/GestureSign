@@ -99,6 +99,7 @@ namespace GestureSign.Daemon.Input
                 if (disposing)
                 {
                     AppConfig.ConfigChanged -= AppConfig_ConfigChanged;
+                    _messageWindow?.Dispose();
                 }
 
                 SystemEvents.SessionSwitch -= OnSessionSwitch;

@@ -93,13 +93,13 @@ namespace GestureSign.Daemon.Surface
         {
             if (_settingsChanged)
             {
-                _settingsChanged = false;
-                InitializeForm();
+                if (!InitializeForm())
+                    return;
             }
 
             if (_penWidth <= 0) return;
 
-            ClearSurfaces();
+            TryClearSurfaces();
 
             //follow dynamic system color
             _drawingPen.Color = AppConfig.VisualFeedbackColor;
@@ -113,7 +113,7 @@ namespace GestureSign.Daemon.Surface
             Hide();
             TopMost = false;
 
-            ClearSurfaces();
+            TryClearSurfaces();
         }
 
         public void DrawPoints(List<List<Point>> points)
@@ -123,7 +123,7 @@ namespace GestureSign.Daemon.Surface
 
                 if (_bitmap == null || _lastStroke == null)
                 {
-                    ClearSurfaces();
+                    TryClearSurfaces();
                     try
                     {
                         _bitmap = new DiBitmap(this.Size);
@@ -187,7 +187,7 @@ namespace GestureSign.Daemon.Surface
             catch (Exception e)
             {
                 Logging.LogException(e);
-                ClearSurfaces();
+                TryClearSurfaces();
             }
             // this.CreateGraphics().DrawImage(bmp, 0, 0);
 
@@ -198,44 +198,126 @@ namespace GestureSign.Daemon.Surface
 
         private void ResetSurface()
         {
-            if (_lastStroke == null)
+            if (IsDisposed)
+                return;
+
+            Action resetAction = () =>
             {
-                if (InvokeRequired) Invoke(new Action(InitializeForm));
-                else InitializeForm();
+                try
+                {
+                    if (_lastStroke == null)
+                        InitializeForm();
+                    else
+                        _settingsChanged = true;
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                    _settingsChanged = true;
+                }
+            };
+
+            if (InvokeRequired && IsHandleCreated)
+            {
+                try
+                {
+                    BeginInvoke(resetAction);
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                    _settingsChanged = true;
+                }
             }
             else
             {
-                if (InvokeRequired) Invoke(new Action(() => _settingsChanged = true));
-                else _settingsChanged = true;
+                resetAction();
             }
         }
 
-        private void InitializeForm()
+        private bool InitializeForm()
         {
-            // Set basic variables
-            FormBorderStyle = FormBorderStyle.None;
-            Name = "SurfaceForm";
-            ShowIcon = false;
-            StartPosition = FormStartPosition.Manual;
-            Show();
-            Hide();
+            try
+            {
+                Rectangle screenBounds;
+                if (!TryGetVirtualScreenBounds(out screenBounds))
+                {
+                    if (Visible)
+                        Hide();
+                    _settingsChanged = true;
+                    return false;
+                }
 
+                // Set basic variables
+                FormBorderStyle = FormBorderStyle.None;
+                Name = "SurfaceForm";
+                ShowIcon = false;
+                StartPosition = FormStartPosition.Manual;
 
-            // Combine monitor screen sizes and set form size to combined size
-            Rectangle rOutput = new Rectangle();
+                // 1 pixel margin for avoiding activating Focus assist
+                SetBounds(
+                    screenBounds.Left + 1,
+                    screenBounds.Top + 1,
+                    Math.Max(1, screenBounds.Width - 1),
+                    Math.Max(1, screenBounds.Height - 1));
 
-            foreach (Screen oScreen in Screen.AllScreens)
-                rOutput = Rectangle.Union(rOutput, oScreen.Bounds);
+                // Store offset in class field
+                _screenOffset = new Size(Location);
 
-            // 1 pixel margin for avoiding activating Focus assist
-            Left = Screen.AllScreens.Min(s => s.Bounds.Left) + 1;
-            Top = Screen.AllScreens.Min(s => s.Bounds.Top) + 1;
-            Width = rOutput.Width - 1;
-            Height = rOutput.Height - 1;
-            // Store offset in class field
-            _screenOffset = new Size(Location);
+                InitializePen();
 
-            InitializePen();
+                Show();
+                Hide();
+                _settingsChanged = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                _settingsChanged = true;
+                return false;
+            }
+        }
+
+        private bool TryGetVirtualScreenBounds(out Rectangle bounds)
+        {
+            bounds = Rectangle.Empty;
+
+            try
+            {
+                var screens = Screen.AllScreens;
+                if (screens != null)
+                {
+                    foreach (Screen screen in screens)
+                    {
+                        if (screen == null || !IsValidBounds(screen.Bounds))
+                            continue;
+
+                        bounds = bounds.IsEmpty ? screen.Bounds : Rectangle.Union(bounds, screen.Bounds);
+                    }
+                }
+
+                if (IsValidBounds(bounds))
+                    return true;
+
+                var virtualScreen = SystemInformation.VirtualScreen;
+                if (IsValidBounds(virtualScreen))
+                {
+                    bounds = virtualScreen;
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+            }
+
+            return false;
+        }
+
+        private static bool IsValidBounds(Rectangle bounds)
+        {
+            return bounds.Width > 0 && bounds.Height > 0;
         }
 
         private void InitializePen()
@@ -289,6 +371,29 @@ namespace GestureSign.Daemon.Surface
 
                 }
                 _bitmap = null;
+            }
+        }
+
+        private void TryClearSurfaces()
+        {
+            try
+            {
+                ClearSurfaces();
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                _lastStroke = null;
+                _bitmap = null;
+                try
+                {
+                    _graphicsPath.Reset();
+                    _dirtyGraphicsPath.Reset();
+                }
+                catch (Exception resetException)
+                {
+                    Logging.LogException(resetException);
+                }
             }
         }
 

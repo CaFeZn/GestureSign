@@ -37,6 +37,12 @@ namespace GestureSign.CorePlugins.TouchKeyboard
         [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Auto, EntryPoint = "PostMessage")]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, uint wParam, uint lParam);
 
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
         [ComImport]
         [Guid("37c994e7-432b-4834-a2f7-dce1f13b834b")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -225,70 +231,108 @@ namespace GestureSign.CorePlugins.TouchKeyboard
             return true;
         }
 
+        private bool WaitForKeyboardState(bool open)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                System.Threading.Thread.Sleep(100);
+                if (IsKeyboardOpen() == open)
+                    return true;
+            }
+
+            return false;
+        }
+
         private bool ShowKeyboard()
         {
-            if (!IsKeyboardOpen())
+            if (IsKeyboardOpen())
+                return true;
+
+            if (StartProcess() && WaitForKeyboardState(true))
+                return true;
+
+            if (GestureSign.Common.VersionHelper.IsWindows10OrGreater() && IsKeyboardOpen())
+                return true;
+
+            if (!ToggleVisibilityByTipBand())
             {
-                if (!ToggleVisibilityByTipBand())
-                {
-                    var processes = Process.GetProcessesByName("TabTip");
-                    if (processes.Length != 0)
-                    {
-                        foreach (var p in processes)
-                        {
-                            p.Dispose();
-                        }
-                        try
-                        {
-                            ToggleVisibility();
-                            return true;
-                        }
-                        catch { }
-                    }
-                    else
-                    {
-                        if (StartProcess())
-                        {
-                            for (int i = 0; i < 6; i++)
-                            {
-                                System.Threading.Thread.Sleep(100);
-                                if (IsKeyboardOpen())
-                                    return true;
-                            }
-                            ToggleVisibility();
-                        }
-                    }
-                }
+                if (!ToggleVisibilityWhenAvailable())
+                    return false;
             }
-            return true;
+
+            return WaitForKeyboardState(true) || IsKeyboardOpen();
         }
 
         private bool HideKeyboard()
         {
             try
             {
-                if (IsKeyboardOpen())
-                    if (!ToggleVisibilityByTipBand())
-                    {
-                        ToggleVisibility();
-                    }
+                if (!IsKeyboardOpen())
+                    return true;
+
+                if (CloseKeyboardWindow() && (WaitForKeyboardState(false) || !IsKeyboardOpen()))
+                    return true;
+
+                if (!ToggleVisibilityByTipBand())
+                    ToggleVisibility();
+
+                return WaitForKeyboardState(false) || !IsKeyboardOpen();
+            }
+            catch
+            {
+                return CloseKeyboardWindow();
+            }
+        }
+
+        private bool ToggleKeyboard()
+        {
+            if (!ToggleVisibilityByTipBand())
+            {
+                if (!ToggleVisibilityWhenAvailable())
+                {
+                    return ShowKeyboard();
+                }
+            }
+
+            return true;
+        }
+
+        private bool ToggleVisibilityWhenAvailable()
+        {
+            var processes = Process.GetProcessesByName("TabTip");
+            try
+            {
+                if (processes.Length == 0)
+                    return false;
+
+                ToggleVisibility();
                 return true;
             }
             catch
             {
-                var keyboardHwnd = FindWindow("IPTip_Main_Window", null);
-
-                if (keyboardHwnd != IntPtr.Zero)
-                {
-                    PostMessage(keyboardHwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-                    return true;
-                }
-                else return false;
+                return false;
             }
+            finally
+            {
+                foreach (var p in processes)
+                {
+                    p.Dispose();
+                }
+            }
+        }
+
+        private bool CloseKeyboardWindow()
+        {
+            var keyboardHwnd = FindWindow("IPTip_Main_Window", null);
+            return keyboardHwnd != IntPtr.Zero && PostMessage(keyboardHwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
         }
 
         private bool IsKeyboardOpen()
         {
+            var keyboardHwnd = FindWindow("IPTip_Main_Window", null);
+            if (IsWindowVisibleAndSized(keyboardHwnd))
+                return true;
+
             // Reference https://stackoverflow.com/a/48545074
             if (GestureSign.Common.VersionHelper.OsVersion >= new Version(10, 0, 16299))
             {
@@ -296,10 +340,10 @@ namespace GestureSign.CorePlugins.TouchKeyboard
                 const string WindowClass1709 = "Windows.UI.Core.CoreWindow";
                 const string WindowCaption1709 = "Microsoft Text Input Application";
 
-                // if there is a top-level window - the keyboard is closed
+                // Newer Windows builds can leave a top-level Text Input window behind when closed.
                 var wnd = FindWindowEx(IntPtr.Zero, IntPtr.Zero, WindowClass1709, WindowCaption1709);
-                if (wnd != IntPtr.Zero)
-                    return false;
+                if (IsWindowVisibleAndSized(wnd))
+                    return true;
 
                 var parent = IntPtr.Zero;
                 while (true)
@@ -310,16 +354,24 @@ namespace GestureSign.CorePlugins.TouchKeyboard
 
                     // if it's a child of a WindowParentClass1709 window - the keyboard is open
                     wnd = FindWindowEx(parent, IntPtr.Zero, WindowClass1709, WindowCaption1709);
-                    if (wnd != IntPtr.Zero)
+                    if (IsWindowVisibleAndSized(wnd))
                         return true;
                 }
             }
 
-            var keyboardHwnd = FindWindow("IPTip_Main_Window", null);
-            if (keyboardHwnd == IntPtr.Zero)
+            return false;
+        }
+
+        private bool IsWindowVisibleAndSized(IntPtr hWnd)
+        {
+            if (hWnd == IntPtr.Zero || !IsWindowVisible(hWnd))
                 return false;
-            var taptipWindow = new SystemWindow(keyboardHwnd);
-            return taptipWindow.Visible && taptipWindow.Enabled;
+
+            RECT rect;
+            if (!GetWindowRect(hWnd, out rect))
+                return false;
+
+            return rect.Width > 0 && rect.Height > 0;
         }
 
         private void ToggleVisibility()
@@ -347,7 +399,7 @@ namespace GestureSign.CorePlugins.TouchKeyboard
             }
             else
             {
-                return IsKeyboardOpen() ? HideKeyboard() : ShowKeyboard();
+                return ToggleKeyboard();
             }
         }
 

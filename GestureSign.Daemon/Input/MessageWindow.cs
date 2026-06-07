@@ -9,10 +9,11 @@ using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
 using GestureSign.Common.Log;
 using GestureSign.Daemon.Native;
+using Microsoft.Win32;
 
 namespace GestureSign.Daemon.Input
 {
-    public class MessageWindow : NativeWindow
+    public class MessageWindow : NativeWindow, IDisposable
     {
         private Screen _currentScr;
         private const int SourceDeviceStaleTimeout = 1000;
@@ -23,6 +24,7 @@ namespace GestureSign.Daemon.Input
         private List<RawData> _lastSourceDeviceOutput = new List<RawData>(1);
         private int _requiringContactCount;
         private Dictionary<IntPtr, ushort> _validDevices = new Dictionary<IntPtr, ushort>();
+        private Dictionary<IntPtr, Screen> _touchScreenDeviceScreens = new Dictionary<IntPtr, Screen>();
 
         private Devices _sourceDevice;
         private int _lastSourceDeviceInputTick;
@@ -30,6 +32,7 @@ namespace GestureSign.Daemon.Input
         private int? _penLastActivity;
         private bool _ignoreTouchInputWhenUsingPen;
         private DeviceStates _penGestureButton;
+        private bool _disposed;
 
         public event RawPointsDataMessageEventHandler PointsIntercepted;
 
@@ -37,11 +40,12 @@ namespace GestureSign.Daemon.Input
         {
             CreateWindow();
             UpdateRegistration();
+            SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
         }
 
         ~MessageWindow()
         {
-            DestroyWindow();
+            Dispose(false);
         }
 
         public bool CreateWindow()
@@ -117,6 +121,7 @@ namespace GestureSign.Daemon.Input
             _penGestureButton = penSetting & (DeviceStates.Invert | DeviceStates.RightClickButton);
 
             _validDevices.Clear();
+            _touchScreenDeviceScreens.Clear();
 
             UpdateRegisterState(AppConfig.RegisterTouchScreen, NativeMethods.TouchScreenUsage);
             UpdateRegisterState(_ignoreTouchInputWhenUsingPen || _penGestureButton != 0 && (penSetting & (DeviceStates.InRange | DeviceStates.Tip)) != 0, NativeMethods.PenUsage);
@@ -222,17 +227,32 @@ namespace GestureSign.Daemon.Input
             {
                 case NativeMethods.WM_INPUT:
                     {
-                        ProcessInputCommand(message.LParam);
+                        try
+                        {
+                            ProcessInputCommand(message.LParam);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logging.LogException(ex);
+                            ResetSourceDevice(true);
+                        }
                         break;
                     }
                 case NativeMethods.WM_INPUT_DEVICE_CHANGE:
                     {
                         _validDevices.Clear();
+                        _touchScreenDeviceScreens.Clear();
                         ResetSourceDevice(true);
                         break;
                     }
             }
             base.WndProc(ref message);
+        }
+
+        private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
+        {
+            _touchScreenDeviceScreens.Clear();
+            ResetSourceDevice(false);
         }
 
         private void CheckLastError()
@@ -300,6 +320,54 @@ namespace GestureSign.Daemon.Input
             }
 
             return false;
+        }
+
+        private bool IsCurrentScreenValid()
+        {
+            if (!IsUsableScreen(_currentScr))
+                return false;
+
+            try
+            {
+                foreach (Screen screen in Screen.AllScreens)
+                {
+                    if (!IsUsableScreen(screen))
+                        continue;
+
+                    if (string.Equals(screen.DeviceName, _currentScr.DeviceName, StringComparison.OrdinalIgnoreCase) &&
+                        screen.Bounds.Equals(_currentScr.Bounds))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+            }
+
+            return false;
+        }
+
+        private bool TrySetCurrentScreenFromCursor(bool updateOrientation)
+        {
+            Screen screen = GetFallbackScreen();
+            if (!IsUsableScreen(screen))
+            {
+                ResetSourceDevice(true);
+                return false;
+            }
+
+            _currentScr = screen;
+            if (updateOrientation)
+                HidDevice.GetCurrentScreenOrientation();
+
+            return true;
+        }
+
+        private static bool IsUsableScreen(Screen screen)
+        {
+            return screen != null && screen.Bounds.Width > 0 && screen.Bounds.Height > 0;
         }
 
         #region ProcessInput
@@ -376,12 +444,10 @@ namespace GestureSign.Daemon.Input
                             {
                                 if ((state & _penGestureButton) != 0)
                                 {
-                                    _currentScr = Screen.FromPoint(Cursor.Position);
-                                    if (_currentScr == null)
+                                    if (!TrySetCurrentScreenFromCursor(true))
                                         return;
                                     if (!TryAcceptSourceDevice(Devices.Pen))
                                         return;
-                                    PenDevice.GetCurrentScreenOrientation();
                                 }
                                 else
                                     return;
@@ -393,6 +459,8 @@ namespace GestureSign.Daemon.Input
                                     state = DeviceStates.None;
                                 }
                             }
+                            if (!IsCurrentScreenValid() && !TrySetCurrentScreenFromCursor(true))
+                                return;
                             penDevice.GetPhysicalMax(1);
                             Point point = penDevice.GetCoordinate(0, _currentScr);
                             _outputTouchs = new List<RawData>(1) { new RawData(state, 0, point) };
@@ -404,16 +472,6 @@ namespace GestureSign.Daemon.Input
                             return;
                         if (!TryAcceptSourceDevice(Devices.TouchScreen))
                             return;
-                        if (_currentScr == null)
-                        {
-                            _currentScr = Screen.FromPoint(Cursor.Position);
-                            if (_currentScr == null)
-                            {
-                                ResetSourceDevice(true);
-                                return;
-                            }
-                            TouchScreenDevice.GetCurrentScreenOrientation();
-                        }
 
                         using (TouchScreenDevice touchScreen = new TouchScreenDevice(buffer, ref raw))
                         {
@@ -437,6 +495,17 @@ namespace GestureSign.Daemon.Input
                                 return;
                             }
 
+                            if (_currentScr == null || !IsCurrentScreenValid())
+                            {
+                                TouchScreenDevice.GetCurrentScreenOrientation();
+                                _currentScr = ResolveTouchScreen(raw.header.hDevice, touchScreen, linkCollection[0].NumberOfChildren);
+                                if (!IsUsableScreen(_currentScr))
+                                {
+                                    ResetSourceDevice(true);
+                                    return;
+                                }
+                            }
+
                             touchScreen.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
                         }
                     }
@@ -444,14 +513,10 @@ namespace GestureSign.Daemon.Input
                     {
                         if (!TryAcceptSourceDevice(Devices.TouchPad))
                             return;
-                        if (_currentScr == null)
+                        if (_currentScr == null || !IsCurrentScreenValid())
                         {
-                            _currentScr = Screen.FromPoint(Cursor.Position);
-                            if (_currentScr == null)
-                            {
-                                ResetSourceDevice(true);
+                            if (!TrySetCurrentScreenFromCursor(false))
                                 return;
-                            }
                         }
 
                         using (TouchPadDevice touchPad = new TouchPadDevice(buffer, ref raw))
@@ -503,8 +568,128 @@ namespace GestureSign.Daemon.Input
             }
         }
 
+        private Screen ResolveTouchScreen(IntPtr hDevice, TouchScreenDevice touchScreen, short numberOfChildren)
+        {
+            Screen screen;
+            if (TryGetCachedTouchScreen(hDevice, out screen))
+                return screen;
+
+            Screen[] screens = Screen.AllScreens;
+            if (screens.Length == 1)
+            {
+                _touchScreenDeviceScreens[hDevice] = screens[0];
+                return screens[0];
+            }
+
+            screen = GetTouchScreenFromForegroundTouchPoint(touchScreen, numberOfChildren, screens);
+            if (screen != null)
+            {
+                _touchScreenDeviceScreens[hDevice] = screen;
+                return screen;
+            }
+
+            screen = touchScreen.GetScreenFromPhysicalSize(screens);
+            if (screen != null)
+            {
+                _touchScreenDeviceScreens[hDevice] = screen;
+                return screen;
+            }
+
+            return GetFallbackScreen();
+        }
+
+        private bool TryGetCachedTouchScreen(IntPtr hDevice, out Screen screen)
+        {
+            if (!_touchScreenDeviceScreens.TryGetValue(hDevice, out screen))
+                return false;
+
+            foreach (Screen currentScreen in Screen.AllScreens)
+            {
+                if (currentScreen.DeviceName == screen.DeviceName && currentScreen.Bounds.Equals(screen.Bounds))
+                {
+                    screen = currentScreen;
+                    return true;
+                }
+            }
+
+            _touchScreenDeviceScreens.Remove(hDevice);
+            screen = null;
+            return false;
+        }
+
+        private Screen GetTouchScreenFromForegroundTouchPoint(TouchScreenDevice touchScreen, short numberOfChildren, Screen[] screens)
+        {
+            Rectangle foregroundBounds;
+            if (!TryGetForegroundWindowBounds(out foregroundBounds))
+                return null;
+
+            Screen matchedScreen = null;
+            foreach (Screen screen in screens)
+            {
+                Point touchPoint;
+                if (!touchScreen.TryGetFirstTipPoint(numberOfChildren, screen, out touchPoint) || !foregroundBounds.Contains(touchPoint))
+                    continue;
+
+                if (matchedScreen != null)
+                    return null;
+
+                matchedScreen = screen;
+            }
+            return matchedScreen;
+        }
+
+        private bool TryGetForegroundWindowBounds(out Rectangle bounds)
+        {
+            bounds = Rectangle.Empty;
+            IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
+            if (foregroundWindow == IntPtr.Zero)
+                return false;
+
+            NativeMethods.RECT windowRect;
+            if (!NativeMethods.GetWindowRect(foregroundWindow, out windowRect) ||
+                windowRect.Right <= windowRect.Left ||
+                windowRect.Bottom <= windowRect.Top)
+            {
+                return false;
+            }
+
+            bounds = Rectangle.FromLTRB(windowRect.Left, windowRect.Top, windowRect.Right, windowRect.Bottom);
+            return true;
+        }
+
+        private Screen GetFallbackScreen()
+        {
+            IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
+            if (foregroundWindow != IntPtr.Zero)
+            {
+                Screen foregroundScreen = Screen.FromHandle(foregroundWindow);
+                if (foregroundScreen != null)
+                    return foregroundScreen;
+            }
+
+            Screen cursorScreen = Screen.FromPoint(Cursor.Position);
+            return cursorScreen ?? Screen.PrimaryScreen;
+        }
+
 
         #endregion ProcessInput
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+                SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
+
+            DestroyWindow();
+            _disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
     }
 }
-

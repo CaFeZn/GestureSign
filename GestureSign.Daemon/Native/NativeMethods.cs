@@ -148,6 +148,12 @@ namespace GestureSign.Daemon.Native
         internal static extern uint GetRawInputDeviceInfo(IntPtr hDevice, uint uiCommand, IntPtr pData, ref uint pcbSize);
 
         [DllImport("User32.dll")]
+        internal static extern IntPtr GetForegroundWindow();
+
+        [DllImport("User32.dll")]
+        internal static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("User32.dll")]
         public static extern IntPtr MonitorFromPoint([In] System.Drawing.Point pt, [In] uint dwFlags);
 
         [DllImport("Shcore.dll")]
