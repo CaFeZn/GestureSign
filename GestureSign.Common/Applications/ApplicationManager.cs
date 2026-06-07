@@ -306,7 +306,7 @@ namespace GestureSign.Common.Applications
 
         public IEnumerable<IAction> GetRecognizedDefinedAction(string GestureName)
         {
-            return GetDefinedAction(GestureName, _recognizedApplication, true);
+            return GetDefinedAction(GestureName, _recognizedApplication, true).Where(a => a.ContinuousGesture == null);
         }
 
         public List<IAction> GetRecognizedDefinedAction(Func<IAction, bool> predicate)
