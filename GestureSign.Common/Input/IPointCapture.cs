@@ -8,6 +8,7 @@ namespace GestureSign.Common.Input
         event PointsCapturedEventHandler BeforePointsCaptured;
         event PointsCapturedEventHandler CaptureStarted;
         event EventHandler CaptureEnded;
+        event PointsCapturedEventHandler CaptureCanceled;
         event RecognitionEventHandler GestureRecognized;
         event PointsCapturedEventHandler PointCaptured;
         bool TemporarilyDisableCapture { get; set; }

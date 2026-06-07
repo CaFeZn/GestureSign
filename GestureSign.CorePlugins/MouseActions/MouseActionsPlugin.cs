@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -16,6 +17,9 @@ namespace GestureSign.CorePlugins.MouseActions
 
         private MouseActionsUI _gui = null;
         private MouseActionsSettings _settings = null;
+        private readonly object _heldButtonsLock = new object();
+        private readonly HashSet<MouseActions> _heldButtons = new HashSet<MouseActions>();
+        private bool _captureReleaseHandlersAttached;
 
         #endregion
 
@@ -110,16 +114,19 @@ namespace GestureSign.CorePlugins.MouseActions
                     case MouseActions.XButton1Down:
                     case MouseActions.XButton2Down:
                         simulator.Mouse.XButtonDown(buttonId).Sleep(30);
+                        TrackHeldButtonIfCapturing(_settings.MouseAction.GetButtons());
                         break;
                     case MouseActions.XButton1Up:
                     case MouseActions.XButton2Up:
                         simulator.Mouse.XButtonUp(buttonId).Sleep(30);
+                        ForgetHeldButton(_settings.MouseAction.GetButtons());
                         break;
                     default:
                         {
                             MethodInfo clickMethod = typeof(IMouseSimulator).GetMethod(_settings.MouseAction.ToString());
                             clickMethod.Invoke(simulator.Mouse, null);
                             Thread.Sleep(30);
+                            TrackHeldButtonChangeIfNeeded(_settings.MouseAction);
                             break;
                         }
                 }
@@ -201,6 +208,102 @@ namespace GestureSign.CorePlugins.MouseActions
             };
 
             return newGUI;
+        }
+
+        private void TrackHeldButtonChangeIfNeeded(MouseActions action)
+        {
+            switch (action.GetActions())
+            {
+                case MouseActions.Down:
+                    TrackHeldButtonIfCapturing(action.GetButtons());
+                    break;
+                case MouseActions.Up:
+                    ForgetHeldButton(action.GetButtons());
+                    break;
+            }
+        }
+
+        private void TrackHeldButtonIfCapturing(MouseActions button)
+        {
+            if (button == MouseActions.None ||
+                HostControl?.PointCapture?.State != GestureSign.Common.Input.CaptureState.Capturing)
+                return;
+
+            lock (_heldButtonsLock)
+            {
+                _heldButtons.Add(button);
+            }
+
+            AttachCaptureReleaseHandlers();
+        }
+
+        private void ForgetHeldButton(MouseActions button)
+        {
+            lock (_heldButtonsLock)
+            {
+                _heldButtons.Remove(button);
+            }
+        }
+
+        private void AttachCaptureReleaseHandlers()
+        {
+            if (_captureReleaseHandlersAttached || HostControl?.PointCapture == null)
+                return;
+
+            HostControl.PointCapture.CaptureEnded += PointCapture_CaptureEnded;
+            HostControl.PointCapture.CaptureCanceled += PointCapture_CaptureCanceled;
+            _captureReleaseHandlersAttached = true;
+        }
+
+        private void PointCapture_CaptureEnded(object sender, EventArgs e)
+        {
+            ReleaseHeldButtons();
+        }
+
+        private void PointCapture_CaptureCanceled(object sender, GestureSign.Common.Input.PointsCapturedEventArgs e)
+        {
+            ReleaseHeldButtons();
+        }
+
+        private void ReleaseHeldButtons()
+        {
+            MouseActions[] buttons;
+            lock (_heldButtonsLock)
+            {
+                if (_heldButtons.Count == 0)
+                    return;
+
+                buttons = _heldButtons.ToArray();
+                _heldButtons.Clear();
+            }
+
+            InputSimulator simulator = new InputSimulator();
+            foreach (var button in buttons)
+            {
+                ReleaseButton(simulator, button);
+            }
+        }
+
+        private static void ReleaseButton(InputSimulator simulator, MouseActions button)
+        {
+            switch (button)
+            {
+                case MouseActions.LeftButton:
+                    simulator.Mouse.LeftButtonUp();
+                    break;
+                case MouseActions.MiddleButton:
+                    simulator.Mouse.MiddleButtonUp();
+                    break;
+                case MouseActions.RightButton:
+                    simulator.Mouse.RightButtonUp();
+                    break;
+                case MouseActions.XButton1:
+                    simulator.Mouse.XButtonUp(1);
+                    break;
+                case MouseActions.XButton2:
+                    simulator.Mouse.XButtonUp(2);
+                    break;
+            }
         }
 
         private string GetDescription()
