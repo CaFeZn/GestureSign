@@ -110,16 +110,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
             // Set color picker dialog color to current visual feedback color
             ColorDialog cdColorPicker = new ColorDialog();
             cdColorPicker.AllowFullOpen = true;
-            cdColorPicker.Color = _VisualFeedbackColor;// System.Drawing.Color.FromArgb(_VisualFeedbackColor.A, _VisualFeedbackColor.R, _VisualFeedbackColor.G, _VisualFeedbackColor.B);
+            cdColorPicker.Color = AppConfig.VisualFeedbackColor;
 
             // Show color picker dialog
             if (cdColorPicker.ShowDialog() != DialogResult.OK)
                 return;
-            // Change color of visual feedback and refresh example
-            //_VisualFeedbackColor.A = cdColorPicker.Color.A;
-            //_VisualFeedbackColor.R = cdColorPicker.Color.R;
-            //_VisualFeedbackColor.B = cdColorPicker.Color.B;
-            //_VisualFeedbackColor.G = cdColorPicker.Color.G;
             _VisualFeedbackColor = cdColorPicker.Color;
             AppConfig.VisualFeedbackColor = _VisualFeedbackColor;
             UpdateVisualFeedbackExample();
@@ -169,7 +164,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
             if (VisualFeedbackWidthSlider.Value > 0)
             {
                 VisualFeedbackExample.Stroke = new SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(_VisualFeedbackColor.A, _VisualFeedbackColor.R, _VisualFeedbackColor.G, _VisualFeedbackColor.B));
+                    System.Windows.Media.Color.FromArgb(AppConfig.VisualFeedbackColor.A, AppConfig.VisualFeedbackColor.R, AppConfig.VisualFeedbackColor.G, AppConfig.VisualFeedbackColor.B));
 
                 VisualFeedbackWidthText.Text = String.Format(LocalizationProvider.Instance.GetTextValue("Options.VisualFeedbackWidth"), VisualFeedbackWidthSlider.Value);
             }
