@@ -79,7 +79,7 @@ jobs:
           "prerelease=$($isContinuous.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.resolve.outputs.build_ref }}
 
@@ -181,7 +181,7 @@ jobs:
             artifacts/${{ steps.resolve.outputs.installer_artifact }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.resolve.outputs.release_tag }}
           name: GestureSign ${{ steps.resolve.outputs.release_tag }}

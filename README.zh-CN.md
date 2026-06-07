@@ -241,6 +241,7 @@ Windows 11 触摸/手势冲突：
 - 推送 `v8.1.0` 或 `v8.1.0-beta.1` 这类 semver 风格 tag 会自动运行 release workflow。
 - 每次推送到 `master` 也会更新 `continuous` 预发布版，提供最新便携构建用于手动测试。
 - workflow 会为安装器构建 `Release|Any CPU`，为 zip 构建 `Portable|Any CPU`，创建或更新 GitHub Release，并同时上传 `GestureSign-<tag>-setup-win-anycpu.exe` 和 `GestureSign-<tag>-portable-win-anycpu.zip`。
+- release workflow 已在上游支持时使用兼容 Node 24 的 checkout 和 release action；`actions/upload-artifact` 仍需等待上游发布兼容 Node 24 的 major 版本后，才能完全消除 Actions 警告。
 - 也可以在 GitHub Actions 页面手动运行 `Release` workflow。填写 `tag_name`；测试预发布版可用 `continuous`，正式 release 使用 semver 风格 tag。默认会 checkout 与 `tag_name` 相同的 ref，也可以填写 `build_ref` 来构建指定 branch、commit 或 tag。如果 `tag_name` 还没有推送，请填写 `build_ref`。
 - 常规安装请使用 setup `.exe`。手动测试或免安装运行请使用便携 `.zip`；解压后启动 `GestureSign.ControlPanel.exe`。`GestureSign.exe` 是后台守护进程。
 - 在第一次 `master` 推送、匹配 tag 推送或手动 workflow 成功完成前，本 fork 的 releases 页面可能没有可下载 asset。
