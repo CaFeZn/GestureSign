@@ -68,6 +68,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
                     InitialTimeoutSwitch.IsChecked = true;
                     InitialTimeoutSlider.Value = AppConfig.InitialTimeout / 1000f;
                 }
+                if (AppConfig.CompositeGestureTimeout > 0)
+                {
+                    CompositeGestureTimeoutSwitch.IsChecked = true;
+                    CompositeGestureTimeoutSlider.Value = AppConfig.CompositeGestureTimeout / 1000f;
+                }
 
                 var penState = AppConfig.PenGestureButton;
                 if ((penState & (DeviceStates.InRange | DeviceStates.Tip)) != 0 && (penState & (DeviceStates.RightClickButton | DeviceStates.Invert)) != 0)
@@ -390,6 +395,26 @@ namespace GestureSign.ControlPanel.MainWindowControls
             var newValue = (int)Math.Round(e.NewValue * 1000);
             if (newValue == AppConfig.InitialTimeout) return;
             AppConfig.InitialTimeout = newValue;
+        }
+
+        private void CompositeGestureTimeoutSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            if (CompositeGestureTimeoutSwitch.IsChecked.GetValueOrDefault())
+            {
+                CompositeGestureTimeoutSlider.Value = 0.8;
+            }
+            else
+            {
+                CompositeGestureTimeoutSlider.Value = 0;
+                AppConfig.CompositeGestureTimeout = 0;
+            }
+        }
+
+        private void CompositeGestureTimeoutSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            var newValue = (int)Math.Round(e.NewValue * 1000);
+            if (newValue == AppConfig.CompositeGestureTimeout) return;
+            AppConfig.CompositeGestureTimeout = newValue;
         }
 
         private void PenGestureSwitch_Click(object sender, RoutedEventArgs e)

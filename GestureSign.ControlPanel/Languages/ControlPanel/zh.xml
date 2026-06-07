@@ -259,6 +259,8 @@ QQ交流群：576981420
     <Hover>保持悬空画出手势</Hover>
     <InitialTimeoutTitle>手势起始超时</InitialTimeoutTitle>
     <InitialTimeout>{0:F1} 秒后超时</InitialTimeout>
+    <CompositeGestureTimeoutTitle>组合手势等待时间</CompositeGestureTimeoutTitle>
+    <CompositeGestureTimeout>等待下一段手势 {0:F1} 秒</CompositeGestureTimeout>
     <ErrorLogPrompt>错误日志提示</ErrorLogPrompt>
     <RunAsAdmin>以管理员身份启动</RunAsAdmin>
     <WindowsStartup>

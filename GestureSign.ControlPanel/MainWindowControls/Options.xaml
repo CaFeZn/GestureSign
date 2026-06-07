@@ -250,6 +250,23 @@
                     TickFrequency="0.1"
                     IsSnapToTickEnabled="True"
                     ValueChanged="InitialTimeoutSlider_ValueChanged" />
+            <controls:ToggleSwitch x:Name="CompositeGestureTimeoutSwitch"
+                                   Header="{localization:LocalisedText Options.CompositeGestureTimeoutTitle}"
+                                   OnLabel="{localization:LocalisedText Options.OnLabel}"
+                                   OffLabel="{localization:LocalisedText Options.OffLabel}"
+                                   Click="CompositeGestureTimeoutSwitch_Click" />
+            <TextBlock HorizontalAlignment="Center"
+                       Visibility="{Binding ElementName=CompositeGestureTimeoutSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
+                       Text="{Binding ElementName=CompositeGestureTimeoutSlider, Path=Value, StringFormat={localization:LocalisedText Options.CompositeGestureTimeout}}"
+                       FontSize="14"
+                       Margin="0,5,0,0" />
+            <Slider x:Name="CompositeGestureTimeoutSlider"
+                    Visibility="{Binding ElementName=CompositeGestureTimeoutSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Maximum="2"
+                    Minimum="0"
+                    TickFrequency="0.1"
+                    IsSnapToTickEnabled="True"
+                    ValueChanged="CompositeGestureTimeoutSlider_ValueChanged" />
             <controls:ToggleSwitch x:Name="StartupSwitch"
                                    Header="{localization:LocalisedText Options.WindowsStartup.Header}"
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"

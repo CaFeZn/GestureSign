@@ -255,6 +255,8 @@ Email:ccfyzh@gmail.com
     <Hover>Hover over the screen</Hover>
     <InitialTimeoutTitle>Drawing Start Timeout</InitialTimeoutTitle>
     <InitialTimeout>Timeout after {0:F1} Second</InitialTimeout>
+    <CompositeGestureTimeoutTitle>Composite Gesture Timeout</CompositeGestureTimeoutTitle>
+    <CompositeGestureTimeout>Wait {0:F1} Second for next gesture</CompositeGestureTimeout>
     <ErrorLogPrompt>Error Log Prompt</ErrorLogPrompt>
     <RunAsAdmin>Run GestureSign As Administrator At Startup</RunAsAdmin>
     <WindowsStartup>

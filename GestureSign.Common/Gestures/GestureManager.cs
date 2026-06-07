@@ -17,7 +17,6 @@ namespace GestureSign.Common.Gestures
         #region Private Variables
 
         private const int ProbabilityThreshold = 80;
-        private const int GestureStackTimeout = 800;
 
         private int _gestureLevel = 0;
 
@@ -78,8 +77,12 @@ namespace GestureSign.Common.Gestures
 
         protected void PointCapture_CaptureStarted(object sender, PointsCapturedEventArgs e)
         {
-            if (_lastGestureTime != null && Environment.TickCount - _lastGestureTime.Value > GestureStackTimeout)
+            int gestureStackTimeout = AppConfig.CompositeGestureTimeout;
+            if (_lastGestureTime != null &&
+                (gestureStackTimeout <= 0 || unchecked(Environment.TickCount - _lastGestureTime.Value) > gestureStackTimeout))
+            {
                 _isGestureStackTimeout = true;
+            }
         }
 
         protected void PointCapture_BeforePointsCaptured(object sender, PointsCapturedEventArgs e)
