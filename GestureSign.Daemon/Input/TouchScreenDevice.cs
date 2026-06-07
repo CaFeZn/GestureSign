@@ -27,7 +27,7 @@ namespace GestureSign.Daemon.Input
                 for (short nodeIndex = 1; nodeIndex <= numberOfChildren; nodeIndex++)
                 {
                     ushort[] usageList = GetButtonList(_hPreparsedData.DangerousGetHandle(), pRawDataPacket, nodeIndex, _dwSizHid);
-                    if (usageList.Length == 0 || usageList[0] != NativeMethods.TipId)
+                    if (Array.IndexOf(usageList, NativeMethods.TipId) < 0)
                         continue;
 
                     point = GetCoordinate(nodeIndex, currentScr, pRawDataPacket);
@@ -84,7 +84,7 @@ namespace GestureSign.Daemon.Input
                     Point point = GetCoordinate(nodeIndex, currentScr, pRawDataPacket);
 
                     ushort[] usageList = GetButtonList(_hPreparsedData.DangerousGetHandle(), pRawDataPacket, nodeIndex, _dwSizHid);
-                    bool tip = usageList.Length != 0 && usageList[0] == NativeMethods.TipId;
+                    bool tip = Array.IndexOf(usageList, NativeMethods.TipId) >= 0;
 
                     _outputTouchs.Add(new RawData(tip ? DeviceStates.Tip : DeviceStates.None, contactIdentifier, point));
 

@@ -190,6 +190,7 @@ namespace GestureSign.Daemon.Input
                         IntPtr pInfo = Marshal.AllocHGlobal((int)pSize);
                         using (new SafeUnmanagedMemoryHandle(pInfo))
                         {
+                            InitializeRawDeviceInfoBuffer(pInfo);
                             NativeMethods.GetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pSize);
                             var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
                             if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
@@ -218,6 +219,15 @@ namespace GestureSign.Daemon.Input
             {
                 throw new ApplicationException("Error!");
             }
+        }
+
+        public static void InitializeRawDeviceInfoBuffer(IntPtr pInfo)
+        {
+            var deviceInfo = new RID_DEVICE_INFO
+            {
+                cbSize = (uint)Marshal.SizeOf(typeof(RID_DEVICE_INFO))
+            };
+            Marshal.StructureToPtr(deviceInfo, pInfo, false);
         }
 
         public bool TryGetPhysicalMax(int collectionCount)
