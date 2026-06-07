@@ -87,11 +87,27 @@ namespace GestureSign.Common.Applications
             action.Name = Name == null ? null : string.Copy(Name);
             action.GestureName = GestureName == null ? null : string.Copy(GestureName);
             action.Condition = Condition == null ? null : string.Copy(Condition);
-            action._commands = new List<ICommand>(_commands);
+            action._commands = Commands.Select(CloneCommand).ToList();
             action.Hotkey = Hotkey == null ? null : new Hotkey() { KeyCode = Hotkey.KeyCode, ModifierKeys = Hotkey.ModifierKeys };
             action.ContinuousGesture = ContinuousGesture == null ? null : new ContinuousGesture(ContinuousGesture.ContactCount, ContinuousGesture.Gesture);
 
             return action;
+        }
+
+        private static ICommand CloneCommand(ICommand command)
+        {
+            var cloneable = command as ICloneable;
+            if (cloneable != null)
+                return (ICommand)cloneable.Clone();
+
+            return new Command
+            {
+                CommandSettings = command.CommandSettings,
+                IsEnabled = command.IsEnabled,
+                Name = command.Name,
+                PluginClass = command.PluginClass,
+                PluginFilename = command.PluginFilename
+            };
         }
 
         public void AddCommand(ICommand command)
