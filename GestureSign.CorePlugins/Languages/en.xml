@@ -160,6 +160,11 @@
       <Description>Open the default web browser</Description>
       <Category>Internet</Category>
     </DefaultBrowser>
+    <OpenClipboardText>
+      <Name>Search or Open Clipboard Text</Name>
+      <Description>Open URL-like clipboard text, or search clipboard text in the default browser</Description>
+      <Category>Internet</Category>
+    </OpenClipboardText>
     <ToggleDisableGestures>
       <Name>Disable/Enable GestureSign</Name>
       <Description>Disables or enable GestureSign from capturing gestures</Description>

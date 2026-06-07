@@ -161,6 +161,11 @@
       <Description>打开本机默认设置的浏览器</Description>
       <Category>网络</Category>
     </DefaultBrowser>
+    <OpenClipboardText>
+      <Name>搜索或打开剪贴板文本</Name>
+      <Description>剪贴板像网址时直接打开，否则用默认浏览器搜索剪贴板文本</Description>
+      <Category>网络</Category>
+    </OpenClipboardText>
     <ToggleDisableGestures>
       <Name>关闭/开启手势</Name>
       <Description>停止或打开手势识别功能</Description>

@@ -81,6 +81,7 @@ Common command examples:
 - `Send Keystrokes` types a key sequence or text.
 - `Key Down/Up` can hold or release keys such as `Left Shift`; pair one hold action with another release action when you need to select text or keep a modifier down temporarily.
 - `Launch Windows Store App`, `Open Default Browser`, `Open File`, and `Run Command or Program` start applications or files.
+- `Search or Open Clipboard Text` opens URL-like clipboard text directly, or searches other clipboard text in the default browser. To use it with selected text, chain `Hot Key` (`Ctrl+C`), a short `Delay`, then this command.
 - `Mouse Actions` can send clicks, wheel actions, and other mouse input.
 - `Add Current Application to Ignored List` adds the current foreground application to the ignored-app list, which is useful when a gesture conflicts with one app's native input.
 - `Open GestureSign Control Panel` opens the settings window from a gesture.
@@ -154,6 +155,7 @@ Implemented or covered:
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
+| [#43](https://github.com/TransposonY/GestureSign/issues/43) | Added `Search or Open Clipboard Text` for browser search/open-URL workflows after selected text is copied to the clipboard. |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | Mouse gestures can use multiple configured drawing buttons, such as right and middle mouse buttons. |
 | [#38](https://github.com/TransposonY/GestureSign/issues/38) | Control Panel touchpad scrolling uses fractional wheel-delta handling instead of treating every small delta as a full wheel tick. |
 | [#19](https://github.com/TransposonY/GestureSign/issues/19), [#126](https://github.com/TransposonY/GestureSign/issues/126) | Hot Key and built-in window commands cover common accessibility shortcuts and hide-window workflows. |
