@@ -113,13 +113,36 @@ namespace GestureSign.Daemon.Filtration
             }
         }
 
+        private void ResetPointerState()
+        {
+            _pointerIdList.Clear();
+            ResetIdPool();
+            _tempDisable = false;
+        }
+
+        private void ReleasePointerId(int pointerId)
+        {
+            if (_pointerIdList.TryGetValue(pointerId, out int id))
+            {
+                _pointerIdList.Remove(pointerId);
+                _idPool.Enqueue(id);
+            }
+
+            if (_pointerIdList.Count == 0)
+            {
+                ResetPointerState();
+            }
+        }
+
         protected override void WndProc(ref Message message)
         {
             switch (message.Msg)
             {
                 //case NativeMethods.WM_POINTERENTER:
                 //case NativeMethods.WM_POINTERLEAVE:
-                //case NativeMethods.WM_POINTERCAPTURECHANGED:
+                case NativeMethods.WM_POINTERCAPTURECHANGED:
+                    ReleasePointerId((int)(message.WParam.ToInt64() & 0xffff));
+                    return;
                 case NativeMethods.WM_POINTERDOWN:
                 case NativeMethods.WM_POINTERUP:
                 case NativeMethods.WM_POINTERUPDATE:
@@ -197,6 +220,13 @@ namespace GestureSign.Daemon.Filtration
 
             foreach (var currentPointerInfo in pointerInfos)
             {
+                if (currentPointerInfo.PointerFlags.HasFlag(POINTER_FLAGS.CANCELED) ||
+                    currentPointerInfo.PointerFlags.HasFlag(POINTER_FLAGS.CAPTURECHANGED))
+                {
+                    ReleasePointerId(currentPointerInfo.PointerID);
+                    continue;
+                }
+
                 POINTER_INFO pointerInfo = new POINTER_INFO()
                 {
                     pointerType = POINTER_INPUT_TYPE.TOUCH,
@@ -255,12 +285,7 @@ namespace GestureSign.Daemon.Filtration
 
             if (upFlagCount == pointerInfos.Length)
             {
-                _pointerIdList.Clear();
-                ResetIdPool();
-                if (_tempDisable)
-                {
-                    _tempDisable = false;
-                }
+                ResetPointerState();
             }
             return ptis;
         }

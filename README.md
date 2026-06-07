@@ -150,7 +150,7 @@ Implemented or covered:
 | [#73](https://github.com/TransposonY/GestureSign/issues/73), [#56](https://github.com/TransposonY/GestureSign/issues/56) | Touch Keyboard command behavior and TabTip path lookup have been hardened for Windows 10/11. |
 | [#72](https://github.com/TransposonY/GestureSign/issues/72) | Touchscreen gestures can be disabled from `Options`. |
 | [#70](https://github.com/TransposonY/GestureSign/issues/70) | Touchscreen monitor selection no longer relies only on cursor position. |
-| [#57](https://github.com/TransposonY/GestureSign/issues/57), [#9](https://github.com/TransposonY/GestureSign/issues/9) | Touch-blocking behavior has been hardened and its UIAccess/per-app/initial-frame limits are documented. |
+| [#57](https://github.com/TransposonY/GestureSign/issues/57), [#9](https://github.com/TransposonY/GestureSign/issues/9) | Touch-blocking behavior has been hardened, pointer capture-loss/canceled frames release internal injected-touch IDs, and UIAccess/per-app/initial-frame limits are documented. |
 | [#51](https://github.com/TransposonY/GestureSign/issues/51) | Drawing-start timeout is honored for precision touchpad gestures. |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
