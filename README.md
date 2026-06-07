@@ -73,6 +73,7 @@ Gesture creation notes:
 - Point and tap gestures are recorded as point samples, so their preview can look like dots instead of strokes.
 - A one-finger touchscreen tap can be recorded as a gesture sample. Mouse and touchpad training still require movement to avoid capturing ordinary clicks as gestures.
 - Double-clicking a gesture in the `Gestures` tab opens it for editing; use the edit window to redraw or rename the gesture.
+- Gesture trail color is configured in `Options` > `Gesture Trail`. Use `Pick Color` for a fixed trail color, or `Follow System Color` to use the current Windows DWM theme color.
 
 Common command examples:
 
@@ -155,6 +156,7 @@ Implemented or covered:
 | [#70](https://github.com/TransposonY/GestureSign/issues/70) | Touchscreen monitor selection no longer relies only on cursor position. |
 | [#57](https://github.com/TransposonY/GestureSign/issues/57), [#9](https://github.com/TransposonY/GestureSign/issues/9) | Touch-blocking behavior has been hardened, pointer capture-loss/canceled frames release internal injected-touch IDs, and UIAccess/per-app/initial-frame limits are documented. |
 | [#51](https://github.com/TransposonY/GestureSign/issues/51) | Drawing-start timeout is honored for precision touchpad gestures. |
+| [#50](https://github.com/TransposonY/GestureSign/issues/50) | Gesture trail color can be fixed with `Pick Color` or reset to follow the Windows DWM theme color with `Follow System Color`. |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
