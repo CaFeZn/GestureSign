@@ -40,7 +40,11 @@ namespace GestureSign.CorePlugins.HotKey
                 Keys.LControlKey, Keys.RControlKey, Keys.LShiftKey, Keys.RShiftKey,
                 Keys.LMenu, Keys.RMenu, Keys.LWin, Keys.RWin);
 
-            AddKeys(Keys.Home, Keys.End, Keys.Insert, Keys.Pause);
+            AddKeys(Keys.F1, Keys.F2, Keys.F3, Keys.F4, Keys.F5, Keys.F6,
+                Keys.F7, Keys.F8, Keys.F9, Keys.F10, Keys.F11, Keys.F12,
+                Keys.F13, Keys.F14, Keys.F15, Keys.F16, Keys.F17, Keys.F18,
+                Keys.F19, Keys.F20, Keys.F21, Keys.F22, Keys.F23, Keys.F24,
+                Keys.Home, Keys.End, Keys.Insert, Keys.Pause);
         }
         public static Dictionary<Keys, string> DescriptionDict { get; private set; }
 
