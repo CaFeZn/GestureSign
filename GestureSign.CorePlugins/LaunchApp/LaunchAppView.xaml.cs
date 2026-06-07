@@ -61,63 +61,60 @@ namespace GestureSign.CorePlugins.LaunchApp
                 if (GestureSign.Common.VersionHelper.IsWindows10OrGreater())
                 {
                     var appXInfos = GetAppXInfosFromReg();
-                    if (appXInfos == null || appXInfos.Count == 0) return;
 
                     foreach (var package in packages)
                     {
                         try
                         {
+                            List<AppInfo> infoList = ReadAppInfosFromManifest(package.InstalledLocation.Path);
+                            if (infoList == null) continue;
+
                             using (var key = Registry.ClassesRoot.OpenSubKey($@"Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\SystemAppData\{package.Id.FamilyName}\SplashScreen\"))
                             {
-                                var appUserModelIds =
-                                    key?.GetSubKeyNames().Where(k => k.StartsWith(package.Id.FamilyName));
-                                List<AppInfo> infoList = ReadAppInfosFromManifest(package.InstalledLocation.Path);
-                                if (appUserModelIds == null || infoList == null) continue;
-
-                                foreach (string appUserModelId in appUserModelIds)
+                                foreach (AppInfo info in infoList)
                                 {
-                                    Model model = new Model();
-                                    AppInfo info = infoList.Find(i => appUserModelId.EndsWith(i.ID));
+                                    string appUserModelId = package.Id.FamilyName + "!" + info.ID;
                                     string displayName = info.DisplayName;
+                                    string logoPath = null;
 
                                     var color = ColorConverter.ConvertFromString(info.BackgroundColor);
+                                    Model model = new Model();
                                     if (color != null)
                                     {
                                         model.BackgroundColor = (Color)color == Colors.Transparent ? SystemParameters.WindowGlassBrush : new SolidColorBrush((Color)color);
                                         model.BackgroundColor.Freeze();
                                     }
 
-                                    if (appXInfos.ContainsKey(appUserModelId))
+                                    if (appXInfos != null && appXInfos.ContainsKey(appUserModelId))
                                     {
                                         var appXInfo = appXInfos[appUserModelId];
 
                                         displayName = ExtractDisplayName(package, appXInfo.ApplicationName);
-                                        if (string.IsNullOrEmpty(displayName)) continue;
-                                        if (infoList.Count > 1)
-                                            displayName = displayName + "\n(" + info.ID + ")";
-                                        var logoPath = GetDisplayIconPath(package.InstalledLocation.Path, appXInfo.ApplicationIcon);
-                                        if (string.IsNullOrEmpty(logoPath))
-                                        {
-                                            logoPath = ExtractDisplayIcon(package.InstalledLocation.Path, info.Logo);
-                                        }
-                                        model.Logo = logoPath;
-                                        model.AppInfo = new KeyValuePair<string, string>(appUserModelId, displayName);
+                                        logoPath = GetDisplayIconPath(package.InstalledLocation.Path, appXInfo.ApplicationIcon);
                                     }
-                                    else
+
+                                    if ((string.IsNullOrEmpty(displayName) || displayName.Contains("ms-resource:")) && key != null)
                                     {
                                         using (var subKey = key.OpenSubKey(appUserModelId))
                                         {
                                             var appName = subKey?.GetValue("AppName");
                                             if (appName != null)
                                                 displayName = ExtractDisplayName(package, appName.ToString());
-                                            if (string.IsNullOrEmpty(displayName) || displayName.Contains("ms-resource:")) continue;
-                                            if (infoList.Count > 1)
-                                                displayName = displayName + "\n(" + info.ID + ")";
-                                            model.AppInfo = new KeyValuePair<string, string>(appUserModelId, displayName);
-
-                                            model.Logo = ExtractDisplayIcon(package.InstalledLocation.Path, info.Logo);
                                         }
                                     }
+
+                                    if (string.IsNullOrEmpty(displayName) || displayName.Contains("ms-resource:"))
+                                        displayName = ExtractDisplayName(package.InstalledLocation.Path, package.Id.Name, info.DisplayName);
+                                    if (string.IsNullOrEmpty(displayName) || displayName.Contains("ms-resource:"))
+                                        displayName = string.IsNullOrWhiteSpace(package.DisplayName) ? package.Id.Name : package.DisplayName;
+
+                                    if (infoList.Count > 1)
+                                        displayName = displayName + "\n(" + info.ID + ")";
+
+                                    model.Logo = string.IsNullOrEmpty(logoPath)
+                                        ? ExtractDisplayIcon(package.InstalledLocation.Path, info.Logo)
+                                        : logoPath;
+                                    model.AppInfo = new KeyValuePair<string, string>(appUserModelId, displayName);
                                     apps.Add(model);
                                 }
                             }
@@ -351,9 +348,10 @@ namespace GestureSign.CorePlugins.LaunchApp
                         using (var applicationKey = appRegKey.OpenSubKey("Application"))
                         {
                             if (applicationKey == null) continue;
-                            var appUserModelId = applicationKey.GetValue("AppUserModelId").ToString();
-                            var applicationIcon = applicationKey.GetValue("ApplicationIcon").ToString();
-                            var applicationName = applicationKey.GetValue("ApplicationName").ToString();
+                            var appUserModelId = applicationKey.GetValue("AppUserModelId") as string;
+                            var applicationIcon = applicationKey.GetValue("ApplicationIcon") as string;
+                            var applicationName = applicationKey.GetValue("ApplicationName") as string;
+                            if (string.IsNullOrWhiteSpace(appUserModelId)) continue;
 
                             if (!dic.ContainsKey(appUserModelId))
                                 dic.Add(appUserModelId, new AppXInfo
