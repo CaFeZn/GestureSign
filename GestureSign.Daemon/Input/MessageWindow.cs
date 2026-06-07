@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows.Forms;
 using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
@@ -25,6 +26,7 @@ namespace GestureSign.Daemon.Input
         private int _requiringContactCount;
         private Dictionary<IntPtr, ushort> _validDevices = new Dictionary<IntPtr, ushort>();
         private Dictionary<IntPtr, Screen> _touchScreenDeviceScreens = new Dictionary<IntPtr, Screen>();
+        private readonly SynchronizationContext _messageContext;
 
         private Devices _sourceDevice;
         private int _lastSourceDeviceInputTick;
@@ -33,11 +35,13 @@ namespace GestureSign.Daemon.Input
         private bool _ignoreTouchInputWhenUsingPen;
         private DeviceStates _penGestureButton;
         private bool _disposed;
+        private int _displaySettingsRefreshQueued;
 
         public event RawPointsDataMessageEventHandler PointsIntercepted;
 
         public MessageWindow()
         {
+            _messageContext = SynchronizationContext.Current;
             CreateWindow();
             UpdateRegistration();
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
@@ -115,6 +119,9 @@ namespace GestureSign.Daemon.Input
 
         public void UpdateRegistration()
         {
+            if (_disposed || Handle == IntPtr.Zero)
+                return;
+
             ResetSourceDevice(true);
             _ignoreTouchInputWhenUsingPen = AppConfig.IgnoreTouchInputWhenUsingPen;
             var penSetting = AppConfig.PenGestureButton;
@@ -267,8 +274,56 @@ namespace GestureSign.Daemon.Input
 
         private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
         {
-            _touchScreenDeviceScreens.Clear();
-            ResetSourceDevice(false);
+            if (_disposed)
+                return;
+
+            if (Interlocked.Exchange(ref _displaySettingsRefreshQueued, 1) != 0)
+                return;
+
+            if (_messageContext == null)
+            {
+                RefreshAfterDisplaySettingsChanged();
+                return;
+            }
+
+            try
+            {
+                _messageContext.Post(_ => RefreshAfterDisplaySettingsChanged(), null);
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                RefreshAfterDisplaySettingsChanged();
+            }
+        }
+
+        private void RefreshAfterDisplaySettingsChanged()
+        {
+            try
+            {
+                if (_disposed)
+                    return;
+
+                UpdateRegistration();
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                try
+                {
+                    _validDevices.Clear();
+                    _touchScreenDeviceScreens.Clear();
+                    ResetSourceDevice(true);
+                }
+                catch (Exception resetException)
+                {
+                    Logging.LogException(resetException);
+                }
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _displaySettingsRefreshQueued, 0);
+            }
         }
 
         private void CheckLastError()
@@ -345,7 +400,11 @@ namespace GestureSign.Daemon.Input
 
             try
             {
-                foreach (Screen screen in Screen.AllScreens)
+                Screen[] screens;
+                if (!TryGetScreens(out screens))
+                    return false;
+
+                foreach (Screen screen in screens)
                 {
                     if (!IsUsableScreen(screen))
                         continue;
@@ -384,6 +443,21 @@ namespace GestureSign.Daemon.Input
         private static bool IsUsableScreen(Screen screen)
         {
             return screen != null && screen.Bounds.Width > 0 && screen.Bounds.Height > 0;
+        }
+
+        private static bool TryGetScreens(out Screen[] screens)
+        {
+            try
+            {
+                screens = Screen.AllScreens?.Where(IsUsableScreen).ToArray() ?? new Screen[0];
+                return screens.Length > 0;
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                screens = new Screen[0];
+                return false;
+            }
         }
 
         #region ProcessInput
@@ -636,7 +710,10 @@ namespace GestureSign.Daemon.Input
             if (TryGetCachedTouchScreen(hDevice, out screen))
                 return screen;
 
-            Screen[] screens = Screen.AllScreens;
+            Screen[] screens;
+            if (!TryGetScreens(out screens))
+                return null;
+
             if (screens.Length == 1)
             {
                 _touchScreenDeviceScreens[hDevice] = screens[0];
@@ -665,7 +742,14 @@ namespace GestureSign.Daemon.Input
             if (!_touchScreenDeviceScreens.TryGetValue(hDevice, out screen))
                 return false;
 
-            foreach (Screen currentScreen in Screen.AllScreens)
+            Screen[] screens;
+            if (!TryGetScreens(out screens))
+            {
+                screen = null;
+                return false;
+            }
+
+            foreach (Screen currentScreen in screens)
             {
                 if (currentScreen.DeviceName == screen.DeviceName && currentScreen.Bounds.Equals(screen.Bounds))
                 {
@@ -721,16 +805,34 @@ namespace GestureSign.Daemon.Input
 
         private Screen GetFallbackScreen()
         {
-            IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
-            if (foregroundWindow != IntPtr.Zero)
+            try
             {
-                Screen foregroundScreen = Screen.FromHandle(foregroundWindow);
-                if (foregroundScreen != null)
-                    return foregroundScreen;
+                IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
+                if (foregroundWindow != IntPtr.Zero)
+                {
+                    Screen foregroundScreen = Screen.FromHandle(foregroundWindow);
+                    if (IsUsableScreen(foregroundScreen))
+                        return foregroundScreen;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
             }
 
-            Screen cursorScreen = Screen.FromPoint(Cursor.Position);
-            return cursorScreen ?? Screen.PrimaryScreen;
+            try
+            {
+                Screen cursorScreen = Screen.FromPoint(Cursor.Position);
+                if (IsUsableScreen(cursorScreen))
+                    return cursorScreen;
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+            }
+
+            Screen[] screens;
+            return TryGetScreens(out screens) ? screens[0] : null;
         }
 
 

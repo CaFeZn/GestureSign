@@ -146,6 +146,7 @@ Windows 11 触摸/手势冲突：
 - 如果鼠标无法开始绘制，确认 `Options` > `Mouse Gesture` 已启用，且至少选择了一个绘制按钮。
 - 如果浏览器动作无法匹配 Chromium Edge，请用 executable filename 或 process matching 添加/编辑 `msedge.exe` 的应用规则。内置浏览器组会匹配常见浏览器进程，包括 `msedge`、`chrome`、`firefox`、`iexplore` 和旧版 `MicrosoftEdge`。Firefox 分离出来的标签页窗口理论上仍应按可执行文件匹配，但浏览器窗口类和标签页分离行为会随版本变化，失败时需要按具体窗口验证。
 - 如果触控笔悬停或按下侧键时 Chrome 忽略鼠标动作，请确认笔驱动把输入暴露为 HID pen state 还是普通鼠标输入。HID 笔输入使用 `Pen Gesture`，把侧键暴露为鼠标右键的驱动可尝试 `Mouse Gesture`。
+- 如果断开外接显示器后 GestureSign 退出或无响应，请重启托盘守护进程并查看日志。显示器变化处理现在会释放当前输入、清理触摸屏映射缓存、在 UI 消息上下文重新注册 raw input，并在系统临时拿不到显示器边界时跳过该输入帧，而不是把它当成致命错误。
 - 如果耗电偏高，关闭不用的输入来源，并避免在长时间平板使用场景里启用低阈值单指手势。后台守护进程运行时会监听 raw digitizer input，具体功耗影响需要在受影响硬件上 profiling。
 - 如果手势只在 Task Manager、Device Manager、安装程序或其他管理员窗口中失败，请查看下方“管理员窗口”说明。
 - 如果某个动作在一个应用里不运行，检查该应用是否在忽略列表中，或者该动作是否只配置给了其他应用。
@@ -210,7 +211,7 @@ Windows 11 触摸/手势冲突：
 | [#77](https://github.com/TransposonY/GestureSign/issues/77), [#78](https://github.com/TransposonY/GestureSign/issues/78), [#80](https://github.com/TransposonY/GestureSign/issues/80), [#100](https://github.com/TransposonY/GestureSign/issues/100) | 手势捕获受 Windows 完整性级别、shell/安全界面，以及先于 GestureSign 捕获输入的应用限制。管理员窗口说明覆盖 Task Manager；Timeline/Win+Tab 和 Parsec 仍需要按系统/应用验证。 |
 | [#79](https://github.com/TransposonY/GestureSign/issues/79), [#81](https://github.com/TransposonY/GestureSign/issues/81) | Windows Store/UWP 启动和匹配路径已存在，包括 `Launch Windows Store App` 以及把 `ApplicationFrameWindow` 展开到 `Windows.UI.Core.CoreWindow`；但 Microsoft 应用失败仍需要按应用和 package 状态验证。 |
 | [#85](https://github.com/TransposonY/GestureSign/issues/85) | 触摸板延迟、重复和轨迹锯齿报告按驱动/设备相关问题处理。触摸板/raw-input 处理已有改进，但仍需要受影响的 Synaptics 或厂商驱动硬件才能关闭。 |
-| [#103](https://github.com/TransposonY/GestureSign/issues/103) | 显示器变化处理会重置触摸屏幕缓存和手势轨迹表面，但外接显示器热拔导致崩溃的报告仍需要在对应笔记本/外接显示拓扑上验证。 |
+| [#103](https://github.com/TransposonY/GestureSign/issues/103) | 显示器变化处理现在会释放活跃 raw input、清理触摸屏幕缓存、在 UI 消息上下文重新注册 raw input、重置手势轨迹表面，并在系统临时拿不到显示器边界时跳过输入帧；外接显示器热拔仍需要在对应笔记本/外接显示拓扑上验证。 |
 | [#128](https://github.com/TransposonY/GestureSign/issues/128), [#120](https://github.com/TransposonY/GestureSign/issues/120) | Win11 平板/触摸屏解析对缺少标准 contact-count 或坐标范围数据的 HID 报告更宽容，会按 Win32 要求初始化 raw-device info buffer，支持无序 tip usage，并改进 raw-input 诊断；但仍需要具体设备验证。 |
 | [#123](https://github.com/TransposonY/GestureSign/issues/123) | 快速点击时，如果新的活跃触点帧替换了过期触点集合，现在不会再直接丢掉该帧；但高频触摸屏场景仍需要真实硬件验证。 |
 | [#127](https://github.com/TransposonY/GestureSign/issues/127), [#119](https://github.com/TransposonY/GestureSign/issues/119), [#112](https://github.com/TransposonY/GestureSign/issues/112), [#94](https://github.com/TransposonY/GestureSign/issues/94), [#55](https://github.com/TransposonY/GestureSign/issues/55) | 触控笔设置和文档更清晰，但 Wacom/无源笔支持仍取决于驱动是否暴露 HID pen/touchpad input。 |
