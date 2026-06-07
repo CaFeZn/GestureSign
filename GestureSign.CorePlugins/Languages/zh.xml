@@ -185,6 +185,10 @@
       <Name>最小化</Name>
       <Description>最小化当前窗口</Description>
     </Minimize>
+    <HideWindow>
+      <Name>隐藏窗口</Name>
+      <Description>隐藏当前窗口</Description>
+    </HideWindow>
     <NextApplication>
       <Name>下一窗口</Name>
       <Description>切换到下一个窗口 (相当于 Alt + Tab)</Description>

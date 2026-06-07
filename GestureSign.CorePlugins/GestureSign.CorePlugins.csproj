@@ -174,6 +174,7 @@
     <Compile Include="NextDesktop.cs" />
     <Compile Include="NextApplication.cs" />
     <Compile Include="DefaultBrowser.cs" />
+    <Compile Include="HideWindow.cs" />
     <Compile Include="Minimize.cs" />
     <Compile Include="MaximizeRestore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

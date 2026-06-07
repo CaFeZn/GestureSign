@@ -184,6 +184,10 @@
       <Name>Minimize</Name>
       <Description>Minimize current window</Description>
     </Minimize>
+    <HideWindow>
+      <Name>Hide Window</Name>
+      <Description>Hide current window</Description>
+    </HideWindow>
     <NextApplication>
       <Name>Next Window</Name>
       <Description>Switches to the next window (Same as Alt + Tab)</Description>
