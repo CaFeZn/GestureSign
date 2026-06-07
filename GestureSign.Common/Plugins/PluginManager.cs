@@ -6,6 +6,7 @@ using System.Linq;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using GestureSign.Common.Applications;
@@ -26,6 +27,7 @@ namespace GestureSign.Common.Plugins
         private readonly object _lastCommandLock = new object();
         private RepeatableCommand _lastCommand;
         private SynchronizationContext _mainContext;
+        private static readonly Regex FingerVariablePattern = new Regex(@"\bfinger_\d+_(?:start_X%?|start_Y%?|end_X%?|end_Y%?|ID)\b", RegexOptions.Compiled);
 
         #endregion
 
@@ -265,8 +267,13 @@ namespace GestureSign.Common.Plugins
         private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
             if (string.IsNullOrWhiteSpace(condition)) return true;
+            pointList = pointList ?? new List<List<Point>>();
+            contactIdentifiers = contactIdentifiers ?? new List<int>();
 
             string expression = GetExpression(condition, pointList, contactIdentifiers, targetWindow);
+            if (FingerVariablePattern.IsMatch(expression))
+                return false;
+
             try
             {
                 DataTable dataTable = new DataTable();
@@ -281,8 +288,12 @@ namespace GestureSign.Common.Plugins
 
         private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
-            for (int i = 1; i <= pointList.Count; i++)
+            int count = Math.Min(pointList.Count, contactIdentifiers.Count);
+            for (int i = 1; i <= count; i++)
             {
+                if (pointList[i - 1] == null || pointList[i - 1].Count == 0)
+                    continue;
+
                 int startX = pointList[i - 1].FirstOrDefault().X;
                 int startY = pointList[i - 1].FirstOrDefault().Y;
                 int endX = pointList[i - 1].LastOrDefault().X;

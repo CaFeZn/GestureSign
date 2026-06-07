@@ -78,8 +78,8 @@ namespace GestureSign.Daemon.Triggers
                 new List<int>(new[] { 1 }),
                 point,
                 points,
-                conditionContactIdentifiers.Count == 0 ? null : conditionContactIdentifiers,
-                conditionPoints.Count == 0 ? null : conditionPoints);
+                conditionContactIdentifiers,
+                conditionPoints);
         }
 
         #endregion
