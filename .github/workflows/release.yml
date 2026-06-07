@@ -165,7 +165,12 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release delete-asset continuous GestureSign-continuous-win-anycpu.zip --yes --repo ${{ github.repository }} || $true
+        run: |
+          gh release delete-asset continuous GestureSign-continuous-win-anycpu.zip --yes --repo ${{ github.repository }} 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Legacy release asset was not present."
+            exit 0
+          }
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
