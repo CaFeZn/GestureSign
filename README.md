@@ -93,6 +93,7 @@ Multiple gestures for the same behavior:
 - An action has one assigned gesture, but you can bind several gestures to the same command sequence by duplicating the action.
 - In the `Actions` tab, copy the existing action, use `Paste To New Action`, then edit the pasted action and choose a different gesture.
 - Commands inside each action run from top to bottom, so keep the duplicated command order identical when both gestures should do exactly the same thing.
+- To disable one global gesture only in a specific app, create or copy an action with the same gesture under that app and turn all commands in that app-specific action off. The app-specific action blocks fallback to the global action, while other global gestures still work in that app.
 
 Gesture and trigger notes:
 
@@ -138,6 +139,7 @@ Implemented or covered:
 | [#132](https://github.com/TransposonY/GestureSign/issues/132), [#125](https://github.com/TransposonY/GestureSign/issues/125) | The `Fn` limitation is documented, and F1-F24/media/function keys are easier to choose from the Hot Key UI. |
 | [#117](https://github.com/TransposonY/GestureSign/issues/117) | Installer installation and update commands are documented for the current winget package. |
 | [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | Virtual desktop switching actions are available and can be assigned to normal or continuous gestures. |
+| [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. |
 | [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | Shell/taskbar activation and modifier-key cleanup around switch-window and switch-desktop actions have been hardened. |
 | [#97](https://github.com/TransposonY/GestureSign/issues/97), [#31](https://github.com/TransposonY/GestureSign/issues/31) | Control Panel startup tolerates unavailable Windows Application Event Log access, and configuration writes are flushed, serialized, and stored under package local state for Desktop Bridge builds. |
 | [#104](https://github.com/TransposonY/GestureSign/issues/104) | `Add Current Application to Ignored List` is available and documented. |
@@ -170,6 +172,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#135](https://github.com/TransposonY/GestureSign/issues/135), [#116](https://github.com/TransposonY/GestureSign/issues/116), [#114](https://github.com/TransposonY/GestureSign/issues/114), [#59](https://github.com/TransposonY/GestureSign/issues/59) | Precision touchpad handling is improved, but third-party/vendor driver support must be validated per device. |
 | [#130](https://github.com/TransposonY/GestureSign/issues/130), [#87](https://github.com/TransposonY/GestureSign/issues/87), [#45](https://github.com/TransposonY/GestureSign/issues/45) | Hold-to-drag workflows need an explicit hold/release feature to avoid stuck mouse buttons. |
 | [#66](https://github.com/TransposonY/GestureSign/issues/66), [#24](https://github.com/TransposonY/GestureSign/issues/24), [#52](https://github.com/TransposonY/GestureSign/issues/52) | Modifier-key conditions and held-key actions are partly supported, but arbitrary-key gesture conditions and keyboard-triggered mouse drawing are not implemented. |
+| [#46](https://github.com/TransposonY/GestureSign/issues/46) | Full whitelist mode is not implemented; use ignored applications for whole-app exclusion or app-specific disabled-command actions for one-gesture exclusions. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | Portable builds can run from a chosen folder, but installer-directory selection is not implemented in this repository. |
 
 ## Build

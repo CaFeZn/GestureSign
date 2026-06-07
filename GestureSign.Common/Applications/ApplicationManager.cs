@@ -330,11 +330,13 @@ namespace GestureSign.Common.Applications
                 return Enumerable.Empty<IAction>();
             }
             // Attempt to retrieve an action on the application passed in
-            IEnumerable<IAction> finalAction =
-                application.Where(app => !(app is IgnoredApp) && app.Actions != null).SelectMany(app => app.Actions.Where(a => a.GestureName == gestureName && a.Commands != null && a.Commands.Any(com => com != null && com.IsEnabled)));
+            var finalAction =
+                application.Where(app => !(app is IgnoredApp) && app.Actions != null)
+                    .SelectMany(app => app.Actions.Where(a => a != null && a.GestureName == gestureName && HasCommands(a)))
+                    .ToList();
             // If there is was no action found on given application, try to get an action for global application
-            if (!finalAction.Any() && useGlobal)
-                finalAction = GetGlobalApplication().Actions.Where(a => a.GestureName == gestureName);
+            if (finalAction.Count == 0 && useGlobal)
+                return GetGlobalApplication().Actions.Where(a => a.GestureName == gestureName);
 
             // Return whatever the result was
             return finalAction;
@@ -579,6 +581,11 @@ namespace GestureSign.Common.Applications
             return useRegEx
                 ? Regex.IsMatch(windowMatchString, compareMatchString, RegexOptions.Singleline | RegexOptions.IgnoreCase)
                 : string.Equals(windowMatchString.Trim(), compareMatchString.Trim(), StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private static bool HasCommands(IAction action)
+        {
+            return action != null && action.Commands != null && action.Commands.Any(command => command != null);
         }
 
 #pragma warning disable CS0618
