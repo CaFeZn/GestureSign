@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
+using FormsTimer = System.Windows.Forms.Timer;
 using GestureSign.Common;
 using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
@@ -31,6 +33,8 @@ namespace GestureSign.Daemon
         private MenuItem _disableGesturesMenuItem;
         private MenuItem _controlPanelMenuItem;
         private MenuItem _exitGestureSignMenuItem;
+        private SynchronizationContext _syncContext;
+        private FormsTimer _notificationRestoreTimer;
 
         #endregion
 
@@ -131,6 +135,7 @@ namespace GestureSign.Daemon
 
         public void Load()
         {
+            _syncContext = SynchronizationContext.Current;
             SetupTrayIconAndTrayMenu();
             _trayIcon.Visible = AppConfig.ShowTrayIcon;
 
@@ -174,6 +179,17 @@ namespace GestureSign.Daemon
             StartControlPanel();
         }
 
+        public void ShowNotification(string title, string message, int timeout)
+        {
+            if (_syncContext != null && SynchronizationContext.Current != _syncContext)
+            {
+                _syncContext.Post(o => ShowNotificationOnUiThread(title, message, timeout), null);
+                return;
+            }
+
+            ShowNotificationOnUiThread(title, message, timeout);
+        }
+
         #endregion
 
         #region Events
@@ -207,6 +223,41 @@ namespace GestureSign.Daemon
         public void ToggleDisableGestures()
         {
             PointCapture.Instance.ToggleUserDisablePointCapture();
+        }
+
+        private void ShowNotificationOnUiThread(string title, string message, int timeout)
+        {
+            if (_trayIcon == null)
+                return;
+
+            int safeTimeout = Math.Max(1000, Math.Min(timeout, 30000));
+            string safeTitle = string.IsNullOrWhiteSpace(title) ? "GestureSign" : title.Trim();
+            string safeMessage = string.IsNullOrWhiteSpace(message) ? safeTitle : message.Trim();
+            bool restoreHidden = !_trayIcon.Visible;
+
+            if (restoreHidden)
+                _trayIcon.Visible = true;
+
+            _trayIcon.BalloonTipTitle = safeTitle;
+            _trayIcon.BalloonTipText = safeMessage;
+            _trayIcon.BalloonTipIcon = ToolTipIcon.Info;
+            _trayIcon.ShowBalloonTip(safeTimeout);
+
+            if (!restoreHidden)
+                return;
+
+            _notificationRestoreTimer?.Stop();
+            _notificationRestoreTimer?.Dispose();
+            _notificationRestoreTimer = new FormsTimer { Interval = safeTimeout + 500 };
+            _notificationRestoreTimer.Tick += (o, e) =>
+            {
+                _notificationRestoreTimer.Stop();
+                _notificationRestoreTimer.Dispose();
+                _notificationRestoreTimer = null;
+                if (_trayIcon != null)
+                    _trayIcon.Visible = AppConfig.ShowTrayIcon;
+            };
+            _notificationRestoreTimer.Start();
         }
 
         #endregion

@@ -6,5 +6,6 @@ namespace GestureSign.Common.UI
 		//void EnterUserDefinedMode();
 		void ToggleDisableGestures();
 		void OpenControlPanel();
+        void ShowNotification(string title, string message, int timeout);
 	}
 }

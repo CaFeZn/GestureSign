@@ -177,6 +177,15 @@
       <Name>Open GestureSign Control Panel</Name>
       <Description>Open the GestureSign Control Panel</Description>
     </OpenControlPanel>
+    <Notifier>
+      <Name>Show Notification</Name>
+      <Description>Show notification: {0}</Description>
+      <DefaultTitle>GestureSign</DefaultTitle>
+      <DefaultMessage>Gesture complete</DefaultMessage>
+      <Title>Title</Title>
+      <Message>Message</Message>
+      <Timeout>Display time (milliseconds)</Timeout>
+    </Notifier>
     <RepeatLastCommand>
       <Name>Repeat Last Command</Name>
       <Description>Repeat the last successfully executed command</Description>

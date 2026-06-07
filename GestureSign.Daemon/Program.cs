@@ -34,6 +34,10 @@ namespace GestureSign.Daemon
                         Application.ThreadException += Application_ThreadException;
                         Logging.LoggedExceptionOccurred += (o, e) => ShowException(e);
                         Logging.OpenLogFile();
+                        if (SynchronizationContext.Current == null)
+                        {
+                            SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+                        }
 
                         if (!LocalizationProvider.Instance.LoadFromFile("Daemon"))
                         {

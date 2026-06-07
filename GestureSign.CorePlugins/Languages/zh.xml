@@ -178,6 +178,15 @@
       <Name>打开 GestureSign 设置</Name>
       <Description>打开 GestureSign 设置面板</Description>
     </OpenControlPanel>
+    <Notifier>
+      <Name>显示通知</Name>
+      <Description>显示通知：{0}</Description>
+      <DefaultTitle>GestureSign</DefaultTitle>
+      <DefaultMessage>手势已完成</DefaultMessage>
+      <Title>标题</Title>
+      <Message>消息</Message>
+      <Timeout>显示时间（毫秒）</Timeout>
+    </Notifier>
     <RepeatLastCommand>
       <Name>重复上一个命令</Name>
       <Description>重复执行上一个成功执行的命令</Description>

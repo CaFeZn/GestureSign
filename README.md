@@ -93,6 +93,7 @@ Common command examples:
 - `Search or Open Clipboard Text` opens URL-like clipboard text directly, or searches other clipboard text in the default browser. To use it with selected text, chain `Hot Key` (`Ctrl+C`), a short `Delay`, then this command.
 - `Mouse Actions` can send clicks, wheel actions, and other mouse input.
 - `Add Current Application to Ignored List` adds the current foreground application to the ignored-app list, which is useful when a gesture conflicts with one app's native input.
+- `Show Notification` displays a short Windows tray notification with configurable title, message, and duration.
 - `Open GestureSign Control Panel` opens the settings window from a gesture.
 - `Repeat Last Command` replays the last command that completed successfully.
 - `Next Virtual Desktop` and `Previous Virtual Desktop` switch Windows virtual desktops.
@@ -180,6 +181,7 @@ Implemented or covered:
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
 | [#60](https://github.com/TransposonY/GestureSign/issues/60) | Startup guidance now clarifies that unattended startup should target `GestureSign.exe`, while `GestureSign.ControlPanel.exe` is the settings UI. |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
+| [#110](https://github.com/TransposonY/GestureSign/issues/110) | Added a `Show Notification` action for short task-complete popups using the daemon tray icon. |
 | [#43](https://github.com/TransposonY/GestureSign/issues/43) | Added `Search or Open Clipboard Text` for browser search/open-URL workflows after selected text is copied to the clipboard. |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | Mouse gestures can use multiple configured drawing buttons, such as right and middle mouse buttons. |
 | [#38](https://github.com/TransposonY/GestureSign/issues/38) | Control Panel touchpad scrolling uses fractional wheel-delta handling instead of treating every small delta as a full wheel tick. |
