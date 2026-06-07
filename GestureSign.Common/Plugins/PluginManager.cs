@@ -27,7 +27,7 @@ namespace GestureSign.Common.Plugins
         private readonly object _lastCommandLock = new object();
         private RepeatableCommand _lastCommand;
         private SynchronizationContext _mainContext;
-        private static readonly Regex FingerVariablePattern = new Regex(@"\bfinger_\d+_(?:start_X%?|start_Y%?|end_X%?|end_Y%?|ID)\b", RegexOptions.Compiled);
+        private static readonly Regex FingerVariablePattern = new Regex(@"(?<!\w)finger_\d+_(?:(?:start_X|start_Y|end_X|end_Y)%?|ID)(?![%\w])", RegexOptions.Compiled);
 
         #endregion
 
@@ -293,6 +293,9 @@ namespace GestureSign.Common.Plugins
 
         private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
+            bool hasPercentVariables = condition.Contains("%");
+            Rectangle virtualScreenBounds = Rectangle.Empty;
+            bool hasVirtualScreenBounds = !hasPercentVariables || TryGetVirtualScreenBounds(out virtualScreenBounds);
             int count = Math.Min(pointList.Count, contactIdentifiers.Count);
             for (int i = 1; i <= count; i++)
             {
@@ -304,16 +307,12 @@ namespace GestureSign.Common.Plugins
                 int endX = pointList[i - 1].LastOrDefault().X;
                 int endY = pointList[i - 1].LastOrDefault().Y;
 
-                if (condition.Contains('%'))
+                if (hasPercentVariables && hasVirtualScreenBounds)
                 {
-                    int left = (int)System.Windows.SystemParameters.VirtualScreenLeft;
-                    int top = (int)System.Windows.SystemParameters.VirtualScreenTop;
-                    int width = (int)System.Windows.SystemParameters.VirtualScreenWidth;
-                    int height = (int)System.Windows.SystemParameters.VirtualScreenHeight;
-                    condition = ReplaceVariables(condition, i, "start_X%", (startX - left) * 100 / width);
-                    condition = ReplaceVariables(condition, i, "start_Y%", (startY - top) * 100 / height);
-                    condition = ReplaceVariables(condition, i, "end_X%", (endX - left) * 100 / width);
-                    condition = ReplaceVariables(condition, i, "end_Y%", (endY - top) * 100 / height);
+                    condition = ReplaceVariables(condition, i, "start_X%", (startX - virtualScreenBounds.Left) * 100 / virtualScreenBounds.Width);
+                    condition = ReplaceVariables(condition, i, "start_Y%", (startY - virtualScreenBounds.Top) * 100 / virtualScreenBounds.Height);
+                    condition = ReplaceVariables(condition, i, "end_X%", (endX - virtualScreenBounds.Left) * 100 / virtualScreenBounds.Width);
+                    condition = ReplaceVariables(condition, i, "end_Y%", (endY - virtualScreenBounds.Top) * 100 / virtualScreenBounds.Height);
                 }
 
                 condition = ReplaceVariables(condition, i, "start_X", startX);
@@ -332,7 +331,26 @@ namespace GestureSign.Common.Plugins
         private string ReplaceVariables(string str, int id, string key, int value)
         {
             string variable = $"finger_{id}_{key}";
-            return str.Replace(variable, value.ToString());
+            string suffixPattern = key.EndsWith("%", StringComparison.Ordinal) ? @"(?!\w)" : @"(?![%\w])";
+            string pattern = $@"(?<!\w){Regex.Escape(variable)}{suffixPattern}";
+            return Regex.Replace(str, pattern, value.ToString());
+        }
+
+        private static bool TryGetVirtualScreenBounds(out Rectangle bounds)
+        {
+            int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+            int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+            if (width <= 0 || height <= 0)
+            {
+                bounds = Rectangle.Empty;
+                return false;
+            }
+
+            bounds = new Rectangle(left, top, width, height);
+            return true;
         }
 
         private string ReplaceWindowVariables(string condition, SystemWindow targetWindow)
@@ -420,6 +438,10 @@ namespace GestureSign.Common.Plugins
         private const int VK_RMENU = 0xA5;
         private const int VK_LWIN = 0x5B;
         private const int VK_RWIN = 0x5C;
+        private const int SM_XVIRTUALSCREEN = 76;
+        private const int SM_YVIRTUALSCREEN = 77;
+        private const int SM_CXVIRTUALSCREEN = 78;
+        private const int SM_CYVIRTUALSCREEN = 79;
 
         [DllImport("user32.dll")]
         private static extern bool IsZoomed(IntPtr hWnd);
@@ -438,6 +460,9 @@ namespace GestureSign.Common.Plugins
 
         [DllImport("user32.dll")]
         private static extern short GetAsyncKeyState(int vKey);
+
+        [DllImport("user32.dll")]
+        private static extern int GetSystemMetrics(int nIndex);
 
         private static bool IsAnyKeyDown(params int[] virtualKeys)
         {
