@@ -31,6 +31,8 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 
 ## Usage
 
+This README is the current English getting-started guide when the old external documentation site is unavailable.
+
 1. Start `GestureSign.ControlPanel.exe`. The control panel starts the background daemon (`GestureSign.exe`) and the tray icon.
 2. Open the `Actions` tab. Add actions under `(Global Actions)` for every app, or add a specific application when an action should only run in matching windows.
 3. Pick or create a gesture for the action. Use the `Gestures` tab to teach new gesture shapes before assigning them to actions.
@@ -50,6 +52,22 @@ Gesture names and defaults:
 - Names without a leading number can still be multi-finger gestures. Open the `Gestures` tab to see the recorded sample and finger count for any gesture.
 - Tap gestures are represented by points instead of long stroke paths. `3 Finger Double Tap` is a bundled example made from two three-finger tap samples.
 - Default browser gestures include `Open Web Browser` on `ee`, browser back/forward gestures, and tab gestures under the browser application group. You can edit or delete these in the `Actions` tab.
+
+Default gesture examples:
+
+| Action | Gesture | Fingers | Scope |
+| --- | --- | --- | --- |
+| Open Web Browser | `ee` | 2 | Global actions |
+| Show/Hide Touch Keyboard | `3 Finger Double Tap` | 3 | Global actions |
+| Close Tab | `3Down` | 3 | Browsers |
+| Next Tab | `3Left` | 3 | Browsers |
+
+Gesture creation notes:
+
+- Create or edit gestures from the `Gestures` tab or from the gesture picker in an action, then draw the gesture on the screen when the gesture definition window is open.
+- Multi-finger gestures require simultaneous contacts. A three-finger gesture is not the same as drawing one line three times.
+- Point and tap gestures are recorded as point samples, so their preview can look like dots instead of strokes.
+- Double-clicking a gesture in the `Gestures` tab opens it for editing; use the edit window to redraw or rename the gesture.
 
 Common command examples:
 
