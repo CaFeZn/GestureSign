@@ -50,6 +50,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 _VisualFeedbackColor = AppConfig.VisualFeedbackColor;
                 VisualFeedbackWidthSlider.Value = AppConfig.VisualFeedbackWidth;
                 MinimumPointDistanceSlider.Value = AppConfig.MinimumPointDistance;
+                ContinuousGestureDistanceSlider.Value = AppConfig.ContinuousGestureDistance;
                 OpacitySlider.Value = AppConfig.Opacity;
                 ShowTrayIconSwitch.IsChecked = AppConfig.ShowTrayIcon;
                 SendLogToggleSwitch.IsChecked = AppConfig.SendErrorReport;
@@ -154,6 +155,13 @@ namespace GestureSign.ControlPanel.MainWindowControls
             var newValue = (int)Math.Round(e.NewValue);
             if (newValue == AppConfig.MinimumPointDistance || (int)e.OldValue == 0) return;
             AppConfig.MinimumPointDistance = newValue;
+        }
+
+        private void ContinuousGestureDistanceSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            var newValue = (int)Math.Round(e.NewValue);
+            if (newValue == AppConfig.ContinuousGestureDistance || (int)e.OldValue == 0) return;
+            AppConfig.ContinuousGestureDistance = newValue;
         }
 
         private int GetAlphaPercentage(double Alpha)

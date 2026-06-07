@@ -227,6 +227,18 @@ namespace GestureSign.Common.Configuration
             }
         }
 
+        public static int ContinuousGestureDistance
+        {
+            get
+            {
+                return (int)GetValue(nameof(ContinuousGestureDistance), 20);
+            }
+            set
+            {
+                SetValue(nameof(ContinuousGestureDistance), value);
+            }
+        }
+
         public static MouseActions DrawingButton
         {
             get

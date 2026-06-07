@@ -121,6 +121,17 @@
                     Maximum="100"
                     Minimum="3"
                     ValueChanged="MinimumPointDistanceSlider_ValueChanged" />
+            <TextBlock x:Name="ContinuousGestureDistanceText"
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       Text="{Binding ElementName=ContinuousGestureDistanceSlider, Path=Value, StringFormat={localization:LocalisedText Options.ContinuousGestureDistance}}"
+                       VerticalAlignment="Top"
+                       Margin="15,15,5,3"
+                       FontSize="14" />
+            <Slider x:Name="ContinuousGestureDistanceSlider"
+                    Maximum="100"
+                    Minimum="5"
+                    ValueChanged="ContinuousGestureDistanceSlider_ValueChanged" />
             <TextBlock Text="{localization:LocalisedText Options.Language}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Top"

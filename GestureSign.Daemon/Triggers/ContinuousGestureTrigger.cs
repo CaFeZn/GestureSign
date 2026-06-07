@@ -7,6 +7,7 @@ using GestureSign.PointPatterns;
 using ManagedWinapi.Hooks;
 using System;
 using System.Collections.Generic;
+using GestureSign.Common.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -16,15 +17,12 @@ namespace GestureSign.Daemon.Triggers
     class ContinuousGestureTrigger : Trigger
     {
         private Point _startPoint;
-        private float _motionThreshold;
         private Stopwatch _stopwatch = new Stopwatch();
         private List<Point> _lastPoints;
         private bool _continuousGestureFired;
 
         public ContinuousGestureTrigger()
         {
-            _motionThreshold = 20f * DpiHelper.GetSystemDpi() / 96f;
-
             PointCapture.Instance.CaptureStarted += PointCapture_CaptureStarted;
             PointCapture.Instance.PointCaptured += PointCapture_PointCaptured;
             PointCapture.Instance.BeforePointsCaptured += PointCapture_BeforePointsCaptured;
@@ -123,16 +121,22 @@ namespace GestureSign.Daemon.Triggers
                 return 0;
 
             var velocity = distance / (double)deltaTime;
+            var motionThreshold = GetMotionThreshold();
             if (velocity < 3)
             {
-                return distance / _motionThreshold;
+                return distance / motionThreshold;
             }
             else
             {
                 if (velocity > 16)
                     velocity = 16;
-                return distance / ((-0.0023 * velocity * velocity + 0.0096 * velocity + 0.89) * _motionThreshold);
+                return distance / ((-0.0023 * velocity * velocity + 0.0096 * velocity + 0.89) * motionThreshold);
             }
+        }
+
+        private static float GetMotionThreshold()
+        {
+            return Math.Max(1, AppConfig.ContinuousGestureDistance) * DpiHelper.GetSystemDpi() / 96f;
         }
     }
 }

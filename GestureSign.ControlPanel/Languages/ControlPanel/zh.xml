@@ -246,6 +246,7 @@ QQ交流群：576981420
     <PickColor>选择颜色..</PickColor>
     <SystemColor>使用系统主题色</SystemColor>
     <MinimumPointDistance>最小点距 {0:F0} px</MinimumPointDistance>
+    <ContinuousGestureDistance>连续手势触发距离 {0:F0} px</ContinuousGestureDistance>
     <Backup>备份所有设置</Backup>
     <Restore>导入设置</Restore>
     <BackupFile>GestureSign备份文件</BackupFile>

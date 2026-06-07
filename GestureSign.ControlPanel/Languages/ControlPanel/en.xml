@@ -242,6 +242,7 @@ Email:ccfyzh@gmail.com
     <PickColor>Pick Color...</PickColor>
     <SystemColor>Follow System Color</SystemColor>
     <MinimumPointDistance>Minimum Point Distance {0:F0} px</MinimumPointDistance>
+    <ContinuousGestureDistance>Continuous Gesture Distance {0:F0} px</ContinuousGestureDistance>
     <Backup>Backup All User Data</Backup>
     <Restore>Restore User Data</Restore>
     <OpenConfigFolder>Open Configuration Folder</OpenConfigFolder>
