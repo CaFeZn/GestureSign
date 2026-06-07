@@ -3,6 +3,7 @@ using System.Threading;
 using System.Windows.Forms;
 using GestureSign.Common;
 using GestureSign.Common.Applications;
+using GestureSign.Common.Configuration;
 using GestureSign.Common.Gestures;
 using GestureSign.Common.InterProcessCommunication;
 using GestureSign.Common.Localization;
@@ -80,6 +81,7 @@ namespace GestureSign.Daemon
 
         private static void Application_ApplicationExit(object sender, EventArgs e)
         {
+            AppConfig.Flush();
             NamedPipe.Instance.Dispose();
             PointCapture.Instance.Dispose();
         }

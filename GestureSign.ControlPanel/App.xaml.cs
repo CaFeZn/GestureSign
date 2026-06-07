@@ -149,6 +149,7 @@ namespace GestureSign.ControlPanel
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
+            AppConfig.Flush();
             if (mutex != null)
             {
                 NamedPipe.Instance.Dispose();

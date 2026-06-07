@@ -355,6 +355,12 @@ namespace GestureSign.Common.Configuration
             Timer.Change(100, Timeout.Infinite);
         }
 
+        public static void Flush()
+        {
+            Timer.Change(Timeout.Infinite, Timeout.Infinite);
+            SaveFile(null);
+        }
+
         private static void SaveFile(object state)
         {
             try
