@@ -140,7 +140,11 @@ QQ交流群：576981420
     <WindowMaximized>最大化</WindowMaximized>
     <WindowMinimized>最小化</WindowMinimized>
     <WindowFullscreen>全屏</WindowFullscreen>
-    <Sample>示例：finger_2_start_X>100 AND NOT window_is_fullscreen</Sample>
+    <KeyShiftDown>按住 Shift</KeyShiftDown>
+    <KeyCtrlDown>按住 Ctrl</KeyCtrlDown>
+    <KeyAltDown>按住 Alt</KeyAltDown>
+    <KeyWinDown>按住 Win</KeyWinDown>
+    <Sample>示例：finger_2_start_X>100 AND key_is_shift_down</Sample>
   </EditConditionDialog>
   <Action>
     <Header>动作</Header>

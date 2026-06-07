@@ -307,7 +307,10 @@ namespace GestureSign.Common.Plugins
 
                 condition = ReplaceVariables(condition, i, "ID", contactIdentifiers[i - 1]);
             }
-            return ReplaceWindowVariables(condition, targetWindow);
+            condition = ReplaceWindowVariables(condition, targetWindow);
+            condition = ReplaceKeyVariables(condition);
+
+            return condition;
         }
 
         private string ReplaceVariables(string str, int id, string key, int value)
@@ -325,6 +328,16 @@ namespace GestureSign.Common.Plugins
             condition = condition.Replace("window_is_maximized", ToExpressionBoolean(isMaximized));
             condition = condition.Replace("window_is_minimized", ToExpressionBoolean(isMinimized));
             condition = condition.Replace("window_is_fullscreen", ToExpressionBoolean(isFullscreen));
+
+            return condition;
+        }
+
+        private string ReplaceKeyVariables(string condition)
+        {
+            condition = condition.Replace("key_is_shift_down", ToExpressionBoolean(IsAnyKeyDown(VK_LSHIFT, VK_RSHIFT)));
+            condition = condition.Replace("key_is_ctrl_down", ToExpressionBoolean(IsAnyKeyDown(VK_LCONTROL, VK_RCONTROL)));
+            condition = condition.Replace("key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(VK_LMENU, VK_RMENU)));
+            condition = condition.Replace("key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(VK_LWIN, VK_RWIN)));
 
             return condition;
         }
@@ -383,6 +396,14 @@ namespace GestureSign.Common.Plugins
         }
 
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+        private const int VK_LSHIFT = 0xA0;
+        private const int VK_RSHIFT = 0xA1;
+        private const int VK_LCONTROL = 0xA2;
+        private const int VK_RCONTROL = 0xA3;
+        private const int VK_LMENU = 0xA4;
+        private const int VK_RMENU = 0xA5;
+        private const int VK_LWIN = 0x5B;
+        private const int VK_RWIN = 0x5C;
 
         [DllImport("user32.dll")]
         private static extern bool IsZoomed(IntPtr hWnd);
@@ -398,6 +419,14 @@ namespace GestureSign.Common.Plugins
 
         [DllImport("user32.dll")]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+
+        private static bool IsAnyKeyDown(params int[] virtualKeys)
+        {
+            return virtualKeys.Any(key => (GetAsyncKeyState(key) & 0x8000) != 0);
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct MONITORINFO

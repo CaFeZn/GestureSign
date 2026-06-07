@@ -86,6 +86,26 @@
                     Margin="0,0,5,5"
                     Click="WindowVariableButton_Click"
                     Focusable="False" />
+            <Button Content="{localization:LocalisedText EditConditionDialog.KeyShiftDown}"
+                    Tag="key_is_shift_down"
+                    Margin="0,0,5,5"
+                    Click="VariableButton_Click"
+                    Focusable="False" />
+            <Button Content="{localization:LocalisedText EditConditionDialog.KeyCtrlDown}"
+                    Tag="key_is_ctrl_down"
+                    Margin="0,0,5,5"
+                    Click="VariableButton_Click"
+                    Focusable="False" />
+            <Button Content="{localization:LocalisedText EditConditionDialog.KeyAltDown}"
+                    Tag="key_is_alt_down"
+                    Margin="0,0,5,5"
+                    Click="VariableButton_Click"
+                    Focusable="False" />
+            <Button Content="{localization:LocalisedText EditConditionDialog.KeyWinDown}"
+                    Tag="key_is_win_down"
+                    Margin="0,0,5,5"
+                    Click="VariableButton_Click"
+                    Focusable="False" />
         </WrapPanel>
         <TextBox x:Name="ConditionTextBox"
                  controls:TextBoxHelper.Watermark="{localization:LocalisedText EditConditionDialog.Sample}"

@@ -22,6 +22,11 @@ namespace GestureSign.ControlPanel.Dialogs
 
         private void WindowVariableButton_Click(object sender, RoutedEventArgs e)
         {
+            VariableButton_Click(sender, e);
+        }
+
+        private void VariableButton_Click(object sender, RoutedEventArgs e)
+        {
             var button = sender as System.Windows.Controls.Button;
             InsertConditionText(button?.Tag as string);
         }

@@ -158,8 +158,8 @@ namespace GestureSign.ControlPanel.Dialogs
         {
             try
             {
-                var regex = new Regex("finger_[0-9]+_((start|end)_[XY]%?|ID)|window_is_(maximized|minimized|fullscreen)");
-                var replaced = regex.Replace(ConditionTextBox.Text, m => m.Value.StartsWith("window_is_") ? "(1=0)" : "10");
+                var regex = new Regex("finger_[0-9]+_((start|end)_[XY]%?|ID)|window_is_(maximized|minimized|fullscreen)|key_is_(shift|ctrl|alt|win)_down");
+                var replaced = regex.Replace(ConditionTextBox.Text, m => m.Value.StartsWith("finger_") ? "10" : "(1=0)");
 
                 DataTable dataTable = new DataTable();
                 dataTable.Compute(replaced, null);

@@ -136,7 +136,11 @@ Email:ccfyzh@gmail.com
     <WindowMaximized>Maximized</WindowMaximized>
     <WindowMinimized>Minimized</WindowMinimized>
     <WindowFullscreen>Fullscreen</WindowFullscreen>
-    <Sample>Sample: finger_2_start_X>100 AND NOT window_is_fullscreen</Sample>
+    <KeyShiftDown>Shift down</KeyShiftDown>
+    <KeyCtrlDown>Ctrl down</KeyCtrlDown>
+    <KeyAltDown>Alt down</KeyAltDown>
+    <KeyWinDown>Win down</KeyWinDown>
+    <Sample>Sample: finger_2_start_X>100 AND key_is_shift_down</Sample>
   </EditConditionDialog>
   <Action>
     <Header>Action</Header>
