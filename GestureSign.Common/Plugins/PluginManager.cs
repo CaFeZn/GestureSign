@@ -61,12 +61,14 @@ namespace GestureSign.Common.Plugins
 
         #region Public Methods
 
-        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points)
+        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points, List<int> conditionContactIdentifiers = null, List<List<Point>> conditionPoints = null)
         {
             // Exit if we're teaching
             if (mode == CaptureMode.Training)
                 return;
             var target = ApplicationManager.Instance.CaptureWindow;
+            var pointsForCondition = conditionPoints ?? points;
+            var contactIdentifiersForCondition = conditionContactIdentifiers ?? contactIdentifiers;
             var pointInfo = new PointInfo(firstCapturedPoints, points, target, _mainContext);
             var action = new Action<object>(o =>
             {
@@ -74,7 +76,7 @@ namespace GestureSign.Common.Plugins
                 {
                     // Exit if there is no action configured
                     if (executableAction == null || (executableAction.IgnoredDevices & devices) != 0 ||
-                    executableAction.Commands == null || !Compute(executableAction.Condition, points, contactIdentifiers))
+                    executableAction.Commands == null || !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition))
                         continue;
 
                     var commandList = executableAction.Commands.Where(command => command != null && command.IsEnabled).ToList();

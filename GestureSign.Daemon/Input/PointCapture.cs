@@ -93,6 +93,16 @@ namespace GestureSign.Daemon.Input
             }
         }
 
+        public List<int> InputContactIdentifiers
+        {
+            get
+            {
+                if (_pointsCaptured == null)
+                    return new List<int>();
+                return _pointsCaptured.Keys.ToList();
+            }
+        }
+
         public CaptureState State
         {
             get { return _state; }
@@ -591,7 +601,11 @@ namespace GestureSign.Daemon.Input
             //CaptureWindow GetGestureName
             OnBeforePointsCaptured(pointsInformation);
 
-            if (pointsInformation.Cancel) return;
+            if (pointsInformation.Cancel)
+            {
+                _pointsCaptured.Clear();
+                return;
+            }
 
             if (Mode == CaptureMode.Training && !(_pointsCaptured.Count == 1 && _pointsCaptured.Values.First().Count == 1))
             {

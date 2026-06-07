@@ -68,6 +68,7 @@ namespace GestureSign.ControlPanel.UserControls
             {
                 CurrentGesture = null;
                 DrawGestureTextBlock.Visibility = Visibility.Visible;
+                DrawGestureHelpTextBlock.Visibility = Visibility.Visible;
                 ExistingTextBlock.Visibility = RedrawButton.Visibility = Visibility.Collapsed;
                 MessageProcessor.GotNewPattern += MessageProcessor_GotNewPattern;
                 NamedPipe.SendMessageAsync(IpcCommands.StartTeaching, Constants.Daemon);
@@ -75,6 +76,7 @@ namespace GestureSign.ControlPanel.UserControls
             else
             {
                 DrawGestureTextBlock.Visibility = Visibility.Collapsed;
+                DrawGestureHelpTextBlock.Visibility = Visibility.Collapsed;
                 RedrawButton.Visibility = Visibility.Visible;
                 MessageProcessor.GotNewPattern -= MessageProcessor_GotNewPattern;
                 NamedPipe.SendMessageAsync(IpcCommands.StopTraining, Constants.Daemon);

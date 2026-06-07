@@ -189,7 +189,7 @@ namespace GestureSign.ControlPanel.Dialogs
                 }
                 : null;
             int contactCount = (int)ContactCountSlider.Value;
-            NewAction.ContinuousGesture = ContinuousGestureSwitch.IsChecked.GetValueOrDefault() && contactCount > 1 && GestureListBox.SelectedIndex >= 0 ? new ContinuousGesture(contactCount, (Gestures)(1 << GestureListBox.SelectedIndex)) : null;
+            NewAction.ContinuousGesture = ContinuousGestureSwitch.IsChecked.GetValueOrDefault() && contactCount > 0 && GestureListBox.SelectedIndex >= 0 ? new ContinuousGesture(contactCount, (Gestures)(1 << GestureListBox.SelectedIndex)) : null;
             Devices ignoredDevices = Devices.None;
             if (!MouseCheckBox.IsChecked.GetValueOrDefault())
                 ignoredDevices |= Devices.Mouse;

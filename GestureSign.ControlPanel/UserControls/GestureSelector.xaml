@@ -22,6 +22,14 @@
                    Text="{localization:LocalisedText GestureDefinition.DrawGesture}"
                    HorizontalAlignment="Center"
                    Visibility="Collapsed" />
+        <TextBlock x:Name="DrawGestureHelpTextBlock"
+                   TextWrapping="Wrap"
+                   FontSize="12"
+                   Margin="20,-4,20,8"
+                   Text="{localization:LocalisedText GestureDefinition.DrawGestureHelp}"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Visibility="Collapsed" />
         <Button x:Name="RedrawButton"
                 Content="{localization:LocalisedText GestureDefinition.Redraw}"
                 Custom:ControlsHelper.ContentCharacterCasing="Normal"

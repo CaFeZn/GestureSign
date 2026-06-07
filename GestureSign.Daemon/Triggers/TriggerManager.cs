@@ -56,7 +56,30 @@ namespace GestureSign.Daemon.Triggers
         {
             if (e.FiredActions == null || e.FiredActions.Count == 0) return;
             var point = new List<Point>(new[] { e.FiredPoint });
-            PluginManager.Instance.ExecuteAction(e.FiredActions, PointCapture.Instance.Mode, PointCapture.Instance.SourceDevice, new List<int>(new[] { 1 }), point, new List<List<Point>>(new[] { point }));
+            var points = new List<List<Point>>(new[] { point });
+            var inputPoints = PointCapture.Instance.InputPoints;
+            var inputContactIdentifiers = PointCapture.Instance.InputContactIdentifiers;
+            var conditionPoints = new List<List<Point>>(inputPoints.Length);
+            var conditionContactIdentifiers = new List<int>(inputPoints.Length);
+
+            for (int i = 0; i < inputPoints.Length && i < inputContactIdentifiers.Count; i++)
+            {
+                if (inputPoints[i].Count == 0)
+                    continue;
+
+                conditionPoints.Add(new List<Point>(inputPoints[i]));
+                conditionContactIdentifiers.Add(inputContactIdentifiers[i]);
+            }
+
+            PluginManager.Instance.ExecuteAction(
+                e.FiredActions,
+                PointCapture.Instance.Mode,
+                PointCapture.Instance.SourceDevice,
+                new List<int>(new[] { 1 }),
+                point,
+                points,
+                conditionContactIdentifiers.Count == 0 ? null : conditionContactIdentifiers,
+                conditionPoints.Count == 0 ? null : conditionPoints);
         }
 
         #endregion

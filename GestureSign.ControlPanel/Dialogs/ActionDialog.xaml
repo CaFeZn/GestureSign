@@ -68,7 +68,7 @@
                             Visibility="{Binding ElementName=ContinuousGestureSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
                             common:SliderTools.MoveToPointOnDrag="True"
                             ValueChanged="ContactCountSlider_ValueChanged"
-                            Minimum="2"
+                            Minimum="1"
                             Maximum="10"
                             IsMoveToPointEnabled="True"
                             Margin="0,10,0,0"

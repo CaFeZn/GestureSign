@@ -19,13 +19,30 @@ namespace GestureSign.Daemon.Triggers
         private float _motionThreshold;
         private Stopwatch _stopwatch = new Stopwatch();
         private List<Point> _lastPoints;
+        private bool _continuousGestureFired;
 
         public ContinuousGestureTrigger()
         {
             _motionThreshold = 20f * DpiHelper.GetSystemDpi() / 96f;
 
+            PointCapture.Instance.CaptureStarted += PointCapture_CaptureStarted;
             PointCapture.Instance.PointCaptured += PointCapture_PointCaptured;
+            PointCapture.Instance.BeforePointsCaptured += PointCapture_BeforePointsCaptured;
             PointCapture.Instance.CaptureEnded += PointCapture_CaptureEnded;
+        }
+
+        private void PointCapture_CaptureStarted(object sender, PointsCapturedEventArgs e)
+        {
+            _continuousGestureFired = false;
+        }
+
+        private void PointCapture_BeforePointsCaptured(object sender, PointsCapturedEventArgs e)
+        {
+            if (!_continuousGestureFired)
+                return;
+
+            e.Cancel = true;
+            _continuousGestureFired = false;
         }
 
         private void PointCapture_CaptureEnded(object sender, System.EventArgs e)
@@ -36,7 +53,7 @@ namespace GestureSign.Daemon.Triggers
 
         private void PointCapture_PointCaptured(object sender, PointsCapturedEventArgs e)
         {
-            if (PointCapture.Instance.State != CaptureState.Capturing || e.Points.Count < 2)
+            if (PointCapture.Instance.State != CaptureState.Capturing || e.Points.Count == 0 || e.FirstCapturedPoints.Count == 0)
                 return;
             var actionsWithContinuousGesture = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a != null && a.ContinuousGesture != null);
             if (actionsWithContinuousGesture == null || actionsWithContinuousGesture.Count == 0)
@@ -93,7 +110,10 @@ namespace GestureSign.Daemon.Triggers
             var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.ContinuousGesture != null &&
             a.ContinuousGesture.ContactCount == contactCount && a.ContinuousGesture.Gesture == gesture);
             if (actions.Count > 0)
+            {
+                _continuousGestureFired = true;
                 OnTriggerFired(new TriggerFiredEventArgs(actions, _startPoint));
+            }
         }
 
         private double GetRateOfFire(int distance)

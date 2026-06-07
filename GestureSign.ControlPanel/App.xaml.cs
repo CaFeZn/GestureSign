@@ -13,6 +13,9 @@ using System.Linq;
 using System.Security.Principal;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using Windows.Management.Deployment;
 
@@ -23,6 +26,12 @@ namespace GestureSign.ControlPanel
     /// </summary>
     public partial class App : Application
     {
+        private const double MouseWheelDeltaForOneLine = 120.0;
+        private const double MouseWheelPixelsPerLine = 16.0;
+        private const double ScrollOffsetTolerance = 0.001;
+        private static readonly DependencyProperty PendingMouseWheelLinesProperty =
+            DependencyProperty.RegisterAttached("PendingMouseWheelLines", typeof(double), typeof(App), new PropertyMetadata(0.0));
+
         Mutex mutex;
 
         private void Application_Startup(object sender, StartupEventArgs e)
@@ -194,7 +203,148 @@ namespace GestureSign.ControlPanel
             SetupExceptionHandling();
             AppContext.SetSwitch("Switch.System.Windows.DoNotScaleForDpiChanges", false);
             AppContext.SetSwitch("Switch.System.Windows.Input.Stylus.DisableStylusAndTouchSupport", true);
+            EventManager.RegisterClassHandler(typeof(ScrollViewer), UIElement.PreviewMouseWheelEvent, new MouseWheelEventHandler(ScrollViewer_PreviewMouseWheel));
             base.OnStartup(e);
+        }
+
+        private static void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            var scrollViewer = sender as ScrollViewer;
+            if (scrollViewer == null || e.Delta == 0 || HasNestedScrollableScrollViewer(scrollViewer, e.OriginalSource as DependencyObject, e.Delta))
+                return;
+
+            if (!CanScrollVertically(scrollViewer, e.Delta))
+            {
+                scrollViewer.SetValue(PendingMouseWheelLinesProperty, 0.0);
+                e.Handled = true;
+                return;
+            }
+
+            int wheelScrollLines = SystemParameters.WheelScrollLines;
+            if (wheelScrollLines == 0)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            e.Handled = true;
+
+            if (wheelScrollLines < 0 || wheelScrollLines == int.MaxValue)
+            {
+                ScrollByPage(scrollViewer, e.Delta);
+                return;
+            }
+
+            double lineDelta = e.Delta / MouseWheelDeltaForOneLine * wheelScrollLines;
+            if (UsesPixelScrolling(scrollViewer))
+            {
+                ScrollToVerticalOffset(scrollViewer, scrollViewer.VerticalOffset - lineDelta * MouseWheelPixelsPerLine);
+                return;
+            }
+
+            double pendingLines = (double)scrollViewer.GetValue(PendingMouseWheelLinesProperty) + lineDelta;
+            int wholeLines = pendingLines > 0 ? (int)Math.Floor(pendingLines) : (int)Math.Ceiling(pendingLines);
+            scrollViewer.SetValue(PendingMouseWheelLinesProperty, pendingLines - wholeLines);
+            ScrollByLines(scrollViewer, wholeLines);
+        }
+
+        private static void ScrollByPage(ScrollViewer scrollViewer, int delta)
+        {
+            if (UsesPixelScrolling(scrollViewer))
+            {
+                ScrollToVerticalOffset(scrollViewer, scrollViewer.VerticalOffset - delta / MouseWheelDeltaForOneLine * scrollViewer.ViewportHeight);
+                return;
+            }
+
+            double pendingPages = (double)scrollViewer.GetValue(PendingMouseWheelLinesProperty) + delta / MouseWheelDeltaForOneLine;
+            int wholePages = pendingPages > 0 ? (int)Math.Floor(pendingPages) : (int)Math.Ceiling(pendingPages);
+            scrollViewer.SetValue(PendingMouseWheelLinesProperty, pendingPages - wholePages);
+
+            for (int i = 0; i < Math.Abs(wholePages); i++)
+            {
+                if (wholePages > 0)
+                    scrollViewer.PageUp();
+                else
+                    scrollViewer.PageDown();
+            }
+        }
+
+        private static void ScrollByLines(ScrollViewer scrollViewer, int lineCount)
+        {
+            for (int i = 0; i < Math.Abs(lineCount); i++)
+            {
+                if (lineCount > 0)
+                    scrollViewer.LineUp();
+                else
+                    scrollViewer.LineDown();
+            }
+        }
+
+        private static void ScrollToVerticalOffset(ScrollViewer scrollViewer, double offset)
+        {
+            scrollViewer.ScrollToVerticalOffset(Math.Max(0.0, Math.Min(scrollViewer.ScrollableHeight, offset)));
+        }
+
+        private static bool UsesPixelScrolling(ScrollViewer scrollViewer)
+        {
+            if (!scrollViewer.CanContentScroll)
+                return true;
+
+            var itemsControl = FindAncestor<ItemsControl>(scrollViewer);
+            return itemsControl != null && VirtualizingPanel.GetScrollUnit(itemsControl) == ScrollUnit.Pixel;
+        }
+
+        private static bool CanScrollVertically(ScrollViewer scrollViewer, int delta)
+        {
+            if (scrollViewer.ScrollableHeight <= ScrollOffsetTolerance)
+                return false;
+
+            return delta > 0
+                ? scrollViewer.VerticalOffset > ScrollOffsetTolerance
+                : scrollViewer.VerticalOffset < scrollViewer.ScrollableHeight - ScrollOffsetTolerance;
+        }
+
+        private static bool HasNestedScrollableScrollViewer(ScrollViewer scrollViewer, DependencyObject originalSource, int delta)
+        {
+            DependencyObject current = originalSource;
+            while (current != null && !ReferenceEquals(current, scrollViewer))
+            {
+                var nestedScrollViewer = current as ScrollViewer;
+                if (nestedScrollViewer != null && CanScrollVertically(nestedScrollViewer, delta))
+                    return true;
+
+                current = GetParent(current);
+            }
+            return false;
+        }
+
+        private static T FindAncestor<T>(DependencyObject element) where T : DependencyObject
+        {
+            DependencyObject current = GetParent(element);
+            while (current != null)
+            {
+                var typedCurrent = current as T;
+                if (typedCurrent != null)
+                    return typedCurrent;
+
+                current = GetParent(current);
+            }
+            return null;
+        }
+
+        private static DependencyObject GetParent(DependencyObject element)
+        {
+            if (element == null)
+                return null;
+
+            if (element is Visual || element is System.Windows.Media.Media3D.Visual3D)
+            {
+                DependencyObject visualParent = VisualTreeHelper.GetParent(element);
+                if (visualParent != null)
+                    return visualParent;
+            }
+
+            return LogicalTreeHelper.GetParent(element);
         }
     }
 }
