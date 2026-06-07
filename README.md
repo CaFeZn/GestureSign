@@ -32,10 +32,10 @@ The current codebase remains a Windows desktop app targeting `.NET Framework 4.8
 
 ## Install
 
-- Installer edition: `winget install --id TransposonY.GestureSign -e`
-- Update installer edition: `winget upgrade --id TransposonY.GestureSign -e`
-- Portable edition: when this fork has a GitHub Release, download `GestureSign-<tag>-win-anycpu.zip` from the [releases page](https://github.com/CaFeZn/GestureSign/releases), extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
-- If this fork has no published release asset yet, use the installer edition above or build locally with `.\scripts\build.ps1 -Configuration Release`.
+- Upstream installer package: `winget install --id TransposonY.GestureSign -e`
+- Update upstream installer package: `winget upgrade --id TransposonY.GestureSign -e`
+- Fork portable edition: when this fork has a GitHub Release, download `GestureSign-<tag>-win-anycpu.zip` from the [releases page](https://github.com/CaFeZn/GestureSign/releases), extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
+- If this fork has no published release asset yet, use the upstream installer package above or build locally with `.\scripts\build.ps1 -Configuration Portable`.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
 
 ## Usage
@@ -186,7 +186,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#129](https://github.com/TransposonY/GestureSign/issues/129), [#124](https://github.com/TransposonY/GestureSign/issues/124), [#54](https://github.com/TransposonY/GestureSign/issues/54) | Project status is documented for this fork: it is a community fork with selected maintenance fixes, docs, and build/release automation, not an official upstream continuation or promised roadmap. |
 | [#107](https://github.com/TransposonY/GestureSign/issues/107), [#106](https://github.com/TransposonY/GestureSign/issues/106) | Current tech status is documented: this fork targets `.NET Framework 4.8`, builds with Visual Studio 2022, and has optional native Arm64 .NET Framework output on Windows 11 24H2/VS 2022 17.11+; it has not migrated to .NET 6/.NET 8. |
 | [#105](https://github.com/TransposonY/GestureSign/issues/105) | Windows 11 native gesture and app touch conflicts are documented as limitations; mitigation is configuration/app-specific behavior, not a complete OS-level override. |
-| [#67](https://github.com/TransposonY/GestureSign/issues/67) | Release executable expectations are documented: the workflow can upload a zip containing `GestureSign.exe`, but this fork has no downloadable GitHub Release asset until a release is created. |
+| [#67](https://github.com/TransposonY/GestureSign/issues/67) | Release executable expectations are documented and the workflow builds the true `Portable` configuration, validates the control panel and daemon entrypoints, and uploads a zip once a release is created. |
 | [#82](https://github.com/TransposonY/GestureSign/issues/82), [#54](https://github.com/TransposonY/GestureSign/issues/54) | Donation/support status is documented: this fork has no donation or sponsorship link; support is testing, reports, docs, or focused PRs. |
 | [#77](https://github.com/TransposonY/GestureSign/issues/77), [#78](https://github.com/TransposonY/GestureSign/issues/78), [#80](https://github.com/TransposonY/GestureSign/issues/80), [#100](https://github.com/TransposonY/GestureSign/issues/100) | Gesture capture is limited by Windows integrity levels, shell/secure UI, and apps that capture input before GestureSign. Administrator-window guidance covers Task Manager; Timeline/Win+Tab and Parsec still require OS/app-specific validation. |
 | [#79](https://github.com/TransposonY/GestureSign/issues/79), [#81](https://github.com/TransposonY/GestureSign/issues/81) | Windows Store/UWP launch and matching paths exist, including `Launch Windows Store App` and `ApplicationFrameWindow` unwrapping to `Windows.UI.Core.CoreWindow`, but Microsoft app failures still need per-app/package-state validation. |
@@ -213,7 +213,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 ## GitHub Releases
 
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
-- The workflow builds `Release|Any CPU`, packages `bin\Release`, creates or updates the GitHub Release, and uploads `GestureSign-<tag>-win-anycpu.zip`.
+- The workflow builds `Portable|Any CPU`, packages `bin\Portable`, creates or updates the GitHub Release, and uploads `GestureSign-<tag>-win-anycpu.zip`.
 - You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; by default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
 - The release asset is a zip package, not a standalone installer `.exe`. After extracting it, start `GestureSign.ControlPanel.exe`; `GestureSign.exe` is the background daemon.
 - A release is created only after a matching tag is pushed or the workflow is run manually. Until then, the releases page may have no downloadable asset for this fork.

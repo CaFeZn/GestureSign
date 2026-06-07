@@ -60,20 +60,28 @@ jobs:
 
       - name: Clean release output
         shell: pwsh
-        run: Remove-Item -Recurse -Force .\bin\Release -ErrorAction SilentlyContinue
+        run: Remove-Item -Recurse -Force .\bin\Portable -ErrorAction SilentlyContinue
 
-      - name: Build Release
+      - name: Build Portable
         shell: pwsh
-        run: .\scripts\build.ps1 -Configuration Release -Platform "Any CPU"
+        run: .\scripts\build.ps1 -Configuration Portable -Platform "Any CPU"
 
       - name: Package binaries
         shell: pwsh
         run: |
-          if (-not (Test-Path .\bin\Release\GestureSign.exe)) {
-            throw "Release build output was not found."
+          $requiredFiles = @(
+            ".\bin\Portable\GestureSign.ControlPanel.exe",
+            ".\bin\Portable\GestureSign.exe",
+            ".\bin\Portable\GestureSign.CorePlugins.dll"
+          )
+
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path $file)) {
+              throw "Required release build output was not found: $file"
+            }
           }
 
-          Compress-Archive -Path .\bin\Release\* -DestinationPath $env:ARTIFACT -Force
+          Compress-Archive -Path .\bin\Portable\* -DestinationPath $env:ARTIFACT -Force
         env:
           ARTIFACT: ${{ steps.resolve.outputs.artifact }}
 
