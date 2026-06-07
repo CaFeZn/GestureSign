@@ -80,10 +80,7 @@ namespace GestureSign.Daemon.Triggers
                 var rate = GetRateOfFire(deltaXAbs);
                 if (rate >= 1)
                 {
-                    for (int i = 1; i < rate; i++)
-                    {
-                        OnGesturerRecognized(_lastPoints.Count, deltaX > 0 ? Gestures.Right : Gestures.Left);
-                    }
+                    FireContinuousGesture(rate, deltaX > 0 ? Gestures.Right : Gestures.Left);
                     _stopwatch.Restart();
                     _lastPoints = e.FirstCapturedPoints;
                 }
@@ -93,13 +90,19 @@ namespace GestureSign.Daemon.Triggers
                 var rate = GetRateOfFire(deltaYAbs);
                 if (rate >= 1)
                 {
-                    for (int i = 1; i < rate; i++)
-                    {
-                        OnGesturerRecognized(_lastPoints.Count, deltaY > 0 ? Gestures.Down : Gestures.Up);
-                    }
+                    FireContinuousGesture(rate, deltaY > 0 ? Gestures.Down : Gestures.Up);
                     _stopwatch.Restart();
                     _lastPoints = e.FirstCapturedPoints;
                 }
+            }
+        }
+
+        private void FireContinuousGesture(double rate, Gestures gesture)
+        {
+            int fireCount = (int)Math.Floor(rate);
+            for (int i = 0; i < fireCount; i++)
+            {
+                OnGesturerRecognized(_lastPoints.Count, gesture);
             }
         }
 
