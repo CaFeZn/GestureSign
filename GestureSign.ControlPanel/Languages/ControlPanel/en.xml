@@ -7,8 +7,8 @@
   <Messages>
     <CannotFindDaemonMessage>Can not find GestureSign.exe.Try to redownload or reinstall GestureSign.</CannotFindDaemonMessage>
     <Error>Error</Error>
-    <CompatWarning>Application detect that it is set the compatibility to run as administrator(right click/properties/compatibility/Run this program as an administrator).
-This may lead to function failure(e.g. Start application at Windows startup).
+    <CompatWarning>GestureSign is configured with the Windows compatibility option "Run this program as an administrator".
+This can break startup and touch-blocking features. To run gestures against administrator windows, use Options &gt; Start GestureSign on Windows Startup &gt; Run GestureSign As Administrator At Startup, or start GestureSign from the right-click menu with Run as administrator.
     </CompatWarning>
     <CompatWarningTitle>Warning</CompatWarningTitle>
     <FindNewErrorLog>Find new error log.You can help me track and fix problems by sending these error logs.</FindNewErrorLog>

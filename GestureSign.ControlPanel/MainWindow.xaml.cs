@@ -218,9 +218,12 @@ namespace GestureSign.ControlPanel
                     {
                         daemon.StartInfo.FileName = daemonPath;
 
-                        //daemon.StartInfo.UseShellExecute = false;
-                        if (IsAdministrator())
+                        // Gestures cannot target elevated windows unless the daemon is elevated too.
+                        if (IsAdministrator() || StartupHelper.IsRunAsAdmin)
+                        {
+                            daemon.StartInfo.UseShellExecute = true;
                             daemon.StartInfo.Verb = "runas";
+                        }
                         daemon.StartInfo.CreateNoWindow = false;
                         daemon.Start();
                     }

@@ -7,8 +7,8 @@
   <Messages>
     <CannotFindDaemonMessage>未找到组件GestureSign.exe，请重新下载或安装本软件。</CannotFindDaemonMessage>
     <Error>错误</Error>
-    <CompatWarning>检测到您在本程序的文件属性中勾选了“以管理员身份运行此程序”，这将导致开机启动、屏蔽等功能失效。
-如需用管理员身份运行，请在快捷方式的高级属性中设置，或右键菜单-以管理员身份运行。</CompatWarning>
+    <CompatWarning>检测到您在本程序的文件属性中勾选了“以管理员身份运行此程序”，这可能导致开机启动、屏蔽触摸等功能失效。
+如需让手势作用于任务管理器等管理员窗口，请在“选项”中启用“开机启动”和“以管理员身份启动”，或通过右键菜单“以管理员身份运行”启动 GestureSign。</CompatWarning>
     <CompatWarningTitle>注意</CompatWarningTitle>
     <FindNewErrorLog>有新的错误日志生成。
 日志包含程序崩溃的信息，你可以将这些信息发回作者以便尽快解决问题。
