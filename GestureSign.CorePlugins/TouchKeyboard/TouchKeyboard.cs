@@ -163,7 +163,7 @@ namespace GestureSign.CorePlugins.TouchKeyboard
 
         private bool StartProcess()
         {
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles) + @"\Microsoft Shared\ink\TabTip.exe";
+            var path = TouchKeyboardExecutable.GetTabTipPath();
 
             try
             {
@@ -388,5 +388,22 @@ namespace GestureSign.CorePlugins.TouchKeyboard
         }
 
         #endregion
+    }
+
+    internal static class TouchKeyboardExecutable
+    {
+        private const string CommonProgramFiles64VariableName = "CommonProgramW6432";
+        private const string TabTipRelativePath = @"Microsoft Shared\ink\TabTip.exe";
+
+        public static string GetTabTipPath()
+        {
+            var commonProgramFiles = Environment.GetEnvironmentVariable(CommonProgramFiles64VariableName);
+            if (string.IsNullOrEmpty(commonProgramFiles))
+            {
+                commonProgramFiles = Environment.GetFolderPath(Environment.SpecialFolder.CommonProgramFiles);
+            }
+
+            return System.IO.Path.Combine(commonProgramFiles, TabTipRelativePath);
+        }
     }
 }

@@ -13,6 +13,56 @@ namespace GestureSign.CorePlugins
 {
     public class KeyboardHelper
     {
+        public static void SwitchToNextApplication()
+        {
+            SendAltTab(false);
+        }
+
+        public static void SwitchToPreviousApplication()
+        {
+            SendAltTab(true);
+        }
+
+        private static void SendAltTab(bool shift)
+        {
+            KeyboardKey altKey = new KeyboardKey(Keys.LMenu);
+            KeyboardKey shiftKey = new KeyboardKey(Keys.LShiftKey);
+            KeyboardKey tabKey = new KeyboardKey(Keys.Tab);
+            bool altPressed = false;
+            bool shiftPressed = false;
+
+            try
+            {
+                altKey.Press();
+                altPressed = true;
+                Thread.Sleep(30);
+
+                if (shift)
+                {
+                    shiftKey.Press();
+                    shiftPressed = true;
+                    Thread.Sleep(30);
+                }
+
+                tabKey.PressAndRelease();
+                Thread.Sleep(30);
+            }
+            finally
+            {
+                if (shiftPressed)
+                {
+                    shiftKey.Release();
+                    Thread.Sleep(30);
+                }
+
+                if (altPressed)
+                {
+                    altKey.Release();
+                    Thread.Sleep(30);
+                }
+            }
+        }
+
         public static void ResetKeyState(SystemWindow targetWindow, params Keys[] keys)
         {
             if (keys == null || keys.Length == 0)

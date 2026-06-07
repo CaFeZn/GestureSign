@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
+using GestureSign.Common.Log;
 using GestureSign.Daemon.Native;
 
 namespace GestureSign.Daemon.Input
@@ -13,14 +15,17 @@ namespace GestureSign.Daemon.Input
     public class MessageWindow : NativeWindow
     {
         private Screen _currentScr;
+        private const int SourceDeviceStaleTimeout = 1000;
 
         private static readonly HandleRef HwndMessage = new HandleRef(null, new IntPtr(-3));
 
         private List<RawData> _outputTouchs = new List<RawData>(1);
+        private List<RawData> _lastSourceDeviceOutput = new List<RawData>(1);
         private int _requiringContactCount;
         private Dictionary<IntPtr, ushort> _validDevices = new Dictionary<IntPtr, ushort>();
 
         private Devices _sourceDevice;
+        private int _lastSourceDeviceInputTick;
         private List<ushort> _registeredDeviceList = new List<ushort>(1);
         private int? _penLastActivity;
         private bool _ignoreTouchInputWhenUsingPen;
@@ -106,6 +111,7 @@ namespace GestureSign.Daemon.Input
 
         public void UpdateRegistration()
         {
+            ResetSourceDevice(true);
             _ignoreTouchInputWhenUsingPen = AppConfig.IgnoreTouchInputWhenUsingPen;
             var penSetting = AppConfig.PenGestureButton;
             _penGestureButton = penSetting & (DeviceStates.Invert | DeviceStates.RightClickButton);
@@ -179,6 +185,9 @@ namespace GestureSign.Daemon.Input
             {
                 NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pcbSize);
                 var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
+                if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
+                    return true;
+
                 switch (info.hid.usUsage)
                 {
                     case NativeMethods.TouchPadUsage:
@@ -219,6 +228,7 @@ namespace GestureSign.Daemon.Input
                 case NativeMethods.WM_INPUT_DEVICE_CHANGE:
                     {
                         _validDevices.Clear();
+                        ResetSourceDevice(true);
                         break;
                     }
             }
@@ -232,6 +242,64 @@ namespace GestureSign.Daemon.Input
             {
                 throw new Win32Exception(errCode);
             }
+        }
+
+        private void ResetSourceDevice()
+        {
+            ResetSourceDevice(false);
+        }
+
+        private void ResetSourceDevice(bool notifyRelease)
+        {
+            _currentScr = null;
+            if (notifyRelease)
+                ReleaseSourceDevice();
+            _sourceDevice = Devices.None;
+            _requiringContactCount = 0;
+            _outputTouchs = new List<RawData>(1);
+            _lastSourceDeviceOutput = new List<RawData>(1);
+            _lastSourceDeviceInputTick = 0;
+        }
+
+        private void ReleaseSourceDevice()
+        {
+            if (_sourceDevice == Devices.None || PointsIntercepted == null)
+                return;
+
+            var sourceOutput = _lastSourceDeviceOutput.Count != 0 ? _lastSourceDeviceOutput : _outputTouchs;
+            if (sourceOutput.Count == 0 || sourceOutput.TrueForAll(rd => rd.State == DeviceStates.None))
+                return;
+
+            var releaseOutput = sourceOutput
+                .Select(rd => new RawData(DeviceStates.None, rd.ContactIdentifier, rd.RawPoints))
+                .ToList();
+            PointsIntercepted(this, new RawPointsDataMessageEventArgs(releaseOutput, _sourceDevice));
+        }
+
+        private bool TryAcceptSourceDevice(Devices sourceDevice)
+        {
+            if (_sourceDevice == Devices.None)
+            {
+                _sourceDevice = sourceDevice;
+                _lastSourceDeviceInputTick = Environment.TickCount;
+                return true;
+            }
+
+            if (_sourceDevice == sourceDevice)
+            {
+                _lastSourceDeviceInputTick = Environment.TickCount;
+                return true;
+            }
+
+            if (_lastSourceDeviceInputTick != 0 && unchecked(Environment.TickCount - _lastSourceDeviceInputTick) > SourceDeviceStaleTimeout)
+            {
+                ResetSourceDevice(true);
+                _sourceDevice = sourceDevice;
+                _lastSourceDeviceInputTick = Environment.TickCount;
+                return true;
+            }
+
+            return false;
         }
 
         #region ProcessInput
@@ -278,121 +346,154 @@ namespace GestureSign.Daemon.Input
 
                 if (usage == 0)
                     return;
-                if (usage == NativeMethods.PenUsage)
+                try
                 {
-                    if (_ignoreTouchInputWhenUsingPen)
-                        _penLastActivity = Environment.TickCount;
-                    else
-                        _penLastActivity = null;
-
-                    if (_penGestureButton == 0)
-                        return;
-
-                    switch (_sourceDevice)
+                    if (usage == NativeMethods.PenUsage)
                     {
-                        case Devices.TouchScreen:
-                        case Devices.None:
-                        case Devices.Pen:
-                            break;
-                        default:
+                        if (_ignoreTouchInputWhenUsingPen)
+                            _penLastActivity = Environment.TickCount;
+                        else
+                            _penLastActivity = null;
+
+                        if (_penGestureButton == 0)
                             return;
-                    }
 
-                    using (PenDevice penDevice = new PenDevice(buffer, ref raw))
-                    {
-                        DeviceStates state = penDevice.GetPenState();
-
-                        if (_sourceDevice == Devices.None || _sourceDevice == Devices.TouchScreen)
+                        switch (_sourceDevice)
                         {
-                            if ((state & _penGestureButton) != 0)
-                            {
-                                _currentScr = Screen.FromPoint(Cursor.Position);
-                                if (_currentScr == null)
-                                    return;
-                                _sourceDevice = Devices.Pen;
-                                PenDevice.GetCurrentScreenOrientation();
-                            }
-                            else
+                            case Devices.TouchScreen:
+                            case Devices.None:
+                            case Devices.Pen:
+                                break;
+                            default:
                                 return;
                         }
-                        else if (_sourceDevice == Devices.Pen)
+
+                        using (PenDevice penDevice = new PenDevice(buffer, ref raw))
                         {
-                            if ((state & _penGestureButton) == 0 || (state & DeviceStates.InRange) == 0)
+                            DeviceStates state = penDevice.GetPenState();
+
+                            if (_sourceDevice == Devices.None || _sourceDevice == Devices.TouchScreen)
                             {
-                                state = DeviceStates.None;
+                                if ((state & _penGestureButton) != 0)
+                                {
+                                    _currentScr = Screen.FromPoint(Cursor.Position);
+                                    if (_currentScr == null)
+                                        return;
+                                    if (!TryAcceptSourceDevice(Devices.Pen))
+                                        return;
+                                    PenDevice.GetCurrentScreenOrientation();
+                                }
+                                else
+                                    return;
+                            }
+                            else if (_sourceDevice == Devices.Pen)
+                            {
+                                if ((state & _penGestureButton) == 0 || (state & DeviceStates.InRange) == 0)
+                                {
+                                    state = DeviceStates.None;
+                                }
+                            }
+                            penDevice.GetPhysicalMax(1);
+                            Point point = penDevice.GetCoordinate(0, _currentScr);
+                            _outputTouchs = new List<RawData>(1) { new RawData(state, 0, point) };
+                        }
+                    }
+                    else if (usage == NativeMethods.TouchScreenUsage)
+                    {
+                        if (_penLastActivity != null && Environment.TickCount - _penLastActivity < 100)
+                            return;
+                        if (!TryAcceptSourceDevice(Devices.TouchScreen))
+                            return;
+                        if (_currentScr == null)
+                        {
+                            _currentScr = Screen.FromPoint(Cursor.Position);
+                            if (_currentScr == null)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+                            TouchScreenDevice.GetCurrentScreenOrientation();
+                        }
+
+                        using (TouchScreenDevice touchScreen = new TouchScreenDevice(buffer, ref raw))
+                        {
+                            int contactCount = touchScreen.GetContactCount();
+                            HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchScreen.GetLinkCollectionNodes();
+                            if (linkCollection.Length == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+                            touchScreen.GetPhysicalMax(linkCollection.Length);
+
+                            if (contactCount != 0)
+                            {
+                                _requiringContactCount = contactCount;
+                                _outputTouchs = new List<RawData>(contactCount);
+                            }
+                            if (_requiringContactCount == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+
+                            touchScreen.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
+                        }
+                    }
+                    else if (usage == NativeMethods.TouchPadUsage)
+                    {
+                        if (!TryAcceptSourceDevice(Devices.TouchPad))
+                            return;
+                        if (_currentScr == null)
+                        {
+                            _currentScr = Screen.FromPoint(Cursor.Position);
+                            if (_currentScr == null)
+                            {
+                                ResetSourceDevice(true);
+                                return;
                             }
                         }
-                        penDevice.GetPhysicalMax(1);
-                        Point point = penDevice.GetCoordinate(0, _currentScr);
-                        _outputTouchs = new List<RawData>(1) { new RawData(state, 0, point) };
+
+                        using (TouchPadDevice touchPad = new TouchPadDevice(buffer, ref raw))
+                        {
+                            int contactCount = touchPad.GetContactCount();
+                            HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchPad.GetLinkCollectionNodes();
+                            if (linkCollection.Length == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+                            touchPad.GetPhysicalMax(linkCollection.Length);
+
+                            if (contactCount != 0)
+                            {
+                                _requiringContactCount = contactCount;
+                                _outputTouchs = new List<RawData>(contactCount);
+                            }
+                            if (_requiringContactCount == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+
+                            touchPad.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
+                        }
                     }
                 }
-                else if (usage == NativeMethods.TouchScreenUsage)
+                catch (Exception ex)
                 {
-                    if (_penLastActivity != null && Environment.TickCount - _penLastActivity < 100)
-                        return;
-                    if (_sourceDevice == Devices.None)
-                    {
-                        _currentScr = Screen.FromPoint(Cursor.Position);
-                        if (_currentScr == null)
-                            return;
-                        _sourceDevice = Devices.TouchScreen;
-                        TouchScreenDevice.GetCurrentScreenOrientation();
-                    }
-                    else if (_sourceDevice != Devices.TouchScreen)
-                        return;
-
-                    using (TouchScreenDevice touchScreen = new TouchScreenDevice(buffer, ref raw))
-                    {
-                        int contactCount = touchScreen.GetContactCount();
-                        HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchScreen.GetLinkCollectionNodes();
-                        touchScreen.GetPhysicalMax(linkCollection.Length);
-
-                        if (contactCount != 0)
-                        {
-                            _requiringContactCount = contactCount;
-                            _outputTouchs = new List<RawData>(contactCount);
-                        }
-                        if (_requiringContactCount == 0) return;
-
-                        touchScreen.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
-                    }
-                }
-                else if (usage == NativeMethods.TouchPadUsage)
-                {
-                    if (_sourceDevice == Devices.None)
-                    {
-                        _currentScr = Screen.FromPoint(Cursor.Position);
-                        if (_currentScr == null)
-                            return;
-                        _sourceDevice = Devices.TouchPad;
-                    }
-                    else if (_sourceDevice != Devices.TouchPad)
-                        return;
-
-                    using (TouchPadDevice touchPad = new TouchPadDevice(buffer, ref raw))
-                    {
-                        int contactCount = touchPad.GetContactCount();
-                        HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchPad.GetLinkCollectionNodes();
-                        touchPad.GetPhysicalMax(linkCollection.Length);
-
-                        if (contactCount != 0)
-                        {
-                            _requiringContactCount = contactCount;
-                            _outputTouchs = new List<RawData>(contactCount);
-                        }
-                        if (_requiringContactCount == 0) return;
-
-                        touchPad.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
-                    }
+                    Logging.LogException(ex);
+                    ResetSourceDevice(true);
+                    return;
                 }
 
                 if (_requiringContactCount == 0 && PointsIntercepted != null)
                 {
                     PointsIntercepted(this, new RawPointsDataMessageEventArgs(_outputTouchs, _sourceDevice));
+                    _lastSourceDeviceOutput = _outputTouchs;
                     if (_outputTouchs.TrueForAll(rd => rd.State == DeviceStates.None))
                     {
-                        _sourceDevice = Devices.None;
+                        ResetSourceDevice();
                     }
                 }
             }

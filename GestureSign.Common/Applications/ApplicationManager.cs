@@ -270,7 +270,12 @@ namespace GestureSign.Common.Applications
 
         public SystemWindow GetWindowFromPoint(Point point)
         {
-            return SystemWindow.FromPointEx(point.X, point.Y, true, true);
+            var window = SystemWindow.FromPointEx(point.X, point.Y, true, true);
+            if (!IsShellUiWindow(window))
+                return window;
+
+            var foregroundWindow = SystemWindow.ForegroundWindow;
+            return foregroundWindow == null || IsShellUiWindow(foregroundWindow) ? window : foregroundWindow;
         }
 
         public IApplication[] GetApplicationFromWindow(SystemWindow window, bool userApplicationOnly = false)
@@ -463,6 +468,30 @@ namespace GestureSign.Common.Applications
             }
             catch { }
             return realWindow;
+        }
+
+        public static bool IsShellUiWindow(SystemWindow window)
+        {
+            if (window == null || window.HWnd == IntPtr.Zero)
+                return false;
+
+            try
+            {
+                switch (window.ClassName)
+                {
+                    case "Shell_TrayWnd":
+                    case "Shell_SecondaryTrayWnd":
+                    case "WorkerW":
+                    case "Progman":
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         #endregion

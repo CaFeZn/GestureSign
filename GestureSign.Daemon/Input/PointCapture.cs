@@ -451,16 +451,16 @@ namespace GestureSign.Daemon.Input
         {
             if (!_blockTouchInputThreshold.HasValue) return;
 
-            _currentContext.Post((state) =>
+            PostToCurrentContext(() =>
             {
                 _pointerInputTargetWindow.BlockTouchInputThreshold = _blockTouchInputThreshold.GetValueOrDefault();
                 _blockTouchInputThreshold = null;
-            }, null);
+            });
         }
 
         private void InitialTimeoutCallback(object o)
         {
-            _currentContext.Post((state) =>
+            PostToCurrentContext(() =>
             {
                 if (State != CaptureState.CapturingInvalid) return;
 
@@ -493,13 +493,42 @@ namespace GestureSign.Daemon.Input
                                 break;
                         }
                     }
-                    State = CaptureState.Ready;
+                    CancelCaptureByInitialTimeout();
                 }
                 catch
                 {
                     State = CaptureState.Ready;
+                    Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
                 }
-            }, null);
+            });
+        }
+
+        private void PostToCurrentContext(System.Action action)
+        {
+            if (_currentContext != null)
+            {
+                _currentContext.Post((state) => action(), null);
+            }
+            else
+            {
+                action();
+            }
+        }
+
+        private void CancelCaptureByInitialTimeout()
+        {
+            if (_pointsCaptured != null && _pointsCaptured.Count != 0)
+            {
+                var points = new List<List<Point>>(_pointsCaptured.Values);
+                var firstPoints = SourceDevice == Devices.TouchPad
+                    ? new List<Point>() { _touchPadStartPoint }
+                    : points.Select(p => p.FirstOrDefault()).ToList();
+                OnCaptureCanceled(new PointsCapturedEventArgs(points, firstPoints));
+                _pointsCaptured.Clear();
+            }
+
+            State = CaptureState.Ready;
+            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
         }
 
         private bool TryBeginCapture(List<InputPoint> firstPoint)
@@ -632,6 +661,7 @@ namespace GestureSign.Daemon.Input
         public void Load()
         {
             // Shortcut method to control singleton instantiation
+            _currentContext = SynchronizationContext.Current ?? _currentContext;
         }
 
         public void ToggleUserDisablePointCapture()

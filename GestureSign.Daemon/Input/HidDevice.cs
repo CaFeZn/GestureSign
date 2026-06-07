@@ -168,6 +168,9 @@ namespace GestureSign.Daemon.Input
                         {
                             NativeMethods.GetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pSize);
                             var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
+                            if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
+                                continue;
+
                             switch (info.hid.usUsage)
                             {
                                 case NativeMethods.TouchPadUsage:

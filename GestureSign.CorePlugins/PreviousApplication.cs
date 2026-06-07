@@ -1,7 +1,5 @@
 ﻿using System;
 using GestureSign.Common.Plugins;
-using WindowsInput;
-using WindowsInput.Native;
 using GestureSign.Common.Localization;
 using System.Windows.Forms;
 
@@ -60,10 +58,9 @@ namespace GestureSign.CorePlugins
 
         public bool Gestured(PointInfo ActionPoint)
         {
-            InputSimulator simulator = new InputSimulator();
             try
             {
-                simulator.Keyboard.ModifiedKeyStroke(new VirtualKeyCode[] { VirtualKeyCode.LSHIFT, VirtualKeyCode.LMENU }, VirtualKeyCode.TAB);
+                KeyboardHelper.SwitchToPreviousApplication();
             }
             catch (Exception)
             {

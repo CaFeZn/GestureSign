@@ -115,11 +115,11 @@ namespace GestureSign.Daemon.Native
         [DllImport("user32.dll")]
         internal static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
-        [DllImport("User32")]
+        [DllImport("User32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool RegisterPointerInputTarget(IntPtr handle, POINTER_INPUT_TYPE pointerType);
 
-        [DllImport("User32")]
+        [DllImport("User32", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool UnregisterPointerInputTarget(IntPtr hwnd, POINTER_INPUT_TYPE pointerType);
 

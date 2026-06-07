@@ -17,11 +17,7 @@ namespace GestureSign.Daemon.Triggers
             PointCapture.Instance.ForegroundApplicationsChanged += Instance_ForegroundApplicationsChanged;
             PointCapture.Instance.ModeChanged += Instance_ModeChanged;
 
-            var hotKeyActions = ApplicationManager.Instance.GetApplicationFromWindow(SystemWindow.ForegroundWindow).Where(app => !(app is IgnoredApp)).SelectMany(app => app.Actions).Where(a => a.Hotkey != null).ToList();
-            hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a.Hotkey != null));
-
-            if (hotKeyActions.Count != 0)
-                RegisterHotKeys(hotKeyActions);
+            RefreshHotKeys();
         }
 
         private void Instance_ForegroundApplicationsChanged(object sender, ApplicationChangedEventArgs appsChanged)
@@ -39,6 +35,19 @@ namespace GestureSign.Daemon.Triggers
         {
             if (e.Mode == Common.Input.CaptureMode.UserDisabled)
                 UnloadHotKeys();
+            else if (e.Mode == Common.Input.CaptureMode.Normal)
+                RefreshHotKeys();
+        }
+
+        private void RefreshHotKeys()
+        {
+            var hotKeyActions = ApplicationManager.Instance.GetApplicationFromWindow(SystemWindow.ForegroundWindow).Where(app => !(app is IgnoredApp) && app.Actions != null).SelectMany(app => app.Actions).Where(a => a != null && a.Hotkey != null).ToList();
+            hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a != null && a.Hotkey != null));
+
+            if (hotKeyActions.Count == 0)
+                UnloadHotKeys();
+            else
+                RegisterHotKeys(hotKeyActions);
         }
 
         private void RegisterHotKeys(List<IAction> actions)
@@ -89,6 +98,9 @@ namespace GestureSign.Daemon.Triggers
 
         private void Hotkey_HotkeyPressed(object sender, EventArgs e)
         {
+            if (_hotKeyMap == null)
+                return;
+
             Hotkey hotkey = (Hotkey)sender;
             int index = _hotKeyMap.FindIndex(p => p.Key.KeyCode == hotkey.KeyCode && p.Key.ModifierKeys == hotkey.ModifierKeys);
             if (index >= 0)

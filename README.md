@@ -20,3 +20,10 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 - Launch Windows Store App
 - Send Message
 - Toggle Window Topmost
+
+## Build
+
+- Open `GestureSign.sln` in Visual Studio 2022, or run `.\scripts\build.ps1`
+- The solution now targets `.NET Framework 4.8`
+- NuGet packages are restored with `packages.config`, so restore is required before the first build
+- Windows 11 on Arm64 uses the `Any CPU` build; executable projects set `Prefer32Bit=false`, so they can run natively when the .NET Framework 4.8.1 Arm64 runtime is installed

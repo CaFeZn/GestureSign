@@ -1,4 +1,5 @@
 ﻿using GestureSign.Common.Configuration;
+using GestureSign.Common.Log;
 using GestureSign.Daemon.Native;
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,11 @@ namespace GestureSign.Daemon.Filtration
 
                     if (!_isInitialized)
                     {
-                        NativeMethods.InitializeTouchInjection(10, TOUCH_FEEDBACK.NONE);
+                        if (!NativeMethods.InitializeTouchInjection(10, TOUCH_FEEDBACK.NONE))
+                        {
+                            Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                            return;
+                        }
                         _isInitialized = true;
                     }
 
@@ -63,12 +68,20 @@ namespace GestureSign.Daemon.Filtration
                     {
                         _isRegistered = true;
                     }
+                    else
+                    {
+                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                    }
                 }
                 else
                 {
                     if (_isRegistered && NativeMethods.UnregisterPointerInputTarget(Handle, POINTER_INPUT_TYPE.TOUCH))
                     {
                         _isRegistered = false;
+                    }
+                    else if (_isRegistered)
+                    {
+                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
                     }
                 }
             }
@@ -129,7 +142,16 @@ namespace GestureSign.Daemon.Filtration
 
         private void ProcessPointerMessage(Message message)
         {
-            POINTER_INFO[] pointerInfos = GetPointerInfos(message);
+            POINTER_INFO[] pointerInfos;
+            try
+            {
+                pointerInfos = GetPointerInfos(message);
+            }
+            catch (Win32Exception ex)
+            {
+                Logging.LogException(ex);
+                return;
+            }
 
             if (pointerInfos.Length == 0 || pointerInfos[0].FrameID == _lastFrameID) return;
             _lastFrameID = pointerInfos[0].FrameID;
@@ -143,7 +165,12 @@ namespace GestureSign.Daemon.Filtration
                 _tempDisable)
             {
                 if (ptis.Count != 0)
-                    NativeMethods.InjectTouchInput(ptis.Count, ptis.ToArray());
+                {
+                    if (!NativeMethods.InjectTouchInput(ptis.Count, ptis.ToArray()))
+                    {
+                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                    }
+                }
             }
         }
 

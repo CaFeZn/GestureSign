@@ -25,7 +25,7 @@ namespace GestureSign.Daemon.Input
                     int contactIdentifier = GetContactId(nodeIndex, pRawDataPacket);
                     Point point = GetCoordinate(nodeIndex, currentScr, pRawDataPacket);
 
-                    ushort[] usageList = GetButtonList(_hPreparsedData.DangerousGetHandle(), _pRawData, nodeIndex, _dwSizHid);
+                    ushort[] usageList = GetButtonList(_hPreparsedData.DangerousGetHandle(), pRawDataPacket, nodeIndex, _dwSizHid);
                     bool tip = usageList.Length != 0 && usageList[0] == NativeMethods.TipId;
 
                     _outputTouchs.Add(new RawData(tip ? DeviceStates.Tip : DeviceStates.None, contactIdentifier, point));

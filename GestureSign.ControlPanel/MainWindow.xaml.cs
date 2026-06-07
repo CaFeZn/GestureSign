@@ -80,29 +80,38 @@ namespace GestureSign.ControlPanel
 
         private bool ExistsNewerErrorLog()
         {
-            EventLog logs = new EventLog { Log = "Application" };
-            var now = DateTime.Now;
-            var entryCollection = logs.Entries;
-            int logCount = entryCollection.Count;
-            for (int i = logCount - 1; i > logCount - 500 && i < logCount && i >= 0; i--)
+            try
             {
-                var entry = entryCollection[i];
-                if (now.Subtract(entry.TimeWritten).TotalHours > 1)
-                    break;
-
-                if (entry.EntryType == EventLogEntryType.Error && ".NET Runtime".Equals(entry.Source) &&
-                    entry.Message.IndexOf("GestureSign", StringComparison.OrdinalIgnoreCase) >= 0)
+                using (EventLog logs = new EventLog { Log = "Application" })
                 {
-                    bool hasNewLog = AppConfig.LastErrorTime.CompareTo(entry.TimeWritten) < 0;
-                    if (hasNewLog)
+                    var now = DateTime.Now;
+                    var entryCollection = logs.Entries;
+                    int logCount = entryCollection.Count;
+                    for (int i = logCount - 1; i > logCount - 500 && i < logCount && i >= 0; i--)
                     {
-                        AppConfig.LastErrorTime = entry.TimeWritten;
-                    }
+                        var entry = entryCollection[i];
+                        if (now.Subtract(entry.TimeWritten).TotalHours > 1)
+                            break;
 
-                    return hasNewLog;
+                        if (entry.EntryType == EventLogEntryType.Error && ".NET Runtime".Equals(entry.Source) &&
+                            entry.Message.IndexOf("GestureSign", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            bool hasNewLog = AppConfig.LastErrorTime.CompareTo(entry.TimeWritten) < 0;
+                            if (hasNewLog)
+                            {
+                                AppConfig.LastErrorTime = entry.TimeWritten;
+                            }
+
+                            return hasNewLog;
+                        }
+                        //The collection is dynamic and the number of entries may not be immutable
+                        logCount = entryCollection.Count;
+                    }
                 }
-                //The collection is dynamic and the number of entries may not be immutable
-                logCount = entryCollection.Count;
+            }
+            catch (Exception exception)
+            {
+                Logging.LogException(exception);
             }
             return false;
         }

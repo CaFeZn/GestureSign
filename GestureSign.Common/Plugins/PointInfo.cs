@@ -46,9 +46,10 @@ namespace GestureSign.Common.Plugins
             get
             {
                 // change target window if foreground window changed
-                if (_targetWindow == null || _targetWindow.HWnd != SystemWindow.ForegroundWindow.HWnd)
+                var foregroundWindow = SystemWindow.ForegroundWindow;
+                if (_targetWindow == null || foregroundWindow == null || _targetWindow.HWnd != foregroundWindow.HWnd)
                 {
-                    _targetWindow = SystemWindow.FromPointEx(_pointLocation[0].X, _pointLocation[0].Y, true, false);
+                    _targetWindow = GestureSign.Common.Applications.ApplicationManager.Instance.GetWindowFromPoint(_pointLocation[0]);
                 }
                 return _targetWindow;
             }

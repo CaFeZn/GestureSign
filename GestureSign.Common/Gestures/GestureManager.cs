@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using System.Drawing;
 using System.Threading.Tasks;
+using GestureSign.Common.Applications;
 using GestureSign.Common.Configuration;
 using GestureSign.PointPatterns;
 using GestureSign.Common.Input;
@@ -105,7 +106,13 @@ namespace GestureSign.Common.Gestures
 
             if (pointCapture.Mode != CaptureMode.Training)
             {
-                if (_gestureMatchResult != null && _gestureMatchResult.Count != 0)
+                if (HasExecutableAction(GestureName))
+                {
+                    _gestureLevel = 0;
+                    _gestureMatchResult = null;
+                    _lastGestureTime = null;
+                }
+                else if (_gestureMatchResult != null && _gestureMatchResult.Count != 0)
                 {
                     _gestureLevel++;
                     _lastGestureTime = Environment.TickCount;
@@ -116,6 +123,12 @@ namespace GestureSign.Common.Gestures
                     _gestureMatchResult = null;
                 }
             }
+        }
+
+        private bool HasExecutableAction(string gestureName)
+        {
+            return !string.IsNullOrEmpty(gestureName) &&
+                ApplicationManager.Instance.GetRecognizedDefinedAction(gestureName).Any();
         }
 
         #endregion
