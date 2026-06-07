@@ -110,7 +110,7 @@ Gesture and trigger notes:
 - Open `GestureSign.sln` in Visual Studio 2022, or run `.\scripts\build.ps1`
 - The solution now targets `.NET Framework 4.8`
 - NuGet packages are restored with `packages.config`, so restore is required before the first build
-- Windows 11 on Arm64 uses the `Any CPU` build; executable projects set `Prefer32Bit=false`, so they can run natively when the .NET Framework 4.8.1 Arm64 runtime is installed
+- Windows 11 on Arm64 uses the `Any CPU` build; do not add an `ARM64` solution platform. For native Arm64 .NET Framework output, build on Windows 11 24H2 with VS 2022 17.11 or newer and pass `.\scripts\build.ps1 -Configuration Release -PreferNativeArm64`.
 
 ## Administrator Windows
 

@@ -2,7 +2,8 @@ param(
     [ValidateSet("Debug", "Release", "Portable", "Centennial", "uiAccessRelease")]
     [string]$Configuration = "Debug",
     [string]$Platform = "Any CPU",
-    [switch]$SkipRestore
+    [switch]$SkipRestore,
+    [switch]$PreferNativeArm64
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +25,10 @@ if (-not $msbuild) {
 Push-Location $repoRoot
 
 try {
+    if ($PreferNativeArm64 -and $Platform -notin @("Any CPU", "AnyCPU")) {
+        throw "PreferNativeArm64 requires the Any CPU platform."
+    }
+
     if (-not $SkipRestore) {
         & $msbuild $solution "/t:Restore" "/p:RestorePackagesConfig=true" "/v:m"
         if ($LASTEXITCODE -ne 0) {
@@ -31,7 +36,20 @@ try {
         }
     }
 
-    & $msbuild $solution "/m:1" "/nr:false" "/p:UseSharedCompilation=false" "/p:Configuration=$Configuration" "/p:Platform=$Platform" "/v:m"
+    $buildArgs = @(
+        $solution,
+        "/m:1",
+        "/nr:false",
+        "/p:UseSharedCompilation=false",
+        "/p:Configuration=$Configuration",
+        "/p:Platform=$Platform"
+    )
+    if ($PreferNativeArm64) {
+        $buildArgs += "/p:PreferNativeArm64=true"
+    }
+    $buildArgs += "/v:m"
+
+    & $msbuild @buildArgs
     exit $LASTEXITCODE
 }
 finally {
