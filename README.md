@@ -106,6 +106,7 @@ Gesture and trigger notes:
 - If the touch keyboard or a browser's native touch behavior breaks while touch blocking is enabled, lower that app's block threshold or disable blocking for that app first.
 - Trigger conditions can use `finger_1_start_X`, `finger_1_start_Y`, `finger_1_end_X`, `finger_1_end_Y`, their percent variants such as `finger_1_start_X%`, and `finger_1_ID`.
 - Edge gestures can be approximated with percent trigger conditions, for example `finger_1_start_X%<5`, `finger_1_start_X%>95`, `finger_1_start_Y%<5`, or `finger_1_start_Y%>95`.
+- True BetterTouchTool-style tip-tap is not implemented. A one-shot approximation can use trigger conditions such as `finger_1_ID<finger_2_ID` or `finger_1_ID>finger_2_ID`, but both contacts must be captured together and some touchpad drivers do not expose stable contact IDs.
 - Window conditions can use `window_is_maximized`, `window_is_minimized`, and `window_is_fullscreen`.
 - Modifier-key conditions can use `key_is_shift_down`, `key_is_ctrl_down`, `key_is_alt_down`, and `key_is_win_down`.
 - Use SQL-style operators such as `AND`, `OR`, and parentheses for multiple trigger conditions, for example `finger_1_start_X<500 AND finger_1_end_X<450`.
@@ -172,6 +173,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#135](https://github.com/TransposonY/GestureSign/issues/135), [#116](https://github.com/TransposonY/GestureSign/issues/116), [#114](https://github.com/TransposonY/GestureSign/issues/114), [#59](https://github.com/TransposonY/GestureSign/issues/59) | Precision touchpad handling is improved, but third-party/vendor driver support must be validated per device. |
 | [#130](https://github.com/TransposonY/GestureSign/issues/130), [#87](https://github.com/TransposonY/GestureSign/issues/87), [#45](https://github.com/TransposonY/GestureSign/issues/45) | Hold-to-drag workflows need an explicit hold/release feature to avoid stuck mouse buttons. |
 | [#66](https://github.com/TransposonY/GestureSign/issues/66), [#24](https://github.com/TransposonY/GestureSign/issues/24), [#52](https://github.com/TransposonY/GestureSign/issues/52) | Modifier-key conditions and held-key actions are partly supported, but arbitrary-key gesture conditions and keyboard-triggered mouse drawing are not implemented. |
+| [#47](https://github.com/TransposonY/GestureSign/issues/47), [#26](https://github.com/TransposonY/GestureSign/issues/26) | Tip-tap can only be approximated with contact-ID conditions, and rotation-insensitive five-finger pinch needs recognizer/model work rather than a small configuration change. |
 | [#46](https://github.com/TransposonY/GestureSign/issues/46) | Full whitelist mode is not implemented; use ignored applications for whole-app exclusion or app-specific disabled-command actions for one-gesture exclusions. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | Portable builds can run from a chosen folder, but installer-directory selection is not implemented in this repository. |
 
