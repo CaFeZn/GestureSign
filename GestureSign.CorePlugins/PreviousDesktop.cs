@@ -59,6 +59,7 @@ namespace GestureSign.CorePlugins
             try
             {
                 KeyboardHelper.SwitchToPreviousDesktop();
+                KeyboardHelper.ReleaseKeyState(Keys.LWin, Keys.LControlKey);
                 return true;
             }
             catch (Exception)

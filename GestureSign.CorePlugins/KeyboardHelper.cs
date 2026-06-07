@@ -154,17 +154,38 @@ namespace GestureSign.CorePlugins
                     SystemWindow.ForegroundWindow = targetWindow;
                 shieldWindow.DestroyHandle();
 
-                string keysName = string.Join("+ ", keyList.Select(k => k.KeyName));
-                string message = string.Format(LocalizationProvider.Instance.GetTextValue("CorePlugins.HotKey.FailureMessage"), keysName);
-
                 if (failureList.Count != 0)
                 {
+                    string keysName = string.Join("+ ", keyList.Select(k => k.KeyName));
+                    string message = string.Format(LocalizationProvider.Instance.GetTextValue("CorePlugins.HotKey.FailureMessage"), keysName);
+
                     string failurekeysName = string.Join(", ", failureList.Select(k => k.KeyName));
                     message += "\r\n" + string.Format(LocalizationProvider.Instance.GetTextValue("CorePlugins.HotKey.ResetFailure"), failurekeysName);
-                }
 
-                MessageBox.Show(message, LocalizationProvider.Instance.GetTextValue("Messages.Error"),
-                    MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                    MessageBox.Show(message, LocalizationProvider.Instance.GetTextValue("Messages.Error"),
+                        MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                }
+            }
+        }
+
+        public static void ReleaseKeyState(params Keys[] keys)
+        {
+            if (keys == null || keys.Length == 0)
+                return;
+
+            InputSimulator simulator = new InputSimulator();
+            foreach (var key in keys)
+            {
+                if (!Enum.IsDefined(typeof(VirtualKeyCode), key.GetHashCode()))
+                    continue;
+
+                simulator.Keyboard.KeyUp((VirtualKeyCode)key).Sleep(10);
+                var keyboardKey = new KeyboardKey(key);
+                if (keyboardKey.IsGloballyPressed)
+                {
+                    keyboardKey.Release();
+                    Thread.Sleep(10);
+                }
             }
         }
     }
