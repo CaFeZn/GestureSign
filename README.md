@@ -153,6 +153,8 @@ General troubleshooting:
 - If GestureSign interferes with one app, bind `Add Current Application to Ignored List` to a gesture and run it while that app is active.
 - To avoid interference by default, enable `Options` > `Whitelist Mode`. In this mode GestureSign captures gestures and hotkeys only when the target foreground/capture window matches a configured application; unmatched apps are ignored, and matched apps may still fall back to global actions.
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
+- Mouse wheel rotation can be used as a standalone mouse trigger by selecting `Wheel Forward` or `Wheel Backward` in an action's mouse hotkey field. Standalone wheel triggers require a trigger condition, for example a corner or edge condition, so ordinary scrolling is not intercepted globally.
+- Single-finger touchpad gestures are ignored unless the action has a trigger condition that already matches at touch start. For a right-edge middle strip, use a condition such as `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`; combine it with `Continuous Gesture` one-finger `Up`/`Down` and a mouse vertical-scroll command for scrollbar-like fast paging while the finger moves.
 - Use `Options` > `Backup User Data` before testing large configuration changes.
 
 ## Upstream Issue Coverage
@@ -200,6 +202,7 @@ Implemented or covered:
 | [#43](https://github.com/TransposonY/GestureSign/issues/43) | Added `Search or Open Clipboard Text` for browser search/open-URL workflows after selected text is copied to the clipboard. |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | Mouse gestures can use multiple configured drawing buttons, such as right and middle mouse buttons. |
 | [#38](https://github.com/TransposonY/GestureSign/issues/38) | Control Panel touchpad scrolling uses fractional wheel-delta handling instead of treating every small delta as a full wheel tick. |
+| [#41](https://github.com/TransposonY/GestureSign/issues/41) | Mouse wheel rotation can be used as a standalone conditioned mouse trigger, so edge/corner wheel workflows do not need a held drawing button. |
 | [#19](https://github.com/TransposonY/GestureSign/issues/19), [#126](https://github.com/TransposonY/GestureSign/issues/126) | Hot Key and built-in window commands cover common accessibility shortcuts and hide-window workflows. |
 
 Improved but not fully closed without hardware validation or larger feature design:
@@ -224,7 +227,6 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#64](https://github.com/TransposonY/GestureSign/issues/64), [#63](https://github.com/TransposonY/GestureSign/issues/63), [#47](https://github.com/TransposonY/GestureSign/issues/47), [#26](https://github.com/TransposonY/GestureSign/issues/26) | Tip-tap can only be approximated with contact-ID conditions; separate tap-vs-tip-tap, left/right tip-tap, and rotation-insensitive five-finger pinch need recognizer/model work rather than a small configuration change. |
 | [#61](https://github.com/TransposonY/GestureSign/issues/61) | Native/system event suppression is limited to UIAccess touch-pointer redirection after enough contacts are captured; GestureSign cannot fully block precision-touchpad, pen, mouse, keyboard, or all app-native events. |
 | [#58](https://github.com/TransposonY/GestureSign/issues/58) | Battery-drain reports need profiling on affected touchscreen/tablet hardware; users can reduce risk by disabling unused sources and avoiding low-threshold one-finger capture during long sessions. |
-| [#41](https://github.com/TransposonY/GestureSign/issues/41) | Mouse gesture drawing buttons support multiple button choices, but mouse wheel rotation is an output command under `Mouse Actions`, not a standalone drawing trigger. |
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome plus hovering pen/side-button behavior depends on whether the driver exposes HID pen state or mouse input, and needs validation with the affected browser and stylus driver. |
 | [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox detached-tab windows should match by browser executable/default browser rules, but remaining failures require per-window validation on the affected Firefox version. |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | Actions can be scoped to multiple source devices, including touchscreen and touchpad, but compatible raw HID touchpad input is still driver-dependent. |

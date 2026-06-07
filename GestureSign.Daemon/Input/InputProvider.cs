@@ -1,9 +1,12 @@
 ﻿using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
 using GestureSign.Common.InterProcessCommunication;
+using GestureSign.Common.Applications;
 using ManagedWinapi.Hooks;
 using Microsoft.Win32;
 using System;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GestureSign.Daemon.Input
@@ -14,22 +17,21 @@ namespace GestureSign.Daemon.Input
         private MessageWindow _messageWindow;
         private CustomNamedPipeServer _deviceStateServer;
         private int _stateUpdating;
+        private readonly SynchronizationContext _synchronizationContext;
 
         public LowLevelMouseHook LowLevelMouseHook;
         public event RawPointsDataMessageEventHandler PointsIntercepted;
 
         public InputProvider()
         {
+            _synchronizationContext = SynchronizationContext.Current;
             _messageWindow = new MessageWindow();
             _messageWindow.PointsIntercepted += MessageWindow_PointsIntercepted;
 
             AppConfig.ConfigChanged += AppConfig_ConfigChanged;
+            ApplicationManager.OnLoadApplicationsCompleted += ApplicationManager_OnLoadApplicationsCompleted;
             LowLevelMouseHook = new LowLevelMouseHook();
-            if (AppConfig.DrawingButton != MouseActions.None)
-                Task.Delay(1000).ContinueWith((t) =>
-                {
-                    LowLevelMouseHook.StartHook();
-                }, TaskScheduler.FromCurrentSynchronizationContext());
+            ScheduleMouseHookUpdate(1000);
 
 
             SystemEvents.SessionSwitch += new SessionSwitchEventHandler(OnSessionSwitch);
@@ -41,11 +43,13 @@ namespace GestureSign.Daemon.Input
 
         private void AppConfig_ConfigChanged(object sender, System.EventArgs e)
         {
-            if (AppConfig.DrawingButton != MouseActions.None)
-                LowLevelMouseHook.StartHook();
-            else LowLevelMouseHook.Unhook();
-
+            ScheduleMouseHookUpdate();
             UpdateDeviceState();
+        }
+
+        private void ApplicationManager_OnLoadApplicationsCompleted(object sender, EventArgs e)
+        {
+            ScheduleMouseHookUpdate();
         }
 
         private void MessageWindow_PointsIntercepted(object sender, RawPointsDataMessageEventArgs e)
@@ -90,6 +94,55 @@ namespace GestureSign.Daemon.Input
             }
         }
 
+        private void ScheduleMouseHookUpdate(int delayMilliseconds = 0)
+        {
+            if (delayMilliseconds > 0)
+            {
+                Task.Delay(delayMilliseconds).ContinueWith(t => PostMouseHookUpdate());
+                return;
+            }
+
+            PostMouseHookUpdate();
+        }
+
+        private void PostMouseHookUpdate()
+        {
+            if (_synchronizationContext != null)
+            {
+                _synchronizationContext.Post(state => UpdateMouseHook(), null);
+                return;
+            }
+
+            UpdateMouseHook();
+        }
+
+        private void UpdateMouseHook()
+        {
+            if (ShouldUseMouseHook())
+                LowLevelMouseHook.StartHook();
+            else
+                LowLevelMouseHook.Unhook();
+        }
+
+        private static bool ShouldUseMouseHook()
+        {
+            return AppConfig.DrawingButton != MouseActions.None || HasConditionedStandaloneWheelAction();
+        }
+
+        private static bool HasConditionedStandaloneWheelAction()
+        {
+            return ApplicationManager.Instance.Applications
+                .Where(app => !(app is IgnoredApp) && app.Actions != null)
+                .SelectMany(app => app.Actions)
+                .Any(action =>
+                    action != null &&
+                    (action.MouseHotkey == MouseActions.WheelForward || action.MouseHotkey == MouseActions.WheelBackward) &&
+                    (action.IgnoredDevices & Devices.Mouse) == 0 &&
+                    !string.IsNullOrWhiteSpace(action.Condition) &&
+                    action.Commands != null &&
+                    action.Commands.Any(command => command != null && command.IsEnabled));
+        }
+
         #region IDisposable Support
 
         protected virtual void Dispose(bool disposing)
@@ -99,6 +152,7 @@ namespace GestureSign.Daemon.Input
                 if (disposing)
                 {
                     AppConfig.ConfigChanged -= AppConfig_ConfigChanged;
+                    ApplicationManager.OnLoadApplicationsCompleted -= ApplicationManager_OnLoadApplicationsCompleted;
                     _messageWindow?.Dispose();
                 }
 

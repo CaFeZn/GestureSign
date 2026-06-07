@@ -313,8 +313,9 @@ namespace GestureSign.Common.Applications
 
         public IEnumerable<IApplication> GetApplicationFromPoint(Point testPoint)
         {
-            var systemWindow = GetWindowFromPoint(testPoint);
-            return GetApplicationFromWindow(systemWindow);
+            CaptureWindow = GetWindowFromPoint(testPoint);
+            _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            return _recognizedApplication;
         }
 
         public IEnumerable<IAction> GetRecognizedDefinedAction(string GestureName)
@@ -326,6 +327,12 @@ namespace GestureSign.Common.Applications
         public List<IAction> GetRecognizedDefinedAction(Func<IAction, bool> predicate)
         {
             return GetDefinedAction(_recognizedApplication, predicate, ShouldUseGlobalFallback(_recognizedApplication));
+        }
+
+        public bool ShouldUseGlobalFallback(IEnumerable<IApplication> applications)
+        {
+            return !HasEnabledIgnoredApplication(applications) &&
+                (!AppConfig.WhitelistedApplicationsOnly || HasUserApplication(applications));
         }
 
         public List<IAction> GetDefinedAction(IEnumerable<IApplication> application, Func<IAction, bool> predicate, bool useGlobal)
@@ -614,14 +621,14 @@ namespace GestureSign.Common.Applications
                 !HasUserApplication(applications);
         }
 
-        private static bool ShouldUseGlobalFallback(IEnumerable<IApplication> applications)
-        {
-            return !AppConfig.WhitelistedApplicationsOnly || HasUserApplication(applications);
-        }
-
         private static bool HasUserApplication(IEnumerable<IApplication> applications)
         {
             return applications != null && applications.Any(app => app is UserApp);
+        }
+
+        private static bool HasEnabledIgnoredApplication(IEnumerable<IApplication> applications)
+        {
+            return applications != null && applications.Any(app => app is IgnoredApp ignoredApp && ignoredApp.IsEnabled);
         }
 
         private static bool HasCommands(IAction action)

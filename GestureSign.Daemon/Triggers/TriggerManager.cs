@@ -70,11 +70,16 @@ namespace GestureSign.Daemon.Triggers
                 conditionPoints.Add(new List<Point>(inputPoints[i]));
                 conditionContactIdentifiers.Add(inputContactIdentifiers[i]);
             }
+            if (conditionPoints.Count == 0)
+            {
+                conditionPoints.Add(point);
+                conditionContactIdentifiers.Add(1);
+            }
 
             PluginManager.Instance.ExecuteAction(
                 e.FiredActions,
                 PointCapture.Instance.Mode,
-                PointCapture.Instance.SourceDevice,
+                e.SourceDevice != GestureSign.Common.Input.Devices.None ? e.SourceDevice : PointCapture.Instance.SourceDevice,
                 new List<int>(new[] { 1 }),
                 point,
                 points,

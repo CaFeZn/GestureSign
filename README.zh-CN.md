@@ -153,6 +153,8 @@ Windows 11 触摸/手势冲突：
 - 如果 GestureSign 干扰某个应用，把 `Add Current Application to Ignored List` 绑定到一个手势，在该应用激活时运行它。
 - 如果希望默认不干扰任何未配置应用，请启用 `Options` > `白名单模式`。该模式下 GestureSign 只在目标前台/捕获窗口匹配已配置应用时捕获手势和热键；未匹配应用会被忽略，已匹配应用仍可按规则回退到全局动作。
 - 如果触摸板手势延迟或丢失，提高 `Options` 中的 drawing-start timeout。
+- 鼠标滚轮旋转可以作为独立鼠标触发器使用：在动作的 mouse hotkey 字段选择 `向前滚动` 或 `向后滚动`。独立滚轮触发必须设置触发条件，例如角落或边缘条件，避免普通滚动被全局截获。
+- 单指触摸板手势默认会被忽略，只有动作设置了触发条件并且触摸开始时已经满足条件才会捕获。右侧边缘中段可以使用 `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`；再配合 `Continuous Gesture` 的单指 `Up`/`Down` 和鼠标垂直滚动命令，就能在手指移动过程中实现类似滚动条的快速翻页。
 - 测试大规模配置变更前，先使用 `Options` > `Backup User Data`。
 
 ## 上游 Issue 覆盖情况
@@ -200,6 +202,7 @@ Windows 11 触摸/手势冲突：
 | [#43](https://github.com/TransposonY/GestureSign/issues/43) | 添加 `Search or Open Clipboard Text`，可在选中文本复制到剪贴板后执行浏览器搜索或打开 URL。 |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | 鼠标手势可配置多个绘制按钮，例如同时使用右键和中键。 |
 | [#38](https://github.com/TransposonY/GestureSign/issues/38) | 控制面板触摸板滚动使用小数滚轮增量处理，不再把每个小 delta 当成完整滚轮刻度。 |
+| [#41](https://github.com/TransposonY/GestureSign/issues/41) | 鼠标滚轮旋转可作为带条件的独立鼠标触发器使用，边缘/角落滚轮工作流不再需要按住绘制按钮。 |
 | [#19](https://github.com/TransposonY/GestureSign/issues/19), [#126](https://github.com/TransposonY/GestureSign/issues/126) | Hot Key 和内置窗口命令可覆盖常见无障碍快捷键和隐藏窗口工作流。 |
 
 已有改进但未在无硬件验证或无更大功能设计的情况下完全关闭：
@@ -224,7 +227,6 @@ Windows 11 触摸/手势冲突：
 | [#64](https://github.com/TransposonY/GestureSign/issues/64), [#63](https://github.com/TransposonY/GestureSign/issues/63), [#47](https://github.com/TransposonY/GestureSign/issues/47), [#26](https://github.com/TransposonY/GestureSign/issues/26) | tip-tap 目前只能用触点 ID 条件近似；区分 tap/tip-tap、区分左/右 tip-tap、旋转不敏感的五指捏合都需要改造识别器/模型，不是小配置改动。 |
 | [#61](https://github.com/TransposonY/GestureSign/issues/61) | 原生/系统事件抑制仅限 UIAccess touch-pointer 重定向，并且要等捕获到足够触点后才生效；GestureSign 不能完整阻断精确触摸板、触控笔、鼠标、键盘或所有应用原生事件。 |
 | [#58](https://github.com/TransposonY/GestureSign/issues/58) | 耗电报告需要在受影响的触摸屏/平板硬件上 profiling；可通过关闭不用的输入来源、避免长时间使用低阈值单指捕获来降低风险。 |
-| [#41](https://github.com/TransposonY/GestureSign/issues/41) | 鼠标手势绘制按钮支持多个按钮选择，但鼠标滚轮旋转是 `Mouse Actions` 下的输出命令，不是独立绘制触发器。 |
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome 与悬停笔/侧键组合的行为取决于驱动暴露 HID pen state 还是鼠标输入，需要结合受影响浏览器和触控笔驱动验证。 |
 | [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox 分离标签页窗口理论上应按浏览器可执行文件/默认浏览器规则匹配，但剩余失败需要在受影响 Firefox 版本上逐窗口验证。 |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | 动作可以限定到多个输入来源，包括触摸屏和触摸板，但兼容的 raw HID 触摸板输入仍取决于驱动。 |

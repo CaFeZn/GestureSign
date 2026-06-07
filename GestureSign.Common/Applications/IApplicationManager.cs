@@ -19,6 +19,7 @@ namespace GestureSign.Common.Applications
         IApplication GetExistingUserApplication(string ApplicationName);
         IApplication GetGlobalApplication();
         SystemWindow GetWindowFromPoint(Point Point);
+        bool ShouldUseGlobalFallback(IEnumerable<IApplication> Applications);
         Task LoadApplications();
         bool SaveApplications();
     }
