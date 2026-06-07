@@ -5,6 +5,7 @@ using GestureSign.Common.Input;
 using GestureSign.Common.InterProcessCommunication;
 using GestureSign.Common.Localization;
 using GestureSign.ControlPanel.Common;
+using GestureSign.ControlPanel.Dialogs;
 using MahApps.Metro.Controls.Dialogs;
 using ManagedWinapi.Hooks;
 using System;
@@ -523,10 +524,9 @@ namespace GestureSign.ControlPanel.MainWindowControls
 
         private void RestoreButton_Click(object sender, RoutedEventArgs e)
         {
-            // Legacy .ges archives contain the same actions/gestures payload as .gsb backups, without config.
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog()
             {
-                Filter = $"{LocalizationProvider.Instance.GetTextValue("Options.BackupFile")}|*{GestureSign.Common.Constants.BackupFileExtension};*{GestureSign.Common.Constants.ArchivesExtension}",
+                Filter = $"{LocalizationProvider.Instance.GetTextValue("Options.BackupFile")}|*{GestureSign.Common.Constants.BackupFileExtension};*{GestureSign.Common.Constants.ArchivesExtension};*{GestureSign.Common.Constants.ActionExtension}",
                 Title = LocalizationProvider.Instance.GetTextValue("Common.Import"),
                 CheckFileExists = true
             };
@@ -534,47 +534,71 @@ namespace GestureSign.ControlPanel.MainWindowControls
             {
                 try
                 {
-                    string tempArchivePath = Archive.ExtractToTempDirectory(openFileDialog.FileName);
-
-                    string configPath = Path.Combine(tempArchivePath, Path.GetFileName(AppConfig.ConfigPath));
-                    if (File.Exists(configPath))
-                        File.Copy(configPath, AppConfig.ConfigPath, true);
-                    AppConfig.Reload();
-                    LoadSettings();
-
-                    var applications = FileManager.LoadObject<List<IApplication>>(Path.Combine(tempArchivePath, GestureSign.Common.Constants.ActionFileName), false, true, true);
-                    var gestures = GestureManager.LoadGesturesFromFile(Path.Combine(tempArchivePath, GestureSign.Common.Constants.GesturesFileName), true);
-
-                    if (gestures != null)
-                    {
-                        var oldGestures = GestureManager.Instance.Gestures;
-                        foreach (var g in oldGestures)
-                        {
-                            GestureManager.Instance.DeleteGesture(g.Name);
-                        }
-                        foreach (var g in gestures)
-                        {
-                            GestureManager.Instance.AddGesture(g);
-                        }
-
-                        GestureManager.Instance.SaveGestures();
-                    }
-                    if (applications != null)
-                    {
-                        ApplicationManager.Instance.RemoveAllApplication();
-                        ApplicationManager.Instance.AddApplicationRange(applications);
-
-                        ApplicationManager.Instance.SaveApplications();
-                    }
-
-                    Directory.Delete(tempArchivePath, true);
-                    UIHelper.GetParentWindow(this).ShowModalMessageExternal(LocalizationProvider.Instance.GetTextValue("Options.Messages.RestoreCompleteTitle"), null);
+                    if (Path.GetExtension(openFileDialog.FileName).Equals(GestureSign.Common.Constants.ActionExtension, StringComparison.OrdinalIgnoreCase))
+                        ImportActionFile(openFileDialog.FileName);
+                    else
+                        RestoreArchive(openFileDialog.FileName);
                 }
                 catch (Exception exception)
                 {
                     UIHelper.GetParentWindow(this).ShowModalMessageExternal(LocalizationProvider.Instance.GetTextValue("Messages.Error"), exception.Message);
                 }
             }
+        }
+
+        private void RestoreArchive(string fileName)
+        {
+            // Legacy .ges archives contain the same actions/gestures payload as .gsb backups, without config.
+            string tempArchivePath = Archive.ExtractToTempDirectory(fileName);
+            try
+            {
+                string configPath = Path.Combine(tempArchivePath, Path.GetFileName(AppConfig.ConfigPath));
+                if (File.Exists(configPath))
+                    File.Copy(configPath, AppConfig.ConfigPath, true);
+                AppConfig.Reload();
+                LoadSettings();
+
+                var applications = FileManager.LoadObject<List<IApplication>>(Path.Combine(tempArchivePath, GestureSign.Common.Constants.ActionFileName), false, true, true);
+                var gestures = GestureManager.LoadGesturesFromFile(Path.Combine(tempArchivePath, GestureSign.Common.Constants.GesturesFileName), true);
+
+                if (gestures != null)
+                {
+                    var oldGestures = GestureManager.Instance.Gestures;
+                    foreach (var g in oldGestures)
+                    {
+                        GestureManager.Instance.DeleteGesture(g.Name);
+                    }
+                    foreach (var g in gestures)
+                    {
+                        GestureManager.Instance.AddGesture(g);
+                    }
+
+                    GestureManager.Instance.SaveGestures();
+                }
+                if (applications != null)
+                {
+                    ApplicationManager.Instance.RemoveAllApplication();
+                    ApplicationManager.Instance.AddApplicationRange(applications);
+
+                    ApplicationManager.Instance.SaveApplications();
+                }
+            }
+            finally
+            {
+                Directory.Delete(tempArchivePath, true);
+            }
+
+            UIHelper.GetParentWindow(this).ShowModalMessageExternal(LocalizationProvider.Instance.GetTextValue("Options.Messages.RestoreCompleteTitle"), null);
+        }
+
+        private void ImportActionFile(string fileName)
+        {
+            var applications = FileManager.LoadObject<List<IApplication>>(fileName, false, true, true);
+            if (applications == null)
+                throw new InvalidDataException(LocalizationProvider.Instance.GetTextValue("Options.Messages.LoadSettingError"));
+
+            ExportImportDialog exportImportDialog = new ExportImportDialog(false, false, applications, GestureManager.Instance.Gestures);
+            exportImportDialog.ShowDialog();
         }
 
         private void OpenConfigFolderButton_Click(object sender, RoutedEventArgs e)
