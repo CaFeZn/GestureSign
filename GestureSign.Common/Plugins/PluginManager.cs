@@ -81,6 +81,7 @@ namespace GestureSign.Common.Plugins
                 {
                     // Exit if there is no action configured
                     if (executableAction == null || (executableAction.IgnoredDevices & devices) != 0 ||
+                    IsUnsafeSingleFingerTouchPadAction(executableAction, devices, pointsForCondition) ||
                     executableAction.Commands == null || !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target))
                         continue;
 
@@ -247,6 +248,11 @@ namespace GestureSign.Common.Plugins
             }
         }
 
+        public bool EvaluateCondition(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
+        {
+            return Compute(condition, pointList, contactIdentifiers, targetWindow);
+        }
+
         private static bool ShouldActivateWindow(IAction executableAction, IPlugin plugin)
         {
             return executableAction.ActivateWindow == null && plugin.ActivateWindowDefault ||
@@ -267,6 +273,18 @@ namespace GestureSign.Common.Plugins
         private static bool IsNonRepeatable(IPluginInfo pluginInfo)
         {
             return pluginInfo.Plugin is INonRepeatablePlugin;
+        }
+
+        private static bool IsUnsafeSingleFingerTouchPadAction(IAction action, Devices devices, List<List<Point>> pointList)
+        {
+            if ((devices & Devices.TouchPad) == 0)
+                return false;
+
+            int contactCount = action.ContinuousGesture != null
+                ? action.ContinuousGesture.ContactCount
+                : pointList?.Count ?? 0;
+
+            return contactCount == 1 && string.IsNullOrWhiteSpace(action.Condition);
         }
 
         private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)

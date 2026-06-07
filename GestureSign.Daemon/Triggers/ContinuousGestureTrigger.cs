@@ -65,7 +65,7 @@ namespace GestureSign.Daemon.Triggers
         {
             if (PointCapture.Instance.State != CaptureState.Capturing || e.Points.Count == 0 || e.FirstCapturedPoints.Count == 0)
                 return;
-            var actionsWithContinuousGesture = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a != null && a.ContinuousGesture != null);
+            var actionsWithContinuousGesture = ApplicationManager.Instance.GetRecognizedDefinedAction(IsSafeContinuousGestureAction);
             if (actionsWithContinuousGesture == null || actionsWithContinuousGesture.Count == 0)
                 return;
             if (_lastPoints == null || _lastPoints.Count != e.FirstCapturedPoints.Count)
@@ -121,12 +121,28 @@ namespace GestureSign.Daemon.Triggers
         private void OnGesturerRecognized(int contactCount, Gestures gesture)
         {
             var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.ContinuousGesture != null &&
-            a.ContinuousGesture.ContactCount == contactCount && a.ContinuousGesture.Gesture == gesture);
+            a.ContinuousGesture.ContactCount == contactCount &&
+            a.ContinuousGesture.Gesture == gesture &&
+            IsSafeSingleFingerTouchPadAction(a, contactCount));
             if (actions.Count > 0)
             {
                 _continuousGestureFired = true;
                 OnTriggerFired(new TriggerFiredEventArgs(actions, _startPoint));
             }
+        }
+
+        private static bool IsSafeContinuousGestureAction(IAction action)
+        {
+            return action != null &&
+                action.ContinuousGesture != null &&
+                IsSafeSingleFingerTouchPadAction(action, action.ContinuousGesture.ContactCount);
+        }
+
+        private static bool IsSafeSingleFingerTouchPadAction(IAction action, int contactCount)
+        {
+            return PointCapture.Instance.SourceDevice != Devices.TouchPad ||
+                contactCount != 1 ||
+                !string.IsNullOrWhiteSpace(action.Condition);
         }
 
         private double GetRateOfFire(int distance, Point referencePoint)

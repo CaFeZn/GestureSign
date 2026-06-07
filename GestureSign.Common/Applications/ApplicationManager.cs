@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using GestureSign.Common.Configuration;
+using GestureSign.Common.Gestures;
 using GestureSign.Common.Input;
 using ManagedWinapi.Windows;
 
@@ -82,6 +83,9 @@ namespace GestureSign.Common.Applications
 
             CaptureWindow = GetWindowFromPoint(e.FirstCapturedPoints.FirstOrDefault());
             _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            bool allowSingleFingerTouchPad = pointCapture.SourceDevice == Devices.TouchPad &&
+                e.Points.Count == 1 &&
+                HasConditionedSingleFingerTouchPadAction(_recognizedApplication);
 
             int maxThreshold = 0, maxLimitNumber = 1;
 
@@ -112,6 +116,9 @@ namespace GestureSign.Common.Applications
                         return;
                 }
             }
+            if (allowSingleFingerTouchPad)
+                maxLimitNumber = 1;
+
             e.Cancel = (pointCapture.SourceDevice & Devices.TouchDevice) != 0 && (e.Points.Count < maxLimitNumber);
             e.BlockTouchInputThreshold = maxThreshold;
         }
@@ -311,14 +318,23 @@ namespace GestureSign.Common.Applications
 
         public List<IAction> GetRecognizedDefinedAction(Func<IAction, bool> predicate)
         {
-            if (_recognizedApplication == null)
+            return GetDefinedAction(_recognizedApplication, predicate, true);
+        }
+
+        public List<IAction> GetDefinedAction(IEnumerable<IApplication> application, Func<IAction, bool> predicate, bool useGlobal)
+        {
+            if (application == null || predicate == null)
             {
                 return new List<IAction>();
             }
-            var recognizedActions = _recognizedApplication.Where(app => !(app is IgnoredApp) && app.Actions != null).SelectMany(app => app.Actions).Where(a => predicate(a)).ToList();
+
+            var recognizedActions = application.Where(app => !(app is IgnoredApp) && app.Actions != null)
+                .SelectMany(app => app.Actions)
+                .Where(a => a != null && predicate(a))
+                .ToList();
             // If there is was no action found on given application, try to get an action for global application
-            if (recognizedActions.Count == 0)
-                recognizedActions = GetGlobalApplication().Actions.Where(a => predicate(a)).ToList();
+            if (recognizedActions.Count == 0 && useGlobal)
+                recognizedActions = GetGlobalApplication().Actions.Where(a => a != null && predicate(a)).ToList();
 
             return recognizedActions;
         }
@@ -587,6 +603,46 @@ namespace GestureSign.Common.Applications
         private static bool HasCommands(IAction action)
         {
             return action != null && action.Commands != null && action.Commands.Any(command => command != null);
+        }
+
+        private bool HasConditionedSingleFingerTouchPadAction(IEnumerable<IApplication> applications)
+        {
+            if (HasConditionedSingleFingerTouchPadActionInApplications(applications))
+                return true;
+
+            return HasConditionedSingleFingerTouchPadActionInApplications(new[] { GetGlobalApplication() });
+        }
+
+        private static bool HasConditionedSingleFingerTouchPadActionInApplications(IEnumerable<IApplication> applications)
+        {
+            return applications != null &&
+                applications.Where(app => !(app is IgnoredApp) && app.Actions != null)
+                    .SelectMany(app => app.Actions)
+                    .Any(action => IsSingleFingerTouchPadAction(action) &&
+                        !string.IsNullOrWhiteSpace(action.Condition) &&
+                        action.Commands != null &&
+                        action.Commands.Any(command => command != null && command.IsEnabled));
+        }
+
+        private static bool IsSingleFingerTouchPadAction(IAction action)
+        {
+            if (action == null || (action.IgnoredDevices & Devices.TouchPad) != 0)
+                return false;
+
+            return action.ContinuousGesture != null
+                ? action.ContinuousGesture.ContactCount == 1
+                : IsSingleFingerGesture(action.GestureName);
+        }
+
+        private static bool IsSingleFingerGesture(string gestureName)
+        {
+            if (string.IsNullOrWhiteSpace(gestureName))
+                return false;
+
+            var gesture = GestureManager.Instance.Gestures.FirstOrDefault(g =>
+                g != null && string.Equals(g.Name, gestureName, StringComparison.CurrentCulture));
+            var firstPointPattern = gesture?.PointPatterns?.FirstOrDefault();
+            return firstPointPattern?.Points != null && firstPointPattern.Points.Length == 1;
         }
 
 #pragma warning disable CS0618

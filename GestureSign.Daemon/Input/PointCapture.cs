@@ -4,6 +4,7 @@ using GestureSign.Common.Configuration;
 using GestureSign.Common.Gestures;
 using GestureSign.Common.Input;
 using GestureSign.Common.InterProcessCommunication;
+using GestureSign.Common.Plugins;
 using GestureSign.Daemon.Filtration;
 using GestureSign.Daemon.Surface;
 using GestureSign.PointPatterns;
@@ -352,7 +353,7 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointDown(object sender, InputPointsEventArgs e)
         {
-            if (ShouldIgnoreTouchPadInput(e))
+            if (ShouldIgnoreTouchPadInput(e) || ShouldBlockSingleFingerTouchPadStart(e))
                 return;
 
             if (State == CaptureState.Ready || State == CaptureState.Capturing || State == CaptureState.CapturingInvalid)
@@ -543,6 +544,79 @@ namespace GestureSign.Daemon.Input
         private bool ShouldIgnoreTouchPadInput(InputPointsEventArgs e)
         {
             return _ignoreTouchPadUntilPointUp && e.PointSource == Devices.TouchPad;
+        }
+
+        private bool ShouldBlockSingleFingerTouchPadStart(InputPointsEventArgs e)
+        {
+            if (e.PointSource != Devices.TouchPad ||
+                Mode == CaptureMode.Training ||
+                State != CaptureState.Ready ||
+                e.InputPointList == null ||
+                e.InputPointList.Count != 1)
+                return false;
+
+            return !HasConditionedSingleFingerTouchPadAction(e.InputPointList[0]);
+        }
+
+        private bool HasConditionedSingleFingerTouchPadAction(InputPoint point)
+        {
+            var touchPadStartPoint = System.Windows.Forms.Cursor.Position;
+            var targetWindow = ApplicationManager.Instance.GetWindowFromPoint(touchPadStartPoint);
+            var applications = ApplicationManager.Instance.GetApplicationFromWindow(targetWindow);
+            var conditionPoints = new List<List<Point>>(new[] { new List<Point>(new[] { point.Point }) });
+            var contactIdentifiers = new List<int>(new[] { point.ContactIdentifier });
+            var actions = GetConditionedSingleFingerTouchPadActions(applications);
+
+            return actions.Any(action =>
+                HasEnabledCommands(action) &&
+                PluginManager.Instance.EvaluateCondition(action.Condition, conditionPoints, contactIdentifiers, targetWindow));
+        }
+
+        private static List<IAction> GetConditionedSingleFingerTouchPadActions(IEnumerable<IApplication> applications)
+        {
+            var actions = GetConditionedSingleFingerTouchPadActionsInApplications(applications);
+            if (actions.Count != 0)
+                return actions;
+
+            return GetConditionedSingleFingerTouchPadActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() });
+        }
+
+        private static List<IAction> GetConditionedSingleFingerTouchPadActionsInApplications(IEnumerable<IApplication> applications)
+        {
+            return applications == null
+                ? new List<IAction>()
+                : applications.Where(app => !(app is IgnoredApp) && app.Actions != null)
+                    .SelectMany(app => app.Actions)
+                    .Where(IsConditionedSingleFingerTouchPadAction)
+                    .ToList();
+        }
+
+        private static bool IsConditionedSingleFingerTouchPadAction(IAction action)
+        {
+            if (action == null ||
+                (action.IgnoredDevices & Devices.TouchPad) != 0 ||
+                string.IsNullOrWhiteSpace(action.Condition))
+                return false;
+
+            return action.ContinuousGesture != null
+                ? action.ContinuousGesture.ContactCount == 1
+                : IsSingleFingerGesture(action.GestureName);
+        }
+
+        private static bool IsSingleFingerGesture(string gestureName)
+        {
+            if (string.IsNullOrWhiteSpace(gestureName))
+                return false;
+
+            var gesture = GestureManager.Instance.Gestures.FirstOrDefault(g =>
+                g != null && string.Equals(g.Name, gestureName, StringComparison.CurrentCulture));
+            var firstPointPattern = gesture?.PointPatterns?.FirstOrDefault();
+            return firstPointPattern?.Points != null && firstPointPattern.Points.Length == 1;
+        }
+
+        private static bool HasEnabledCommands(IAction action)
+        {
+            return action?.Commands != null && action.Commands.Any(command => command != null && command.IsEnabled);
         }
 
         private static bool ShouldStartInitialTimeout(Devices pointSource, CaptureState state)
