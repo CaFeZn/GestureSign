@@ -91,6 +91,8 @@ Multiple gestures for the same behavior:
 Gesture and trigger notes:
 
 - Touchscreen, touchpad, pen, and mouse input are separate source devices. Check the action's ignored-device settings if a gesture works from one device but not another.
+- `Block Touch Input` is available only in UIAccess builds and is configured per matched application. It starts blocking after GestureSign has enough touch contacts to identify a gesture, so very early touch frames may still reach the target app.
+- If the touch keyboard or a browser's native touch behavior breaks while touch blocking is enabled, lower that app's block threshold or disable blocking for that app first.
 - Trigger conditions can use `finger_1_start_X`, `finger_1_start_Y`, `finger_1_end_X`, `finger_1_end_Y`, their percent variants such as `finger_1_start_X%`, and `finger_1_ID`.
 - Edge gestures can be approximated with percent trigger conditions, for example `finger_1_start_X%<5`, `finger_1_start_X%>95`, `finger_1_start_Y%<5`, or `finger_1_start_Y%>95`.
 - Window conditions can use `window_is_maximized`, `window_is_minimized`, and `window_is_fullscreen`.
