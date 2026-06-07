@@ -160,6 +160,13 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Remove legacy release asset name
+        if: steps.resolve.outputs.release_tag == 'continuous'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete-asset continuous GestureSign-continuous-win-anycpu.zip --yes --repo ${{ github.repository }} || $true
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -177,6 +184,7 @@ jobs:
           prerelease: ${{ steps.resolve.outputs.prerelease }}
           make_latest: ${{ steps.resolve.outputs.prerelease == 'true' && 'false' || 'legacy' }}
           generate_release_notes: true
+          overwrite_files: true
           files: |
             ${{ steps.resolve.outputs.portable_artifact }}
             artifacts/${{ steps.resolve.outputs.installer_artifact }}
