@@ -188,9 +188,23 @@ namespace GestureSign.Daemon.Input
                 .Where(rd => !IsActiveTouchContact(rd))
                 .Select(rd => rd.ContactIdentifier)
                 .ToList();
+            bool hadActiveTouchContacts = _activeTouchContacts.Count != 0;
+            bool releasedTrackedContacts = releasedContactIdentifiers.Any(id => _activeTouchContacts.Contains(id));
 
             if (_activeTouchContacts.Count != 0 && releasedContactIdentifiers.Count != 0)
                 _activeTouchContacts.ExceptWith(releasedContactIdentifiers);
+
+            if (activeRawData.Count != 0 && hadActiveTouchContacts && releasedTrackedContacts && _activeTouchContacts.Count == 0)
+            {
+                // Rapid taps can report the previous release and the next press in one raw frame.
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                ClearActiveTouchContacts();
+
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
+                if (SourceDevice == e.SourceDevice)
+                    SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                return;
+            }
 
             if (activeRawData.Count == 0)
             {
