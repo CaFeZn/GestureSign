@@ -125,8 +125,17 @@ namespace GestureSign.Common.Gestures
                 }
                 else if (_gestureMatchResult != null && _gestureMatchResult.Count != 0)
                 {
-                    _gestureLevel++;
-                    _lastGestureTime = Environment.TickCount;
+                    if (_gestureMatchResult.Any(g => HasExecutableAction(g.Name)))
+                    {
+                        _gestureLevel++;
+                        _lastGestureTime = Environment.TickCount;
+                    }
+                    else
+                    {
+                        _gestureLevel = 0;
+                        _gestureMatchResult = null;
+                        _lastGestureTime = null;
+                    }
                 }
                 else
                 {
