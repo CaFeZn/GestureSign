@@ -130,13 +130,20 @@ namespace GestureSign.Daemon.Input
 
         private void UpdateRegisterState(bool register, ushort usage)
         {
-            if (register)
+            try
             {
-                RegisterDevice(usage);
+                if (register)
+                {
+                    RegisterDevice(usage);
+                }
+                else
+                {
+                    UnregisterDevice(usage);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                UnregisterDevice(usage);
+                Logging.LogException(ex);
             }
         }
 
@@ -153,7 +160,7 @@ namespace GestureSign.Daemon.Input
 
             if (!NativeMethods.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])))
             {
-                throw new ApplicationException("Failed to register raw input device(s).");
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to register raw input device usage 0x{usage:X2}.");
             }
             _registeredDeviceList.Add(usage);
         }
@@ -171,7 +178,7 @@ namespace GestureSign.Daemon.Input
 
                 if (!NativeMethods.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])))
                 {
-                    throw new ApplicationException("Failed to unregister raw input device.");
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to unregister raw input device usage 0x{usage:X2}.");
                 }
                 _registeredDeviceList.Remove(usage);
             }
