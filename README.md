@@ -43,6 +43,14 @@ Startup notes:
 - `GestureSign.exe` starts only the background daemon and tray icon. Use it when you want GestureSign to start without opening the control panel.
 - The normal startup option creates a shortcut to `GestureSign.exe`. The administrator startup option creates a startup task for `GestureSign.exe`.
 
+Gesture names and defaults:
+
+- The old external documentation site is no longer required for basic setup; the control panel is the supported guide for creating gestures, assigning actions, and changing options.
+- Gesture names are user-editable labels. In the bundled defaults, a leading number usually means the number of fingers, for example `2Left` is a two-finger left swipe and `3Down` is a three-finger down swipe.
+- Names without a leading number can still be multi-finger gestures. Open the `Gestures` tab to see the recorded sample and finger count for any gesture.
+- Tap gestures are represented by points instead of long stroke paths. `3 Finger Double Tap` is a bundled example made from two three-finger tap samples.
+- Default browser gestures include `Open Web Browser` on `ee`, browser back/forward gestures, and tab gestures under the browser application group. You can edit or delete these in the `Actions` tab.
+
 Common command examples:
 
 - `Hot Key` sends one shortcut such as `Ctrl+Alt+T`.
