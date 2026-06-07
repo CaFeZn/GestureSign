@@ -165,6 +165,10 @@
       <Name>打开 GestureSign 设置</Name>
       <Description>打开 GestureSign 设置面板</Description>
     </OpenControlPanel>
+    <RepeatLastCommand>
+      <Name>重复上一个命令</Name>
+      <Description>重复执行上一个成功执行的命令</Description>
+    </RepeatLastCommand>
     <MaximizeRestore>
       <Name>最大化或还原</Name>
       <Description>最大化或还原当前窗口</Description>

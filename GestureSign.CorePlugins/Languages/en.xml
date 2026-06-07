@@ -164,6 +164,10 @@
       <Name>Open GestureSign Control Panel</Name>
       <Description>Open the GestureSign Control Panel</Description>
     </OpenControlPanel>
+    <RepeatLastCommand>
+      <Name>Repeat Last Command</Name>
+      <Description>Repeat the last successfully executed command</Description>
+    </RepeatLastCommand>
     <MaximizeRestore>
       <Name>Maximize or Restore</Name>
       <Description>Maximize or restore current window</Description>

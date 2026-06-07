@@ -143,6 +143,7 @@
     <Compile Include="Applications\Command.cs" />
     <Compile Include="Applications\Action.cs" />
     <Compile Include="Plugins\HostControl.cs" />
+    <Compile Include="Plugins\INonRepeatablePlugin.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
     <Compile Include="Plugins\IPluginInfo.cs" />
     <Compile Include="Plugins\PluginHelper.cs" />

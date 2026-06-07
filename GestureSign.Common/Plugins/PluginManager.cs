@@ -22,6 +22,8 @@ namespace GestureSign.Common.Plugins
         static readonly PluginManager _Instance = new PluginManager();
         List<IPluginInfo> _Plugins = new List<IPluginInfo>();
         private Task _lastActionTask;
+        private readonly object _lastCommandLock = new object();
+        private RepeatableCommand _lastCommand;
         private SynchronizationContext _mainContext;
 
         #endregion
@@ -85,8 +87,6 @@ namespace GestureSign.Common.Plugins
                         if (mode == CaptureMode.UserDisabled && !"GestureSign.CorePlugins.ToggleDisableGestures".Equals(command.PluginClass))
                             continue;
 
-                        target.WaitForIdle(200);
-
                         // Locate the plugin associated with this action
                         IPluginInfo pluginInfo = FindPluginByClassAndFilename(command.PluginClass, command.PluginFilename);
 
@@ -94,18 +94,9 @@ namespace GestureSign.Common.Plugins
                         if (pluginInfo == null)
                             continue;
 
-                        if (commandList.IndexOf(command) == 0)
-                        {
-                            if (executableAction.ActivateWindow == null && pluginInfo.Plugin.ActivateWindowDefault ||
-                            executableAction.ActivateWindow.GetValueOrDefault())
-                                if (target.HWnd.ToInt64() != SystemWindow.ForegroundWindow?.HWnd.ToInt64())
-                                    SystemWindow.ForegroundWindow = target;
-                        }
-
-                        // Load action settings into plugin
-                        pluginInfo.Plugin.Deserialize(command.CommandSettings);
-                        // Execute plugin process
-                        pluginInfo.Plugin.Gestured(pointInfo);
+                        bool activateWindow = ShouldActivateWindow(executableAction, pluginInfo.Plugin);
+                        bool activateThisCommand = commandList.IndexOf(command) == 0 && activateWindow;
+                        ExecuteCommand(command, pluginInfo, pointInfo, target, activateThisCommand, true, activateWindow);
                     }
                 }
             });
@@ -172,6 +163,25 @@ namespace GestureSign.Common.Plugins
             return _Plugins.Exists(p => p.Class == PluginClass && p.Filename == PluginFilename);
         }
 
+        public bool RepeatLastCommand(PointInfo actionPoint)
+        {
+            RepeatableCommand command;
+            lock (_lastCommandLock)
+            {
+                command = _lastCommand?.Clone();
+            }
+
+            if (command == null)
+                return false;
+
+            IPluginInfo pluginInfo = FindPluginByClassAndFilename(command.PluginClass, command.PluginFilename);
+            if (pluginInfo == null || IsNonRepeatable(pluginInfo))
+                return false;
+
+            var target = actionPoint?.Window;
+            return ExecuteCommand(command.ToCommand(), pluginInfo, actionPoint, target, command.ActivateWindow, false, false);
+        }
+
         #endregion
 
         #region Private Methods
@@ -203,6 +213,52 @@ namespace GestureSign.Common.Plugins
                 }
 
             return retPlugins;
+        }
+
+        private bool ExecuteCommand(ICommand command, IPluginInfo pluginInfo, PointInfo pointInfo, SystemWindow target, bool activateWindow, bool recordCommand, bool repeatActivateWindow)
+        {
+            target?.WaitForIdle(200);
+
+            if (activateWindow)
+                ActivateWindow(target);
+
+            // Load action settings into plugin
+            pluginInfo.Plugin.Deserialize(command.CommandSettings);
+
+            // Execute plugin process
+            bool success = pluginInfo.Plugin.Gestured(pointInfo);
+            if (success && recordCommand)
+                StoreLastCommand(command, pluginInfo, repeatActivateWindow);
+
+            return success;
+        }
+
+        private void StoreLastCommand(ICommand command, IPluginInfo pluginInfo, bool activateWindow)
+        {
+            if (IsNonRepeatable(pluginInfo))
+                return;
+
+            lock (_lastCommandLock)
+            {
+                _lastCommand = new RepeatableCommand(command, activateWindow);
+            }
+        }
+
+        private static bool ShouldActivateWindow(IAction executableAction, IPlugin plugin)
+        {
+            return executableAction.ActivateWindow == null && plugin.ActivateWindowDefault ||
+                executableAction.ActivateWindow.GetValueOrDefault();
+        }
+
+        private static void ActivateWindow(SystemWindow target)
+        {
+            if (target != null && target.HWnd.ToInt64() != SystemWindow.ForegroundWindow?.HWnd.ToInt64())
+                SystemWindow.ForegroundWindow = target;
+        }
+
+        private static bool IsNonRepeatable(IPluginInfo pluginInfo)
+        {
+            return pluginInfo.Plugin is INonRepeatablePlugin;
         }
 
         private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers)
@@ -255,6 +311,52 @@ namespace GestureSign.Common.Plugins
         {
             string variable = $"finger_{id}_{key}";
             return str.Replace(variable, value.ToString());
+        }
+
+        private class RepeatableCommand
+        {
+            public RepeatableCommand(ICommand command, bool activateWindow)
+            {
+                CommandSettings = command.CommandSettings;
+                Name = command.Name;
+                PluginClass = command.PluginClass;
+                PluginFilename = command.PluginFilename;
+                ActivateWindow = activateWindow;
+            }
+
+            private RepeatableCommand()
+            {
+            }
+
+            public string CommandSettings { get; set; }
+            public string Name { get; set; }
+            public string PluginClass { get; set; }
+            public string PluginFilename { get; set; }
+            public bool ActivateWindow { get; set; }
+
+            public RepeatableCommand Clone()
+            {
+                return new RepeatableCommand
+                {
+                    CommandSettings = CommandSettings,
+                    Name = Name,
+                    PluginClass = PluginClass,
+                    PluginFilename = PluginFilename,
+                    ActivateWindow = ActivateWindow
+                };
+            }
+
+            public ICommand ToCommand()
+            {
+                return new Command
+                {
+                    CommandSettings = CommandSettings,
+                    IsEnabled = true,
+                    Name = Name,
+                    PluginClass = PluginClass,
+                    PluginFilename = PluginFilename
+                };
+            }
         }
 
         #endregion
