@@ -184,6 +184,14 @@
       <Name>Previous Window</Name>
       <Description>Switches to the previous window (Same as Shift + Alt + Tab)</Description>
     </PreviousApplication>
+    <NextDesktop>
+      <Name>Next Virtual Desktop</Name>
+      <Description>Switches to the next virtual desktop (Same as Win + Ctrl + Right)</Description>
+    </NextDesktop>
+    <PreviousDesktop>
+      <Name>Previous Virtual Desktop</Name>
+      <Description>Switches to the previous virtual desktop (Same as Win + Ctrl + Left)</Description>
+    </PreviousDesktop>
     <TemporarilyDisable>
       <Name>Temporarily Disable</Name>
       <Description>Disables GestureSign for the next contact only</Description>

@@ -8,6 +8,7 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 
 - Activate Window
 - Window Control
+- Virtual Desktop Switching
 - Touch Keyboard Control
 - Keyboard simulation
 - Key Down/Up
@@ -37,6 +38,7 @@ Common command examples:
 - `Mouse Actions` can send clicks, wheel actions, and other mouse input.
 - `Open GestureSign Control Panel` opens the settings window from a gesture.
 - `Repeat Last Command` replays the last command that completed successfully.
+- `Next Virtual Desktop` and `Previous Virtual Desktop` switch Windows virtual desktops.
 
 Gesture and trigger notes:
 

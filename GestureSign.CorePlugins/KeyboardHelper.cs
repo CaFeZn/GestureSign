@@ -23,6 +23,53 @@ namespace GestureSign.CorePlugins
             SendAltTab(true);
         }
 
+        public static void SwitchToNextDesktop()
+        {
+            SendVirtualDesktopSwitch(Keys.Right);
+        }
+
+        public static void SwitchToPreviousDesktop()
+        {
+            SendVirtualDesktopSwitch(Keys.Left);
+        }
+
+        private static void SendVirtualDesktopSwitch(Keys directionKey)
+        {
+            KeyboardKey winKey = new KeyboardKey(Keys.LWin);
+            KeyboardKey controlKey = new KeyboardKey(Keys.LControlKey);
+            KeyboardKey arrowKey = new KeyboardKey(directionKey);
+            bool winPressed = false;
+            bool controlPressed = false;
+
+            try
+            {
+                winKey.Press();
+                winPressed = true;
+                Thread.Sleep(30);
+
+                controlKey.Press();
+                controlPressed = true;
+                Thread.Sleep(30);
+
+                arrowKey.PressAndRelease();
+                Thread.Sleep(30);
+            }
+            finally
+            {
+                if (controlPressed)
+                {
+                    controlKey.Release();
+                    Thread.Sleep(30);
+                }
+
+                if (winPressed)
+                {
+                    winKey.Release();
+                    Thread.Sleep(30);
+                }
+            }
+        }
+
         private static void SendAltTab(bool shift)
         {
             KeyboardKey altKey = new KeyboardKey(Keys.LMenu);

@@ -185,6 +185,14 @@
       <Name>上一窗口</Name>
       <Description>切换到上一窗口 (相当于 Shift + Alt + Tab)</Description>
     </PreviousApplication>
+    <NextDesktop>
+      <Name>下一虚拟桌面</Name>
+      <Description>切换到下一个虚拟桌面 (相当于 Win + Ctrl + 右方向键)</Description>
+    </NextDesktop>
+    <PreviousDesktop>
+      <Name>上一虚拟桌面</Name>
+      <Description>切换到上一个虚拟桌面 (相当于 Win + Ctrl + 左方向键)</Description>
+    </PreviousDesktop>
     <TemporarilyDisable>
       <Name>临时禁用手势识别</Name>
       <Description>停止接收下一次触屏数据</Description>

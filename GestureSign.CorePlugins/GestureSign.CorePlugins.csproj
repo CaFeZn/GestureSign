@@ -169,7 +169,9 @@
     <Compile Include="RunCommand\RunCommandSettings.cs" />
     <Compile Include="Notifier.cs" />
     <Compile Include="RunCommand\RunCommandPlugin.cs" />
+    <Compile Include="PreviousDesktop.cs" />
     <Compile Include="PreviousApplication.cs" />
+    <Compile Include="NextDesktop.cs" />
     <Compile Include="NextApplication.cs" />
     <Compile Include="DefaultBrowser.cs" />
     <Compile Include="Minimize.cs" />
