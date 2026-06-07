@@ -14,8 +14,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Media;
 using System.Threading;
 using System.Threading.Tasks;
 using WindowsInput;
@@ -59,6 +61,8 @@ namespace GestureSign.Daemon.Input
 
         private int? _blockTouchInputThreshold;
         private Point _touchPadStartPoint;
+        private string _unrecognizedGestureSoundPath;
+        private SoundPlayer _unrecognizedGestureSoundPlayer;
 
         #endregion
 
@@ -261,8 +265,10 @@ namespace GestureSign.Daemon.Input
                     _pointerInputTargetWindow?.Dispose();
                     _inputProvider?.Dispose();
                     _surfaceForm?.Dispose();
+                    _unrecognizedGestureSoundPlayer?.Dispose();
                 }
                 _surfaceForm = null;
+                _unrecognizedGestureSoundPlayer = null;
 
                 SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
                 if (_hWinEventHook != IntPtr.Zero)
@@ -656,13 +662,44 @@ namespace GestureSign.Daemon.Input
 
         private void PlayUnrecognizedGestureSound()
         {
+            string customSoundPath = AppConfig.UnrecognizedGestureSoundPath;
             try
             {
-                System.Media.SystemSounds.Beep.Play();
+                var soundPlayer = GetUnrecognizedGestureSoundPlayer(customSoundPath);
+                if (soundPlayer != null)
+                {
+                    soundPlayer.Play();
+                    return;
+                }
             }
             catch
             {
             }
+
+            try
+            {
+                SystemSounds.Beep.Play();
+            }
+            catch
+            {
+            }
+        }
+
+        private SoundPlayer GetUnrecognizedGestureSoundPlayer(string customSoundPath)
+        {
+            if (string.IsNullOrWhiteSpace(customSoundPath) || !File.Exists(customSoundPath))
+                return null;
+
+            if (_unrecognizedGestureSoundPlayer == null ||
+                !string.Equals(_unrecognizedGestureSoundPath, customSoundPath, StringComparison.OrdinalIgnoreCase))
+            {
+                _unrecognizedGestureSoundPlayer?.Dispose();
+                _unrecognizedGestureSoundPath = customSoundPath;
+                _unrecognizedGestureSoundPlayer = new SoundPlayer(customSoundPath);
+                _unrecognizedGestureSoundPlayer.Load();
+            }
+
+            return _unrecognizedGestureSoundPlayer;
         }
 
         //private void CancelCapture(int num)

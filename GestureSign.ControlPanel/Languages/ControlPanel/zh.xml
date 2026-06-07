@@ -281,6 +281,10 @@ QQ交流群：576981420
     </IgnoreTouchInputWhenUsingPen>
     <UnrecognizedGestureSound>
       <Header>未识别手势时播放提示音</Header>
+      <DefaultSound>默认系统提示音</DefaultSound>
+      <Browse>选择提示音...</Browse>
+      <Reset>使用默认</Reset>
+      <WavFile>WAV 声音文件</WavFile>
     </UnrecognizedGestureSound>
     <ShowTrayIconSwitch>
       <Header>任务栏图标</Header>

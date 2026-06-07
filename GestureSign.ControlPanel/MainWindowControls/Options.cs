@@ -58,6 +58,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 IgnoreFullScreenSwitch.IsChecked = AppConfig.IgnoreFullScreen;
                 IgnoreTouchInputWhenUsingPenSwitch.IsChecked = AppConfig.IgnoreTouchInputWhenUsingPen;
                 UnrecognizedGestureSoundSwitch.IsChecked = AppConfig.PlaySoundOnUnrecognizedGesture;
+                UnrecognizedGestureSoundPathTextBox.Text = AppConfig.UnrecognizedGestureSoundPath;
                 if (AppConfig.DrawingButton != MouseActions.None)
                 {
                     MouseSwitch.IsChecked = true;
@@ -422,6 +423,28 @@ namespace GestureSign.ControlPanel.MainWindowControls
         private void UnrecognizedGestureSoundSwitch_Click(object sender, RoutedEventArgs e)
         {
             AppConfig.PlaySoundOnUnrecognizedGesture = UnrecognizedGestureSoundSwitch.IsChecked.GetValueOrDefault();
+        }
+
+        private void BrowseUnrecognizedGestureSoundButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog()
+            {
+                Filter = LocalizationProvider.Instance.GetTextValue("Options.UnrecognizedGestureSound.WavFile") + "|*.wav",
+                Title = LocalizationProvider.Instance.GetTextValue("Options.UnrecognizedGestureSound.Browse"),
+                CheckFileExists = true
+            };
+
+            if (openFileDialog.ShowDialog().GetValueOrDefault())
+            {
+                AppConfig.UnrecognizedGestureSoundPath = openFileDialog.FileName;
+                UnrecognizedGestureSoundPathTextBox.Text = openFileDialog.FileName;
+            }
+        }
+
+        private void ResetUnrecognizedGestureSoundButton_Click(object sender, RoutedEventArgs e)
+        {
+            AppConfig.UnrecognizedGestureSoundPath = string.Empty;
+            UnrecognizedGestureSoundPathTextBox.Clear();
         }
 
         private void InitialTimeoutSwitch_Click(object sender, RoutedEventArgs e)

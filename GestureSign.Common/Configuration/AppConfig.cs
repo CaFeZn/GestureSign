@@ -299,6 +299,18 @@ namespace GestureSign.Common.Configuration
             }
         }
 
+        public static string UnrecognizedGestureSoundPath
+        {
+            get
+            {
+                return GetValue(nameof(UnrecognizedGestureSoundPath), string.Empty);
+            }
+            set
+            {
+                SetValue(nameof(UnrecognizedGestureSoundPath), value ?? string.Empty);
+            }
+        }
+
         public static DeviceStates PenGestureButton
         {
             get

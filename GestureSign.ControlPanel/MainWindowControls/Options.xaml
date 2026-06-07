@@ -295,6 +295,29 @@
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"
                                    OffLabel="{localization:LocalisedText Options.OffLabel}"
                                    Click="UnrecognizedGestureSoundSwitch_Click" />
+            <StackPanel Visibility="{Binding ElementName=UnrecognizedGestureSoundSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="0,5,0,0">
+                <TextBox x:Name="UnrecognizedGestureSoundPathTextBox"
+                         IsReadOnly="True"
+                         Width="300"
+                         FontSize="12"
+                         controls:TextBoxHelper.Watermark="{localization:LocalisedText Options.UnrecognizedGestureSound.DefaultSound}" />
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Margin="0,5,0,0">
+                    <Button x:Name="BrowseUnrecognizedGestureSoundButton"
+                            Content="{localization:LocalisedText Options.UnrecognizedGestureSound.Browse}"
+                            FontSize="12"
+                            FontWeight="Bold"
+                            Click="BrowseUnrecognizedGestureSoundButton_Click" />
+                    <Button x:Name="ResetUnrecognizedGestureSoundButton"
+                            Content="{localization:LocalisedText Options.UnrecognizedGestureSound.Reset}"
+                            Margin="20,0,0,0"
+                            FontSize="12"
+                            FontWeight="Bold"
+                            Click="ResetUnrecognizedGestureSoundButton_Click" />
+                </StackPanel>
+            </StackPanel>
             <controls:ToggleSwitch x:Name="ShowTrayIconSwitch"
                                    Header="{localization:LocalisedText Options.ShowTrayIconSwitch.Header}"
                                    OnLabel="{localization:LocalisedText Options.ShowTrayIconSwitch.OnLabel}"

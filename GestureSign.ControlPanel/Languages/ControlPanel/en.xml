@@ -277,6 +277,10 @@ Email:ccfyzh@gmail.com
     </IgnoreTouchInputWhenUsingPen>
     <UnrecognizedGestureSound>
       <Header>Play Sound for Unrecognized Gesture</Header>
+      <DefaultSound>Default system sound</DefaultSound>
+      <Browse>Choose Sound...</Browse>
+      <Reset>Use Default</Reset>
+      <WavFile>Wave Sound File</WavFile>
     </UnrecognizedGestureSound>
     <ShowTrayIconSwitch>
       <Header>Show Tray Icon</Header>
