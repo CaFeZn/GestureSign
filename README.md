@@ -75,6 +75,7 @@ Gesture creation notes:
 Common command examples:
 
 - `Hot Key` sends one shortcut such as `Ctrl+Alt+T`.
+- For side-specific modifiers such as `Left Alt` or `Right Shift`, use the `Hot Key` extra-key dropdown instead of typing the modifier directly.
 - `Send Keystrokes` types a key sequence or text.
 - `Key Down/Up` can hold or release keys such as `Left Shift`; pair one hold action with another release action when you need to select text or keep a modifier down temporarily.
 - `Launch Windows Store App`, `Open Default Browser`, `Open File`, and `Run Command or Program` start applications or files.
