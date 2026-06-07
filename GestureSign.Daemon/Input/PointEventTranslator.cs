@@ -216,6 +216,10 @@ namespace GestureSign.Daemon.Input
             {
                 OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
                 ClearActiveTouchContacts();
+
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
+                if (SourceDevice == e.SourceDevice)
+                    SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
                 return;
             }
 
