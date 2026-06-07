@@ -61,6 +61,7 @@ namespace GestureSign.Daemon.Input
 
         private int? _blockTouchInputThreshold;
         private Point _touchPadStartPoint;
+        private bool _ignoreTouchPadUntilPointUp;
         private string _unrecognizedGestureSoundPath;
         private SoundPlayer _unrecognizedGestureSoundPlayer;
 
@@ -349,12 +350,16 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointDown(object sender, InputPointsEventArgs e)
         {
+            if (ShouldIgnoreTouchPadInput(e))
+                return;
+
             if (State == CaptureState.Ready || State == CaptureState.Capturing || State == CaptureState.CapturingInvalid)
             {
                 Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
 
+                var stateBeforePointDown = State;
                 var timeout = AppConfig.InitialTimeout;
-                if (timeout > 0)
+                if (timeout > 0 && ShouldStartInitialTimeout(e.PointSource, stateBeforePointDown))
                 {
                     if (_initialTimeoutTimer == null)
                     {
@@ -374,6 +379,9 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointMove(object sender, InputPointsEventArgs e)
         {
+            if (ShouldIgnoreTouchPadInput(e))
+                return;
+
             // Only add point if we're capturing
             if (State == CaptureState.Capturing || State == CaptureState.CapturingInvalid)
             {
@@ -384,6 +392,9 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointUp(object sender, InputPointsEventArgs e)
         {
+            if (e.PointSource == Devices.TouchPad)
+                _ignoreTouchPadUntilPointUp = false;
+
             if (State == CaptureState.Capturing || State == CaptureState.CapturingInvalid && (SourceDevice & Devices.TouchDevice) != 0)
             {
                 e.Handled = Mode != CaptureMode.UserDisabled;
@@ -478,6 +489,10 @@ namespace GestureSign.Daemon.Input
                     {
                         PressMouseButton(_pointEventTranslator.CurrentDrawingButton);
                     }
+                    else if (SourceDevice == Devices.TouchPad)
+                    {
+                        _ignoreTouchPadUntilPointUp = true;
+                    }
                     CancelCaptureByInitialTimeout();
                 }
                 catch
@@ -486,6 +501,16 @@ namespace GestureSign.Daemon.Input
                     Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
                 }
             });
+        }
+
+        private bool ShouldIgnoreTouchPadInput(InputPointsEventArgs e)
+        {
+            return _ignoreTouchPadUntilPointUp && e.PointSource == Devices.TouchPad;
+        }
+
+        private static bool ShouldStartInitialTimeout(Devices pointSource, CaptureState state)
+        {
+            return pointSource != Devices.TouchPad || state == CaptureState.Ready;
         }
 
         private void PostToCurrentContext(System.Action action)
