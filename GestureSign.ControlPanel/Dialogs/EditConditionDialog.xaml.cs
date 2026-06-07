@@ -17,7 +17,20 @@ namespace GestureSign.ControlPanel.Dialogs
 
         private void InsertButton_Click(object sender, RoutedEventArgs e)
         {
-            string variable = $"finger_{FingerIDComboBox.Text}_{VariableComboBox.Text}";
+            InsertConditionText($"finger_{FingerIDComboBox.Text}_{VariableComboBox.Text}");
+        }
+
+        private void WindowVariableButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as System.Windows.Controls.Button;
+            InsertConditionText(button?.Tag as string);
+        }
+
+        private void InsertConditionText(string variable)
+        {
+            if (string.IsNullOrWhiteSpace(variable))
+                return;
+
             int caretIndex = ConditionTextBox.CaretIndex;
             ConditionTextBox.Text = ConditionTextBox.Text.Insert(caretIndex, variable);
             ConditionTextBox.CaretIndex = caretIndex + variable.Length;

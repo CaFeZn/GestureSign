@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using GestureSign.Common.Applications;
 using GestureSign.Common.Input;
 using GestureSign.Common.Log;
@@ -78,7 +79,7 @@ namespace GestureSign.Common.Plugins
                 {
                     // Exit if there is no action configured
                     if (executableAction == null || (executableAction.IgnoredDevices & devices) != 0 ||
-                    executableAction.Commands == null || !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition))
+                    executableAction.Commands == null || !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target))
                         continue;
 
                     var commandList = executableAction.Commands.Where(command => command != null && command.IsEnabled).ToList();
@@ -261,11 +262,11 @@ namespace GestureSign.Common.Plugins
             return pluginInfo.Plugin is INonRepeatablePlugin;
         }
 
-        private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers)
+        private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
             if (string.IsNullOrWhiteSpace(condition)) return true;
 
-            string expression = GetExpression(condition, pointList, contactIdentifiers);
+            string expression = GetExpression(condition, pointList, contactIdentifiers, targetWindow);
             try
             {
                 DataTable dataTable = new DataTable();
@@ -278,7 +279,7 @@ namespace GestureSign.Common.Plugins
             }
         }
 
-        private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers)
+        private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
             for (int i = 1; i <= pointList.Count; i++)
             {
@@ -306,13 +307,80 @@ namespace GestureSign.Common.Plugins
 
                 condition = ReplaceVariables(condition, i, "ID", contactIdentifiers[i - 1]);
             }
-            return condition;
+            return ReplaceWindowVariables(condition, targetWindow);
         }
 
         private string ReplaceVariables(string str, int id, string key, int value)
         {
             string variable = $"finger_{id}_{key}";
             return str.Replace(variable, value.ToString());
+        }
+
+        private string ReplaceWindowVariables(string condition, SystemWindow targetWindow)
+        {
+            bool isMaximized = IsMaximized(targetWindow);
+            bool isMinimized = IsMinimized(targetWindow);
+            bool isFullscreen = IsFullScreen(targetWindow);
+
+            condition = condition.Replace("window_is_maximized", ToExpressionBoolean(isMaximized));
+            condition = condition.Replace("window_is_minimized", ToExpressionBoolean(isMinimized));
+            condition = condition.Replace("window_is_fullscreen", ToExpressionBoolean(isFullscreen));
+
+            return condition;
+        }
+
+        private static string ToExpressionBoolean(bool value)
+        {
+            return value ? "(1=1)" : "(1=0)";
+        }
+
+        private static bool IsMaximized(SystemWindow targetWindow)
+        {
+            try
+            {
+                return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
+                    targetWindow.WindowState == FormWindowState.Maximized;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool IsMinimized(SystemWindow targetWindow)
+        {
+            try
+            {
+                return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
+                    targetWindow.WindowState == FormWindowState.Minimized;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool IsFullScreen(SystemWindow targetWindow)
+        {
+            try
+            {
+                if (targetWindow == null || targetWindow.HWnd == IntPtr.Zero)
+                    return false;
+
+                var windowRect = targetWindow.Rectangle.ToRectangle();
+                if (windowRect.Width <= 0 || windowRect.Height <= 0)
+                    return false;
+
+                var screen = Screen.FromRectangle(windowRect);
+                return windowRect.Left <= screen.Bounds.Left &&
+                    windowRect.Top <= screen.Bounds.Top &&
+                    windowRect.Right >= screen.Bounds.Right &&
+                    windowRect.Bottom >= screen.Bounds.Bottom;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private class RepeatableCommand
