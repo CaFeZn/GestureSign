@@ -332,7 +332,11 @@ namespace GestureSign.Daemon.Input
             if (appsChanged.Applications != null)
             {
                 var userAppList = appsChanged.Applications.Where(application => application is UserApp).ToList();
-                if (userAppList.Count == 0) return;
+                if (userAppList.Count == 0)
+                {
+                    UpdateBlockTouchInputThreshold(0);
+                    return;
+                }
                 UpdateBlockTouchInputThreshold(userAppList.Cast<UserApp>().Max(app => app.BlockTouchInputThreshold));
             }
         }
