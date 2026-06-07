@@ -4,7 +4,13 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 
 [中文说明](README.zh-CN.md)
 
-[![Release](https://img.shields.io/github/release/CaFeZn/GestureSign.svg?style=flat-square)](https://github.com/CaFeZn/GestureSign/releases/latest)
+[![Release](https://img.shields.io/github/release/CaFeZn/GestureSign.svg?style=flat-square)](https://github.com/CaFeZn/GestureSign/releases)
+
+## Project Status
+
+This repository is a community fork of [TransposonY/GestureSign](https://github.com/TransposonY/GestureSign). It carries selected maintenance fixes, documentation updates, and build/release automation, but it is not the upstream maintainer's official continuation and does not promise a full roadmap.
+
+The current codebase remains a Windows desktop app targeting `.NET Framework 4.8`. The documented build path uses Visual Studio 2022 and the Windows 11 notes in this README describe known behavior and limitations, but this fork has not migrated the app to .NET 6/.NET 8.
 
 ## Feature
 
@@ -28,7 +34,8 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 
 - Installer edition: `winget install --id TransposonY.GestureSign -e`
 - Update installer edition: `winget upgrade --id TransposonY.GestureSign -e`
-- Portable edition: download the portable package from this fork's [releases page](https://github.com/CaFeZn/GestureSign/releases/latest), extract it to the folder you want, and run it from there.
+- Portable edition: when this fork has a GitHub Release, download `GestureSign-<tag>-win-anycpu.zip` from the [releases page](https://github.com/CaFeZn/GestureSign/releases), extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
+- If this fork has no published release asset yet, use the installer edition above or build locally with `.\scripts\build.ps1 -Configuration Release`.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
 
 ## Usage
@@ -116,6 +123,13 @@ Gesture and trigger notes:
 
 ## Troubleshooting
 
+Windows 11 touch/gesture conflicts:
+
+- Windows 11, browsers, and some apps can still handle native touch or precision-touchpad gestures before or alongside GestureSign. Disabling Windows three- and four-finger gestures may not stop every app-specific zoom, scroll, or two-finger behavior.
+- Prefer gesture shapes and finger counts that do not conflict with the target app's native input, or add app-specific actions/ignored applications as described above. `Block Touch Input` can help only in UIAccess builds and has the initial-frame limits documented in the gesture notes.
+
+General troubleshooting:
+
 - If no gestures run, confirm the tray daemon is running and restart GestureSign from the control panel.
 - If mouse drawing does not start, confirm `Options` > `Mouse Gesture` is on and at least one drawing button is selected.
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
@@ -169,6 +183,11 @@ Improved but not fully closed without hardware validation or larger feature desi
 
 | Issue | Current status |
 | --- | --- |
+| [#129](https://github.com/TransposonY/GestureSign/issues/129), [#124](https://github.com/TransposonY/GestureSign/issues/124), [#54](https://github.com/TransposonY/GestureSign/issues/54) | Project status is documented for this fork: it is a community fork with selected maintenance fixes, docs, and build/release automation, not an official upstream continuation or promised roadmap. |
+| [#107](https://github.com/TransposonY/GestureSign/issues/107), [#106](https://github.com/TransposonY/GestureSign/issues/106) | Current tech status is documented: this fork targets `.NET Framework 4.8`, builds with Visual Studio 2022, and has optional native Arm64 .NET Framework output on Windows 11 24H2/VS 2022 17.11+; it has not migrated to .NET 6/.NET 8. |
+| [#105](https://github.com/TransposonY/GestureSign/issues/105) | Windows 11 native gesture and app touch conflicts are documented as limitations; mitigation is configuration/app-specific behavior, not a complete OS-level override. |
+| [#67](https://github.com/TransposonY/GestureSign/issues/67) | Release executable expectations are documented: the workflow can upload a zip containing `GestureSign.exe`, but this fork has no downloadable GitHub Release asset until a release is created. |
+| [#82](https://github.com/TransposonY/GestureSign/issues/82), [#54](https://github.com/TransposonY/GestureSign/issues/54) | Donation/support status is documented: this fork has no donation or sponsorship link; support is testing, reports, docs, or focused PRs. |
 | [#128](https://github.com/TransposonY/GestureSign/issues/128), [#120](https://github.com/TransposonY/GestureSign/issues/120) | Win11 tablet/touchscreen parsing is more tolerant of HID reports without standard contact-count or coordinate-range data, initializes raw-device info buffers per Win32 requirements, handles unordered tip usages, and improves raw-input diagnostics; device-specific validation is still required. |
 | [#123](https://github.com/TransposonY/GestureSign/issues/123) | Rapid tap handling no longer drops a new active-contact frame when it replaces a stale contact set, but high-frequency touchscreen validation is still required. |
 | [#127](https://github.com/TransposonY/GestureSign/issues/127), [#119](https://github.com/TransposonY/GestureSign/issues/119), [#112](https://github.com/TransposonY/GestureSign/issues/112), [#94](https://github.com/TransposonY/GestureSign/issues/94), [#55](https://github.com/TransposonY/GestureSign/issues/55) | Pen settings and docs are clearer, but Wacom/passive pen support still depends on whether the driver exposes HID pen/touchpad input. |
@@ -184,6 +203,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 - Open `GestureSign.sln` in Visual Studio 2022, or run `.\scripts\build.ps1`
 - The solution now targets `.NET Framework 4.8`
 - NuGet packages are restored with `packages.config`, so restore is required before the first build
+- This fork intentionally keeps the production build on .NET Framework 4.8 for compatibility with the existing WPF/Win32/HID code. .NET 6 migration is not treated as complete here.
 - Windows 11 on Arm64 uses the `Any CPU` build; do not add an `ARM64` solution platform. For native Arm64 .NET Framework output, build on Windows 11 24H2 with VS 2022 17.11 or newer and pass `.\scripts\build.ps1 -Configuration Release -PreferNativeArm64`.
 
 ## GitHub Releases
@@ -191,6 +211,12 @@ Improved but not fully closed without hardware validation or larger feature desi
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
 - The workflow builds `Release|Any CPU`, packages `bin\Release`, creates or updates the GitHub Release, and uploads `GestureSign-<tag>-win-anycpu.zip`.
 - You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; by default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
+- The release asset is a zip package, not a standalone installer `.exe`. After extracting it, start `GestureSign.ControlPanel.exe`; `GestureSign.exe` is the background daemon.
+- A release is created only after a matching tag is pushed or the workflow is run manually. Until then, the releases page may have no downloadable asset for this fork.
+
+## Donations and Support
+
+This fork does not publish a donation or sponsorship link. Please do not assume any third-party payment account is official unless it is linked from this repository. The most useful support is testing, reproducible bug reports, documentation fixes, and focused pull requests.
 
 ## Administrator Windows
 
