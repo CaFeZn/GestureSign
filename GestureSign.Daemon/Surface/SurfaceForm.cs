@@ -103,7 +103,7 @@ namespace GestureSign.Daemon.Surface
 
             //follow dynamic system color
             _drawingPen.Color = AppConfig.VisualFeedbackColor;
-            _drawingPen.Width = _penWidth * DpiHelper.GetScreenDpi(startPoints.FirstOrDefault()) / 96f;
+            _drawingPen.Width = _penWidth * GetCurrentDpi() / 96f;
         }
 
         public void EndDrawing()
@@ -323,7 +323,7 @@ namespace GestureSign.Daemon.Surface
         private void InitializePen()
         {
             _penWidth = AppConfig.VisualFeedbackWidth;
-            _drawingPen = new Pen(AppConfig.VisualFeedbackColor, _penWidth * DpiHelper.GetSystemDpi() / 96f)
+            _drawingPen = new Pen(AppConfig.VisualFeedbackColor, _penWidth * GetCurrentDpi() / 96f)
             {
                 StartCap = LineCap.Round,
                 EndCap = LineCap.Round,
@@ -336,6 +336,11 @@ namespace GestureSign.Daemon.Surface
                 StartCap = LineCap.Round,
                 LineJoin = LineJoin.Round
             };
+        }
+
+        private int GetCurrentDpi()
+        {
+            return IsHandleCreated ? DpiHelper.GetWindowDpi(Handle) : DpiHelper.GetSystemDpi();
         }
 
 

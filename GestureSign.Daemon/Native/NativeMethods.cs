@@ -156,6 +156,9 @@ namespace GestureSign.Daemon.Native
         [DllImport("User32.dll")]
         public static extern IntPtr MonitorFromPoint([In] System.Drawing.Point pt, [In] uint dwFlags);
 
+        [DllImport("User32.dll")]
+        public static extern uint GetDpiForWindow([In] IntPtr hwnd);
+
         [DllImport("Shcore.dll")]
         public static extern IntPtr GetDpiForMonitor([In] IntPtr hmonitor, [In] MonitorDpiType dpiType, [Out] out uint dpiX, [Out] out uint dpiY);
 

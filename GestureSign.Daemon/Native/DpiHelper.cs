@@ -5,15 +5,25 @@ namespace GestureSign.Daemon.Native
 {
     public class DpiHelper
     {
-        //public static int GetDpiForWindow(IntPtr hwnd)
-        //{
-        //    var h = LoadLibrary("user32.dll");
-        //    var ptr = GetProcAddress(h, "GetDpiForWindow"); // Windows 10 1607
-        //    if (ptr == IntPtr.Zero)
-        //        return GetDpiForNearestMonitor(hwnd);
+        public static int GetWindowDpi(IntPtr hwnd)
+        {
+            if (hwnd != IntPtr.Zero && VersionHelper.IsWindows10OrGreater())
+            {
+                try
+                {
+                    var dpi = NativeMethods.GetDpiForWindow(hwnd);
+                    if (dpi > 0)
+                    {
+                        return (int)dpi;
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
 
-        //    return Marshal.GetDelegateForFunctionPointer<GetDpiForWindowFn>(ptr)(hwnd);
-        //}
+            return GetSystemDpi();
+        }
 
         public static int GetScreenDpi(System.Drawing.Point point)
         {
