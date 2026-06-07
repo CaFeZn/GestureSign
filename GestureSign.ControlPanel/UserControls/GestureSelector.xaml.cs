@@ -1,6 +1,10 @@
 ﻿using GestureSign.Common;
+using GestureSign.Common.Configuration;
 using GestureSign.Common.Gestures;
 using GestureSign.Common.InterProcessCommunication;
+using GestureSign.Common.Localization;
+using GestureSign.ControlPanel.ViewModel;
+using ManagedWinapi.Hooks;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -67,6 +71,7 @@ namespace GestureSign.ControlPanel.UserControls
             if (state)
             {
                 CurrentGesture = null;
+                DrawGestureHelpTextBlock.Text = GetDrawGestureHelpText();
                 DrawGestureTextBlock.Visibility = Visibility.Visible;
                 DrawGestureHelpTextBlock.Visibility = Visibility.Visible;
                 ExistingTextBlock.Visibility = RedrawButton.Visibility = Visibility.Collapsed;
@@ -81,6 +86,16 @@ namespace GestureSign.ControlPanel.UserControls
                 MessageProcessor.GotNewPattern -= MessageProcessor_GotNewPattern;
                 NamedPipe.SendMessageAsync(IpcCommands.StopTraining, Constants.Daemon);
             }
+        }
+
+        private string GetDrawGestureHelpText()
+        {
+            if (AppConfig.DrawingButton == MouseActions.None)
+                return LocalizationProvider.Instance.GetTextValue("GestureDefinition.DrawGestureHelpMouseDisabled");
+
+            return string.Format(
+                LocalizationProvider.Instance.GetTextValue("GestureDefinition.DrawGestureHelp"),
+                MouseActionDescription.GetDescription(AppConfig.DrawingButton));
         }
 
         private void RedrawButton_Click(object sender, RoutedEventArgs e)

@@ -222,7 +222,8 @@ Email:ccfyzh@gmail.com
     <Edit>Redraw Gesture</Edit>
     <ExistingGesture>Exist similar gesture.Use it?</ExistingGesture>
     <DrawGesture>Please draw a gesture</DrawGesture>
-    <DrawGestureHelp>Use the configured mouse gesture button, touchscreen, touchpad, or pen to draw on the screen. The preview area is not a drawing canvas.</DrawGestureHelp>
+    <DrawGestureHelp>Hold {0}, use a touchscreen, touchpad, or pen to draw on the screen, then release to finish. The preview area is not a drawing canvas.</DrawGestureHelp>
+    <DrawGestureHelpMouseDisabled>Use a touchscreen, touchpad, or pen to draw on the screen. To draw with a mouse, enable Options > Mouse Gesture first. The preview area is not a drawing canvas.</DrawGestureHelpMouseDisabled>
     <Redraw>Redraw</Redraw>
   </GestureDefinition>
   <Ignored>
