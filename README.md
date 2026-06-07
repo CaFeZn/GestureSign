@@ -36,6 +36,7 @@ The current codebase remains a Windows desktop app targeting `.NET Framework 4.8
 - Update upstream installer package: `winget upgrade --id TransposonY.GestureSign -e`
 - Fork installer: download `GestureSign-<tag>-setup-win-anycpu.exe` from the [releases page](https://github.com/CaFeZn/GestureSign/releases) and run it. The installer shows a destination-folder page; silent installs can pass `/DIR="D:\Tools\GestureSign"`.
 - Fork portable edition: download `GestureSign-<tag>-portable-win-anycpu.zip`, extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
+- Latest manual-test build: open the rolling `continuous` prerelease on the releases page and download `GestureSign-continuous-setup-win-anycpu.exe` for a normal installer or `GestureSign-continuous-portable-win-anycpu.zip` for a portable run.
 - If this fork has no published release asset yet, use the upstream installer package above or build locally with `.\scripts\build.ps1 -Configuration Portable`.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
 
@@ -78,7 +79,7 @@ Gesture creation notes:
 - Create or edit gestures from the `Gestures` tab or from the gesture picker in an action, then draw the gesture on the screen when the gesture definition window is open.
 - Mouse gestures are disabled by default. To draw gestures with a mouse, open `Options`, turn on `Mouse Gesture`, and select one or more drawing buttons. The default when enabling this option is the right mouse button.
 - When a mouse drawing button is configured, hold that button, move the mouse to draw the gesture, then release the button to finish the sample or run the gesture.
-- Mouse drawing buttons are trigger buttons, not output actions. `Mouse Actions` can send wheel input after a gesture matches, but wheel rotation by itself is not a mouse gesture drawing trigger.
+- Mouse drawing buttons are trigger buttons, not output actions. `Mouse Actions` can send wheel input after a gesture matches. Wheel rotation by itself does not draw a mouse gesture, but it can be used as a conditioned standalone mouse trigger as described below.
 - Multi-finger gestures require simultaneous contacts. A three-finger gesture is not the same as drawing one line three times.
 - Point and tap gestures are recorded as point samples, so their preview can look like dots instead of strokes.
 - A one-finger touchscreen tap can be recorded as a gesture sample. Mouse and touchpad training still require movement to avoid capturing ordinary clicks as gestures.
@@ -107,6 +108,35 @@ Multiple gestures for the same behavior:
 - In the `Actions` tab, copy the existing action, use `Paste To New Action`, then edit the pasted action and choose a different gesture.
 - Commands inside each action run from top to bottom, so keep the duplicated command order identical when both gestures should do exactly the same thing.
 - To disable one global gesture only in a specific app, create or copy an action with the same gesture under that app and turn all commands in that app-specific action off. The app-specific action blocks fallback to the global action, while other global gestures still work in that app.
+
+Continuous gestures:
+
+- `Continuous Gesture` is an action setting, not a GitHub release tag. It means GestureSign runs the action repeatedly while the current finger, pen, touchpad, or mouse capture is still moving.
+- Implementation summary: `PointCapture` collects raw input points and raises `PointCaptured` on accepted movement. `ContinuousGestureTrigger` listens during active capture, compares the latest points with the previous points, chooses `Up`, `Down`, `Left`, or `Right`, checks the DPI-scaled `Options` > `Continuous Gesture Distance`, and fires matching continuous actions immediately. If a continuous action fired, the normal finger-up gesture match for that same capture is canceled to avoid duplicate commands.
+- To configure one, edit or create an action, turn on `Continuous Gesture`, set the contact count and direction, choose commands, then tune `Options` > `Continuous Gesture Distance`. Smaller distances trigger more often; larger distances trigger less often.
+- Continuous commands are good for repeated behaviors such as scrolling, volume, brightness, virtual-desktop switching, or repeated hotkeys. Avoid commands that should run exactly once unless you intentionally want repeats.
+- `Mouse Actions` > `Hold Down` is automatically released when the continuous capture ends or is canceled, reducing stuck-button risk for continuous drag-like workflows.
+
+One-finger touchpad edge workflows:
+
+- One-finger precision-touchpad capture is protected because ordinary one-finger touchpad movement controls the pointer. GestureSign captures a one-finger touchpad action only when the action allows `TouchPad`, uses one contact, has at least one enabled command, and has a trigger condition that is already true at touch start.
+- For a right-edge scrollbar-like area, create two actions: one `Continuous Gesture` with one finger `Up`, and one with one finger `Down`. Enable `TouchPad` for both actions and add `Mouse Actions` > `Vertical Scroll` commands with opposite scroll directions.
+- Use a start-zone condition so normal touchpad movement is not captured. Example middle strip on the right edge: `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
+- If you want a modifier guard, add it to the same condition, for example `key_is_alt_down AND finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
+- The scroll is dynamic: movement events trigger while the finger slides. You do not need to lift the finger before scrolling begins.
+- `start_*` variables decide whether one-finger touchpad capture may begin. `end_*` variables update during execution, but they cannot be the only gate for starting a protected one-finger touchpad capture.
+- Percent coordinates use Windows virtual-screen bounds, not the touchpad's physical hardware percentage. On multi-monitor or unusual scaling setups, adjust the edge percentage after real-device testing.
+
+Standalone wheel triggers:
+
+- `Wheel Forward` and `Wheel Backward` can be selected in an action's `Mouse HotKey` field.
+- Standalone wheel triggers must have a non-empty trigger condition and at least one enabled command. This keeps ordinary scrolling from being captured globally.
+- Use them for deliberate edge or corner workflows, for example only when the cursor or gesture condition is in a configured zone. Do not configure unconditioned global wheel actions.
+
+Default browser matching:
+
+- New bundled defaults match common browser executable names exactly: `msedge`, `chrome`, `firefox`, `iexplore`, and legacy `MicrosoftEdge`, with or without `.exe`.
+- Existing user configurations are not auto-migrated. If an old browser group fails to match Chromium Edge, edit that application rule and use an executable/process match such as `^(MicrosoftEdge|firefox|chrome|iexplore|msedge)(\.exe)?$`.
 
 Gesture and trigger notes:
 
@@ -244,6 +274,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
 - Every push to `master` also updates the `continuous` prerelease with the latest portable build for manual testing.
+- The GitHub release named `continuous` is a rolling prerelease build tag. It is separate from the app feature named `Continuous Gesture`.
 - The workflow builds `Release|Any CPU` for the installer and `Portable|Any CPU` for the zip, creates or updates the GitHub Release, and uploads both `GestureSign-<tag>-setup-win-anycpu.exe` and `GestureSign-<tag>-portable-win-anycpu.zip`.
 - The release workflow uses Node 24-compatible checkout, artifact upload, and release actions to avoid GitHub Actions Node 20 deprecation warnings.
 - You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; use `continuous` for a prerelease test build, or a semver-like tag for a formal release. By default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
