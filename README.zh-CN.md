@@ -144,7 +144,7 @@ Windows 11 触摸/手势冲突：
 - 如果没有任何手势运行，确认托盘守护进程正在运行，并从控制面板重启 GestureSign。
 - 如果只有手动打开 GestureSign 后手势才工作，请启用 `Options` > `Start GestureSign on Windows Startup`，或为 `GestureSign.exe` 添加启动快捷方式/任务，而不是启动控制面板可执行文件。
 - 如果鼠标无法开始绘制，确认 `Options` > `Mouse Gesture` 已启用，且至少选择了一个绘制按钮。
-- 如果浏览器动作无法匹配 Chromium Edge，请用 executable filename 或 process matching 添加/编辑 `msedge.exe` 的应用规则。内置浏览器组会匹配常见浏览器进程，包括 `msedge`、`chrome`、`firefox`、`iexplore` 和旧版 `MicrosoftEdge`。Firefox 分离出来的标签页窗口理论上仍应按可执行文件匹配，但浏览器窗口类和标签页分离行为会随版本变化，失败时需要按具体窗口验证。
+- 如果浏览器动作无法匹配 Chromium Edge，请用 executable filename 或 process matching 添加/编辑 `msedge.exe` 的应用规则。内置浏览器组会按完整可执行文件名匹配常见浏览器进程，包括 `msedge`、`chrome`、`firefox`、`iexplore` 和旧版 `MicrosoftEdge`，带不带 `.exe` 都可匹配。Firefox 分离出来的标签页窗口理论上仍应按可执行文件匹配，但浏览器窗口类和标签页分离行为会随版本变化，失败时需要按具体窗口验证。
 - 如果触控笔悬停或按下侧键时 Chrome 忽略鼠标动作，请确认笔驱动把输入暴露为 HID pen state 还是普通鼠标输入。HID 笔输入使用 `Pen Gesture`，把侧键暴露为鼠标右键的驱动可尝试 `Mouse Gesture`。
 - 如果断开外接显示器后 GestureSign 退出或无响应，请重启托盘守护进程并查看日志。显示器变化处理现在会释放当前输入、清理触摸屏映射缓存、在 UI 消息上下文重新注册 raw input，并在系统临时拿不到显示器边界时跳过该输入帧，而不是把它当成致命错误。
 - 如果耗电偏高，关闭不用的输入来源，并避免在长时间平板使用场景里启用低阈值单指手势。后台守护进程运行时会监听 raw digitizer input，具体功耗影响需要在受影响硬件上 profiling。
@@ -228,9 +228,9 @@ Windows 11 触摸/手势冲突：
 | [#61](https://github.com/TransposonY/GestureSign/issues/61) | 原生/系统事件抑制仅限 UIAccess touch-pointer 重定向，并且要等捕获到足够触点后才生效；GestureSign 不能完整阻断精确触摸板、触控笔、鼠标、键盘或所有应用原生事件。 |
 | [#58](https://github.com/TransposonY/GestureSign/issues/58) | 耗电报告需要在受影响的触摸屏/平板硬件上 profiling；可通过关闭不用的输入来源、避免长时间使用低阈值单指捕获来降低风险。 |
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome 与悬停笔/侧键组合的行为取决于驱动暴露 HID pen state 还是鼠标输入，需要结合受影响浏览器和触控笔驱动验证。 |
-| [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox 分离标签页窗口理论上应按浏览器可执行文件/默认浏览器规则匹配，但剩余失败需要在受影响 Firefox 版本上逐窗口验证。 |
+| [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox 分离标签页窗口理论上应按完整浏览器可执行文件/默认浏览器规则匹配，但剩余失败需要在受影响 Firefox 版本上逐窗口验证。 |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | 动作可以限定到多个输入来源，包括触摸屏和触摸板，但兼容的 raw HID 触摸板输入仍取决于驱动。 |
-| [#53](https://github.com/TransposonY/GestureSign/issues/53) | 浏览器匹配说明现在明确 Chromium Edge 的 `msedge.exe`；Edge 特定失败仍需要按规则和窗口验证。 |
+| [#53](https://github.com/TransposonY/GestureSign/issues/53) | 浏览器匹配说明现在明确 Chromium Edge 的 `msedge.exe`；新的默认浏览器规则使用完整可执行文件名匹配，但既有用户配置和 Edge 特定失败仍需要按规则和窗口验证。 |
 
 ## 构建
 
