@@ -69,6 +69,7 @@ Gesture creation notes:
 - When a mouse drawing button is configured, hold that button, move the mouse to draw the gesture, then release the button to finish the sample or run the gesture.
 - Multi-finger gestures require simultaneous contacts. A three-finger gesture is not the same as drawing one line three times.
 - Point and tap gestures are recorded as point samples, so their preview can look like dots instead of strokes.
+- A one-finger touchscreen tap can be recorded as a gesture sample. Mouse and touchpad training still require movement to avoid capturing ordinary clicks as gestures.
 - Double-clicking a gesture in the `Gestures` tab opens it for editing; use the edit window to redraw or rename the gesture.
 
 Common command examples:

@@ -653,7 +653,7 @@ namespace GestureSign.Daemon.Input
                 return;
             }
 
-            if (Mode == CaptureMode.Training && !(_pointsCaptured.Count == 1 && _pointsCaptured.Values.First().Count == 1))
+            if (ShouldRecordTrainingGesture())
             {
                 _pointPatternCache.Clear();
                 _pointPatternCache.Add(new PointPattern(_pointsCaptured.Values));
@@ -676,6 +676,22 @@ namespace GestureSign.Daemon.Input
             OnAfterPointsCaptured(pointsInformation);
 
             _pointsCaptured.Clear();
+        }
+
+        private bool ShouldRecordTrainingGesture()
+        {
+            if (Mode != CaptureMode.Training)
+                return false;
+
+            if (!IsSinglePointTap())
+                return true;
+
+            return SourceDevice == Devices.TouchScreen;
+        }
+
+        private bool IsSinglePointTap()
+        {
+            return _pointsCaptured.Count == 1 && _pointsCaptured.Values.First().Count == 1;
         }
 
         private bool ShouldPlayUnrecognizedGestureSound()
