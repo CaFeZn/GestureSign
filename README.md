@@ -34,6 +34,7 @@ Common command examples:
 
 - `Hot Key` sends one shortcut such as `Ctrl+Alt+T`.
 - `Send Keystrokes` types a key sequence or text.
+- `Key Down/Up` can hold or release keys such as `Left Shift`; pair one hold action with another release action when you need to select text or keep a modifier down temporarily.
 - `Launch Windows Store App`, `Open Default Browser`, `Open File`, and `Run Command or Program` start applications or files.
 - `Mouse Actions` can send clicks, wheel actions, and other mouse input.
 - `Open GestureSign Control Panel` opens the settings window from a gesture.

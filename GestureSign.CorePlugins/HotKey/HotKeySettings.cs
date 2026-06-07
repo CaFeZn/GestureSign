@@ -36,7 +36,9 @@ namespace GestureSign.CorePlugins.HotKey
                 Keys.BrowserSearch, Keys.BrowserStop,
                 Keys.MediaNextTrack, Keys.MediaPlayPause, Keys.MediaPreviousTrack,
                 Keys.MediaStop, Keys.VolumeDown, Keys.VolumeMute, Keys.VolumeUp,
-                Keys.PageDown, Keys.PageUp, Keys.PrintScreen, Keys.Scroll);
+                Keys.PageDown, Keys.PageUp, Keys.PrintScreen, Keys.Scroll,
+                Keys.LControlKey, Keys.RControlKey, Keys.LShiftKey, Keys.RShiftKey,
+                Keys.LMenu, Keys.RMenu, Keys.LWin, Keys.RWin);
 
             AddKeys(Keys.Home, Keys.End, Keys.Insert, Keys.Pause);
         }

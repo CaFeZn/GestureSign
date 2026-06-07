@@ -77,6 +77,22 @@ namespace GestureSign.CorePlugins.KeyDownKeyUp
             bool extended;
             switch (key)
             {
+                case Keys.LControlKey:
+                    return "Left Ctrl";
+                case Keys.RControlKey:
+                    return "Right Ctrl";
+                case Keys.LShiftKey:
+                    return "Left Shift";
+                case Keys.RShiftKey:
+                    return "Right Shift";
+                case Keys.LMenu:
+                    return "Left Alt";
+                case Keys.RMenu:
+                    return "Right Alt";
+                case Keys.LWin:
+                    return "Left Windows";
+                case Keys.RWin:
+                    return "Right Windows";
                 case Keys.Insert:
                 case Keys.Delete:
                 case Keys.PageUp:
@@ -114,9 +130,29 @@ namespace GestureSign.CorePlugins.KeyDownKeyUp
                     case Keys.Apps:
                         sb.Append("ContextMenu");
                         break;
+                    case Keys.LControlKey:
+                        sb.Append("Left Ctrl");
+                        break;
+                    case Keys.RControlKey:
+                        sb.Append("Right Ctrl");
+                        break;
+                    case Keys.LShiftKey:
+                        sb.Append("Left Shift");
+                        break;
+                    case Keys.RShiftKey:
+                        sb.Append("Right Shift");
+                        break;
+                    case Keys.LMenu:
+                        sb.Append("Left Alt");
+                        break;
+                    case Keys.RMenu:
+                        sb.Append("Right Alt");
+                        break;
                     case Keys.LWin:
+                        sb.Append("Left Windows");
+                        break;
                     case Keys.RWin:
-                        sb.Append("Windows");
+                        sb.Append("Right Windows");
                         break;
                     case Keys.PrintScreen:
                         sb.Append("PrintScreen");

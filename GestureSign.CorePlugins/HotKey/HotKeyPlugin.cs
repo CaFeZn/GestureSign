@@ -85,6 +85,22 @@ namespace GestureSign.CorePlugins.HotKey
             bool extended;
             switch (key)
             {
+                case Keys.LControlKey:
+                    return "Left Ctrl";
+                case Keys.RControlKey:
+                    return "Right Ctrl";
+                case Keys.LShiftKey:
+                    return "Left Shift";
+                case Keys.RShiftKey:
+                    return "Right Shift";
+                case Keys.LMenu:
+                    return "Left Alt";
+                case Keys.RMenu:
+                    return "Right Alt";
+                case Keys.LWin:
+                    return "Left Windows";
+                case Keys.RWin:
+                    return "Right Windows";
                 case Keys.VolumeDown:
                 case Keys.VolumeMute:
                 case Keys.VolumeUp:
@@ -136,9 +152,29 @@ namespace GestureSign.CorePlugins.HotKey
                     case Keys.Apps:
                         sb.Append("ContextMenu");
                         break;
+                    case Keys.LControlKey:
+                        sb.Append("Left Ctrl");
+                        break;
+                    case Keys.RControlKey:
+                        sb.Append("Right Ctrl");
+                        break;
+                    case Keys.LShiftKey:
+                        sb.Append("Left Shift");
+                        break;
+                    case Keys.RShiftKey:
+                        sb.Append("Right Shift");
+                        break;
+                    case Keys.LMenu:
+                        sb.Append("Left Alt");
+                        break;
+                    case Keys.RMenu:
+                        sb.Append("Right Alt");
+                        break;
                     case Keys.LWin:
+                        sb.Append("Left Windows");
+                        break;
                     case Keys.RWin:
-                        sb.Append("Windows");
+                        sb.Append("Right Windows");
                         break;
                     case Keys.PrintScreen:
                         sb.Append("PrintScreen");
@@ -259,125 +295,53 @@ namespace GestureSign.CorePlugins.HotKey
         private void SendKeysSeparately(HotKeySettings settings)
         {
             InputSimulator simulator = new InputSimulator();
+            List<VirtualKeyCode> modifiedKeys;
+            List<VirtualKeyCode> keys;
+            SplitShortcutKeys(settings, out modifiedKeys, out keys);
 
-            // Deceide which keys to press
-            // Windows
-            if (settings.Windows)
-                simulator.Keyboard.KeyDown(VirtualKeyCode.LWIN).Sleep(30);
-
-            // Control
-            if (settings.Control)
-                simulator.Keyboard.KeyDown(VirtualKeyCode.LCONTROL).Sleep(30);
-
-            // Alt
-            if (settings.Alt)
-                simulator.Keyboard.KeyDown(VirtualKeyCode.LMENU).Sleep(30);
-
-            // Shift
-            if (settings.Shift)
-                simulator.Keyboard.KeyDown(VirtualKeyCode.LSHIFT).Sleep(30);
-
-            // Modifier
-            if (settings.KeyCode != null)
-                foreach (var k in settings.KeyCode)
-                {
-                    if (!Enum.IsDefined(typeof(VirtualKeyCode), k.GetHashCode())) continue;
-
-                    var key = (VirtualKeyCode)k;
+            PressModifiers(simulator, modifiedKeys);
+            try
+            {
+                foreach (var key in keys)
                     simulator.Keyboard.KeyPress(key).Sleep(30);
-                }
-            // Release Shift
-            if (settings.Shift)
-                simulator.Keyboard.KeyUp(VirtualKeyCode.LSHIFT).Sleep(30);
-
-            // Release Alt
-            if (settings.Alt)
-                simulator.Keyboard.KeyUp(VirtualKeyCode.LMENU).Sleep(30);
-
-            // Release Control
-            if (settings.Control)
-                simulator.Keyboard.KeyUp(VirtualKeyCode.LCONTROL).Sleep(30);
-
-            // Release Windows
-            if (settings.Windows)
-                simulator.Keyboard.KeyUp(VirtualKeyCode.LWIN).Sleep(30);
+            }
+            finally
+            {
+                ReleaseModifiers(simulator, modifiedKeys);
+            }
         }
 
         private void SendShortcutKeys(HotKeySettings settings)
         {
             if (settings.SendByKeybdEvent)
             {
+                List<VirtualKeyCode> ignoredModifiedKeys;
+                List<VirtualKeyCode> ignoredKeys;
+                SplitShortcutKeys(settings, out ignoredModifiedKeys, out ignoredKeys);
+                var modifiedKeys = ignoredModifiedKeys.Select(k => new KeyboardKey((Keys)k)).ToList();
+                var keys = ignoredKeys.Select(k => new KeyboardKey((Keys)k)).ToList();
 
-                // Create keyboard keys to represent hot key combinations
-                KeyboardKey winKey = new KeyboardKey(Keys.LWin);
-                KeyboardKey controlKey = new KeyboardKey(Keys.LControlKey);
-                KeyboardKey altKey = new KeyboardKey(Keys.LMenu);
-                KeyboardKey shiftKey = new KeyboardKey(Keys.LShiftKey);
+                foreach (var modifierKey in modifiedKeys)
+                    modifierKey.Press();
 
-                // Deceide which keys to press
-                // Windows
-                if (settings.Windows)
-                    winKey.Press();
-
-                // Control
-                if (settings.Control)
-                    controlKey.Press();
-
-                // Alt
-                if (settings.Alt)
-                    altKey.Press();
-
-                // Shift
-                if (settings.Shift)
-                    shiftKey.Press();
-
-                // Modifier
-                if (settings.KeyCode != null)
-                    foreach (var k in settings.KeyCode)
-                    {
-                        KeyboardKey modifierKey = new KeyboardKey(k);
-                        if (!String.IsNullOrEmpty(modifierKey.KeyName))
-                            modifierKey.PressAndRelease();
-                    }
-                // Release Shift
-                if (settings.Shift)
-                    shiftKey.Release();
-
-                // Release Alt
-                if (settings.Alt)
-                    altKey.Release();
-
-                // Release Control
-                if (settings.Control)
-                    controlKey.Release();
-
-                // Release Windows
-                if (settings.Windows)
-                    winKey.Release();
+                try
+                {
+                    foreach (var key in keys)
+                        if (!String.IsNullOrEmpty(key.KeyName))
+                            key.PressAndRelease();
+                }
+                finally
+                {
+                    for (int i = modifiedKeys.Count - 1; i >= 0; i--)
+                        modifiedKeys[i].Release();
+                }
             }
             else
             {
                 InputSimulator simulator = new InputSimulator();
                 List<VirtualKeyCode> modifiedKeys = new List<VirtualKeyCode>();
                 List<VirtualKeyCode> keys = new List<VirtualKeyCode>();
-
-                if (settings.KeyCode != null)
-                    foreach (var k in settings.KeyCode)
-                    {
-                        if (!Enum.IsDefined(typeof(VirtualKeyCode), k.GetHashCode())) continue;
-
-                        var key = (VirtualKeyCode)k;
-                        keys.Add(key);
-                    }
-
-                if (settings.Windows)
-                    modifiedKeys.Add(VirtualKeyCode.LWIN);
-                if (settings.Control)
-                    modifiedKeys.Add(VirtualKeyCode.LCONTROL);
-                if (settings.Alt)
-                    modifiedKeys.Add(VirtualKeyCode.LMENU);
-                if (settings.Shift)
-                    modifiedKeys.Add(VirtualKeyCode.LSHIFT);
+                SplitShortcutKeys(settings, out modifiedKeys, out keys);
 
                 if (modifiedKeys.Count == 0)
                 {
@@ -394,10 +358,67 @@ namespace GestureSign.CorePlugins.HotKey
                     }
                     else
                     {
-                        simulator.Keyboard.KeyPress(modifiedKeys.ToArray()).Sleep(30);
+                        PressModifiers(simulator, modifiedKeys);
+                        ReleaseModifiers(simulator, modifiedKeys);
                     }
                 }
             }
+        }
+
+        private static void SplitShortcutKeys(HotKeySettings settings, out List<VirtualKeyCode> modifiedKeys, out List<VirtualKeyCode> keys)
+        {
+            modifiedKeys = new List<VirtualKeyCode>();
+            keys = new List<VirtualKeyCode>();
+
+            if (settings.Windows)
+                AddDistinct(modifiedKeys, VirtualKeyCode.LWIN);
+            if (settings.Control)
+                AddDistinct(modifiedKeys, VirtualKeyCode.LCONTROL);
+            if (settings.Alt)
+                AddDistinct(modifiedKeys, VirtualKeyCode.LMENU);
+            if (settings.Shift)
+                AddDistinct(modifiedKeys, VirtualKeyCode.LSHIFT);
+
+            if (settings.KeyCode == null)
+                return;
+
+            foreach (var k in settings.KeyCode)
+            {
+                if (!Enum.IsDefined(typeof(VirtualKeyCode), k.GetHashCode()))
+                    continue;
+
+                var key = (VirtualKeyCode)k;
+                if (IsModifierKey(key))
+                    AddDistinct(modifiedKeys, key);
+                else
+                    keys.Add(key);
+            }
+        }
+
+        private static bool IsModifierKey(VirtualKeyCode key)
+        {
+            return key == VirtualKeyCode.LWIN || key == VirtualKeyCode.RWIN ||
+                key == VirtualKeyCode.LCONTROL || key == VirtualKeyCode.RCONTROL ||
+                key == VirtualKeyCode.LMENU || key == VirtualKeyCode.RMENU ||
+                key == VirtualKeyCode.LSHIFT || key == VirtualKeyCode.RSHIFT;
+        }
+
+        private static void AddDistinct(List<VirtualKeyCode> keys, VirtualKeyCode key)
+        {
+            if (!keys.Contains(key))
+                keys.Add(key);
+        }
+
+        private static void PressModifiers(InputSimulator simulator, List<VirtualKeyCode> modifiedKeys)
+        {
+            foreach (var key in modifiedKeys)
+                simulator.Keyboard.KeyDown(key).Sleep(30);
+        }
+
+        private static void ReleaseModifiers(InputSimulator simulator, List<VirtualKeyCode> modifiedKeys)
+        {
+            for (int i = modifiedKeys.Count - 1; i >= 0; i--)
+                simulator.Keyboard.KeyUp(modifiedKeys[i]).Sleep(30);
         }
 
         #endregion

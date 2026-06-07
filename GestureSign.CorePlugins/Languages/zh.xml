@@ -51,6 +51,14 @@
         <PageUp>上一页键</PageUp>
         <PrintScreen>打印显示屏</PrintScreen>
         <Scroll>滚动锁定</Scroll>
+        <LControlKey>左 Ctrl</LControlKey>
+        <RControlKey>右 Ctrl</RControlKey>
+        <LShiftKey>左 Shift</LShiftKey>
+        <RShiftKey>右 Shift</RShiftKey>
+        <LMenu>左 Alt</LMenu>
+        <RMenu>右 Alt</RMenu>
+        <LWin>左 Windows</LWin>
+        <RWin>右 Windows</RWin>
       </ExtraKeys>
     </HotKey>
     <KeyDownKeyUp>

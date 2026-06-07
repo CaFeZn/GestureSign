@@ -51,6 +51,14 @@
         <PageUp>Page Up</PageUp>
         <PrintScreen>Print Screen</PrintScreen>
         <Scroll>Scroll Lock</Scroll>
+        <LControlKey>Left Ctrl</LControlKey>
+        <RControlKey>Right Ctrl</RControlKey>
+        <LShiftKey>Left Shift</LShiftKey>
+        <RShiftKey>Right Shift</RShiftKey>
+        <LMenu>Left Alt</LMenu>
+        <RMenu>Right Alt</RMenu>
+        <LWin>Left Windows</LWin>
+        <RWin>Right Windows</RWin>
       </ExtraKeys>
     </HotKey>
     <KeyDownKeyUp>
