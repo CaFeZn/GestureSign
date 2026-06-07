@@ -214,7 +214,7 @@ namespace GestureSign.Common.Applications
             // Save application list
             bool flag = FileManager.SaveObject(
                  Applications, Path.Combine(AppConfig.ApplicationDataPath, Constants.ActionFileName), true);
-            if (flag) { ApplicationSaved.Invoke(this, EventArgs.Empty); }
+            if (flag) { ApplicationSaved?.Invoke(this, EventArgs.Empty); }
 
         }
 

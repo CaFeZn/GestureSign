@@ -105,6 +105,7 @@
     <Compile Include="ActivateWindow\ActivateWindowUI.xaml.cs">
       <DependentUpon>ActivateWindowUI.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AddIgnoredApplication.cs" />
     <Compile Include="Common\EnvironmentVariablesParser.cs" />
     <Compile Include="Delay\DelaySettings.cs" />
     <Compile Include="IconSource.cs" />

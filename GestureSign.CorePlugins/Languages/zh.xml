@@ -157,6 +157,10 @@
       <Name>关闭/开启手势</Name>
       <Description>停止或打开手势识别功能</Description>
     </ToggleDisableGestures>
+    <AddIgnoredApplication>
+      <Name>添加当前应用到忽略列表</Name>
+      <Description>将当前激活的应用添加到忽略列表</Description>
+    </AddIgnoredApplication>
     <OpenControlPanel>
       <Name>打开 GestureSign 设置</Name>
       <Description>打开 GestureSign 设置面板</Description>
