@@ -26,6 +26,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
     public partial class Options : UserControl
     {
         Color _VisualFeedbackColor;
+        private bool _isUpdatingDrawingButtons;
 
         public Options()
         {
@@ -60,7 +61,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 if (AppConfig.DrawingButton != MouseActions.None)
                 {
                     MouseSwitch.IsChecked = true;
-                    DrawingButtonComboBox.SelectedValue = AppConfig.DrawingButton;
+                    SelectDrawingButtons(AppConfig.DrawingButton);
                 }
 
                 LanguageComboBox.ItemsSource = LocalizationProvider.Instance.GetLanguageList("ControlPanel");
@@ -348,13 +349,54 @@ namespace GestureSign.ControlPanel.MainWindowControls
         private void MouseSwitch_Click(object sender, RoutedEventArgs e)
         {
             if (MouseSwitch.IsChecked != null && MouseSwitch.IsChecked.Value)
-                DrawingButtonComboBox.SelectedValue = AppConfig.DrawingButton = MouseActions.Right;
+            {
+                if (AppConfig.DrawingButton == MouseActions.None)
+                    SelectDrawingButtons(MouseActions.Right);
+                else
+                    SelectDrawingButtons(AppConfig.DrawingButton);
+
+                AppConfig.DrawingButton = GetSelectedDrawingButtons();
+            }
             else AppConfig.DrawingButton = MouseActions.None;
         }
 
-        private void DrawingButtonComboBox_DropDownClosed(object sender, EventArgs e)
+        private void DrawingButtonListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            AppConfig.DrawingButton = (MouseActions)DrawingButtonComboBox.SelectedValue;
+            if (_isUpdatingDrawingButtons) return;
+
+            var selectedButtons = GetSelectedDrawingButtons();
+            AppConfig.DrawingButton = selectedButtons;
+            MouseSwitch.IsChecked = selectedButtons != MouseActions.None;
+        }
+
+        private void SelectDrawingButtons(MouseActions drawingButtons)
+        {
+            _isUpdatingDrawingButtons = true;
+            try
+            {
+                DrawingButtonListBox.SelectedItems.Clear();
+                foreach (var item in DrawingButtonListBox.Items)
+                {
+                    var keyValue = (KeyValuePair<MouseActions, string>)item;
+                    if ((drawingButtons & keyValue.Key) == keyValue.Key)
+                        DrawingButtonListBox.SelectedItems.Add(item);
+                }
+            }
+            finally
+            {
+                _isUpdatingDrawingButtons = false;
+            }
+        }
+
+        private MouseActions GetSelectedDrawingButtons()
+        {
+            MouseActions buttons = MouseActions.None;
+            foreach (var item in DrawingButtonListBox.SelectedItems)
+            {
+                var keyValue = (KeyValuePair<MouseActions, string>)item;
+                buttons |= keyValue.Key;
+            }
+            return buttons;
         }
 
         private void TouchScreenSwitch_Click(object sender, RoutedEventArgs e)

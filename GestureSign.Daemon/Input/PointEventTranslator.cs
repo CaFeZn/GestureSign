@@ -13,6 +13,7 @@ namespace GestureSign.Daemon.Input
         private HashSet<MouseActions> _pressedMouseButton;
 
         internal Devices SourceDevice { get; private set; }
+        internal MouseActions CurrentDrawingButton { get; private set; }
 
         internal PointEventTranslator(InputProvider inputProvider)
         {
@@ -59,13 +60,15 @@ namespace GestureSign.Daemon.Input
 
         private void LowLevelMouseHook_MouseUp(LowLevelMouseMessage mouseMessage, ref bool handled)
         {
-            if ((MouseActions)mouseMessage.Button == AppConfig.DrawingButton)
+            var button = (MouseActions)mouseMessage.Button;
+            if (button == CurrentDrawingButton)
             {
                 var args = new InputPointsEventArgs(new List<InputPoint>(new[] { new InputPoint(1, mouseMessage.Point) }), Devices.Mouse);
                 OnPointUp(args);
                 handled = args.Handled;
+                CurrentDrawingButton = MouseActions.None;
             }
-            _pressedMouseButton.Remove((MouseActions)mouseMessage.Button);
+            _pressedMouseButton.Remove(button);
         }
 
         private void LowLevelMouseHook_MouseMove(LowLevelMouseMessage mouseMessage, ref bool handled)
@@ -76,13 +79,20 @@ namespace GestureSign.Daemon.Input
 
         private void LowLevelMouseHook_MouseDown(LowLevelMouseMessage mouseMessage, ref bool handled)
         {
-            if ((MouseActions)mouseMessage.Button == AppConfig.DrawingButton && _pressedMouseButton.Count == 0)
+            var button = (MouseActions)mouseMessage.Button;
+            if (IsDrawingButton(button) && _pressedMouseButton.Count == 0)
             {
+                CurrentDrawingButton = button;
                 var args = new InputPointsEventArgs(new List<InputPoint>(new[] { new InputPoint(1, mouseMessage.Point) }), Devices.Mouse);
                 OnPointDown(args);
                 handled = args.Handled;
             }
-            _pressedMouseButton.Add((MouseActions)mouseMessage.Button);
+            _pressedMouseButton.Add(button);
+        }
+
+        private static bool IsDrawingButton(MouseActions button)
+        {
+            return button != MouseActions.None && (AppConfig.DrawingButton & button) == button;
         }
 
         private void TranslateTouchEvent(object sender, RawPointsDataMessageEventArgs e)

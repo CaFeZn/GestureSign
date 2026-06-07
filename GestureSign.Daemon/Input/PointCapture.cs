@@ -403,27 +403,10 @@ namespace GestureSign.Daemon.Input
                         Console.WriteLine($"{t.Exception.InnerException.GetType().Name}: {t.Exception.InnerException.Message}");
                     });
 
+                    var drawingButton = _pointEventTranslator.CurrentDrawingButton;
                     var clickAsync = Task.Factory.StartNew(delegate
                     {
-                        InputSimulator simulator = new InputSimulator();
-                        switch (AppConfig.DrawingButton)
-                        {
-                            case MouseActions.Left:
-                                simulator.Mouse.LeftButtonClick();
-                                break;
-                            case MouseActions.Middle:
-                                simulator.Mouse.MiddleButtonClick();
-                                break;
-                            case MouseActions.Right:
-                                simulator.Mouse.RightButtonClick();
-                                break;
-                            case MouseActions.XButton1:
-                                simulator.Mouse.XButtonClick(1);
-                                break;
-                            case MouseActions.XButton2:
-                                simulator.Mouse.XButtonClick(2);
-                                break;
-                        }
+                        ClickMouseButton(drawingButton);
                         State = CaptureState.Ready;
                     }).ContinueWith(observeExceptionsTask, TaskContinuationOptions.OnlyOnFaulted);
 
@@ -487,25 +470,7 @@ namespace GestureSign.Daemon.Input
                     }
                     else if (SourceDevice == Devices.Mouse)
                     {
-                        InputSimulator simulator = new InputSimulator();
-                        switch (AppConfig.DrawingButton)
-                        {
-                            case MouseActions.Left:
-                                simulator.Mouse.LeftButtonDown();
-                                break;
-                            case MouseActions.Middle:
-                                simulator.Mouse.MiddleButtonDown();
-                                break;
-                            case MouseActions.Right:
-                                simulator.Mouse.RightButtonDown();
-                                break;
-                            case MouseActions.XButton1:
-                                simulator.Mouse.XButtonDown(1);
-                                break;
-                            case MouseActions.XButton2:
-                                simulator.Mouse.XButtonDown(2);
-                                break;
-                        }
+                        PressMouseButton(_pointEventTranslator.CurrentDrawingButton);
                     }
                     CancelCaptureByInitialTimeout();
                 }
@@ -526,6 +491,52 @@ namespace GestureSign.Daemon.Input
             else
             {
                 action();
+            }
+        }
+
+        private static void ClickMouseButton(MouseActions button)
+        {
+            InputSimulator simulator = new InputSimulator();
+            switch (button)
+            {
+                case MouseActions.Left:
+                    simulator.Mouse.LeftButtonClick();
+                    break;
+                case MouseActions.Middle:
+                    simulator.Mouse.MiddleButtonClick();
+                    break;
+                case MouseActions.Right:
+                    simulator.Mouse.RightButtonClick();
+                    break;
+                case MouseActions.XButton1:
+                    simulator.Mouse.XButtonClick(1);
+                    break;
+                case MouseActions.XButton2:
+                    simulator.Mouse.XButtonClick(2);
+                    break;
+            }
+        }
+
+        private static void PressMouseButton(MouseActions button)
+        {
+            InputSimulator simulator = new InputSimulator();
+            switch (button)
+            {
+                case MouseActions.Left:
+                    simulator.Mouse.LeftButtonDown();
+                    break;
+                case MouseActions.Middle:
+                    simulator.Mouse.MiddleButtonDown();
+                    break;
+                case MouseActions.Right:
+                    simulator.Mouse.RightButtonDown();
+                    break;
+                case MouseActions.XButton1:
+                    simulator.Mouse.XButtonDown(1);
+                    break;
+                case MouseActions.XButton2:
+                    simulator.Mouse.XButtonDown(2);
+                    break;
             }
         }
 

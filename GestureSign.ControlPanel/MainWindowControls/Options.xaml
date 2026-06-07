@@ -148,17 +148,18 @@
                        Margin="0,0,0,5"
                        Visibility="{Binding ElementName=MouseSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}">
             </TextBlock>
-            <ComboBox x:Name="DrawingButtonComboBox"
-                      ItemsSource="{Binding Source={StaticResource MouseActionDescription},Path=DrawingDescription}"
-                      HorizontalAlignment="Center"
-                      Width="300"
-                      FontSize="14"
-                      Margin="0,5,0,15"
-                      DisplayMemberPath="Value"
-                      SelectedValuePath="Key"
-                      DropDownClosed="DrawingButtonComboBox_DropDownClosed"
-                      Visibility="{Binding ElementName=MouseSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}">
-            </ComboBox>
+            <ListBox x:Name="DrawingButtonListBox"
+                     ItemsSource="{Binding Source={StaticResource MouseActionDescription},Path=DrawingDescription}"
+                     HorizontalAlignment="Center"
+                     Width="300"
+                     MaxHeight="140"
+                     FontSize="14"
+                     Margin="0,5,0,15"
+                     DisplayMemberPath="Value"
+                     SelectionMode="Multiple"
+                     SelectionChanged="DrawingButtonListBox_SelectionChanged"
+                     Visibility="{Binding ElementName=MouseSwitch,Path=IsChecked,Converter={StaticResource BooleanToVisibilityConverter}}">
+            </ListBox>
             <controls:ToggleSwitch x:Name="TouchScreenSwitch"
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"
                                    OffLabel="{localization:LocalisedText Options.OffLabel}"

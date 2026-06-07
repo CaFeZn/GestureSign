@@ -66,8 +66,8 @@ namespace GestureSign.ControlPanel.Dialogs
 
         private void MetroWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            if (MouseActionDescription.DescriptionDict.ContainsKey(AppConfig.DrawingButton))
-                DrawingButtonTextBlock.Text = MouseActionDescription.DescriptionDict[AppConfig.DrawingButton] + "  +  ";
+            if (AppConfig.DrawingButton != MouseActions.None)
+                DrawingButtonTextBlock.Text = MouseActionDescription.GetDescription(AppConfig.DrawingButton) + "  +  ";
             if (AppConfig.DrawingButton == MouseActions.None)
                 MouseHotKeyTextBlock.Text += LocalizationProvider.Instance.GetTextValue("ActionDialog.MouseGestureNotEnabled");
 

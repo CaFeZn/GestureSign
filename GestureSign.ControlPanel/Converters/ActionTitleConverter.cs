@@ -36,7 +36,7 @@ namespace GestureSign.ControlPanel.Converters
                     actionName += "\n";
                 }
                 actionName += LocalizationProvider.Instance.GetTextValue("ActionDialog.MouseHotKey") + ": " +
-                    ViewModel.MouseActionDescription.DescriptionDict[AppConfig.DrawingButton] + " + " + ViewModel.MouseActionDescription.DescriptionDict[action.MouseHotkey];
+                    ViewModel.MouseActionDescription.GetDescription(AppConfig.DrawingButton) + " + " + ViewModel.MouseActionDescription.GetDescription(action.MouseHotkey);
             }
 
             if (!string.IsNullOrWhiteSpace(action.Condition))

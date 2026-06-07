@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using GestureSign.Common.Localization;
 using ManagedWinapi.Hooks;
 
@@ -26,5 +27,17 @@ namespace GestureSign.ControlPanel.ViewModel
 
         public static Dictionary<MouseActions, string> DescriptionDict { get; }
         public static Dictionary<MouseActions, string> DrawingDescription { get; }
+
+        public static string GetDescription(MouseActions mouseActions)
+        {
+            if (DescriptionDict.ContainsKey(mouseActions))
+                return DescriptionDict[mouseActions];
+
+            var descriptions = DescriptionDict
+                .Where(pair => pair.Key != MouseActions.None && (mouseActions & pair.Key) == pair.Key)
+                .Select(pair => pair.Value);
+
+            return string.Join(" + ", descriptions);
+        }
     }
 }
