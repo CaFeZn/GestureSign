@@ -472,25 +472,39 @@ namespace GestureSign.Common.Applications
 
         public static bool IsShellUiWindow(SystemWindow window)
         {
-            if (window == null || window.HWnd == IntPtr.Zero)
-                return false;
-
-            try
+            for (int i = 0; i < 8 && window != null && window.HWnd != IntPtr.Zero; i++)
             {
-                switch (window.ClassName)
+                try
                 {
-                    case "Shell_TrayWnd":
-                    case "Shell_SecondaryTrayWnd":
-                    case "WorkerW":
-                    case "Progman":
+                    if (IsShellUiClassName(window.ClassName))
                         return true;
-                    default:
-                        return false;
                 }
+                catch
+                {
+                    return false;
+                }
+
+                window = window.Parent;
             }
-            catch
+
+            return false;
+        }
+
+        private static bool IsShellUiClassName(string className)
+        {
+            switch (className)
             {
-                return false;
+                case "Shell_TrayWnd":
+                case "Shell_SecondaryTrayWnd":
+                case "Shell_TrayWndChild":
+                case "TrayNotifyWnd":
+                case "MSTaskSwWClass":
+                case "MSTaskListWClass":
+                case "WorkerW":
+                case "Progman":
+                    return true;
+                default:
+                    return false;
             }
         }
 

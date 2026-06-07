@@ -255,8 +255,13 @@ namespace GestureSign.Common.Plugins
 
         private static void ActivateWindow(SystemWindow target)
         {
-            if (target != null && target.HWnd.ToInt64() != SystemWindow.ForegroundWindow?.HWnd.ToInt64())
+            if (target != null &&
+                target.HWnd != IntPtr.Zero &&
+                !ApplicationManager.IsShellUiWindow(target) &&
+                target.HWnd.ToInt64() != SystemWindow.ForegroundWindow?.HWnd.ToInt64())
+            {
                 SystemWindow.ForegroundWindow = target;
+            }
         }
 
         private static bool IsNonRepeatable(IPluginInfo pluginInfo)

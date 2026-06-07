@@ -1,4 +1,5 @@
 ﻿using GestureSign.Common.Localization;
+using GestureSign.Common.Applications;
 using ManagedWinapi;
 using ManagedWinapi.Windows;
 using System;
@@ -149,7 +150,7 @@ namespace GestureSign.CorePlugins
             }
             finally
             {
-                if (targetWindow != null)
+                if (targetWindow != null && !ApplicationManager.IsShellUiWindow(targetWindow))
                     SystemWindow.ForegroundWindow = targetWindow;
                 shieldWindow.DestroyHandle();
 
