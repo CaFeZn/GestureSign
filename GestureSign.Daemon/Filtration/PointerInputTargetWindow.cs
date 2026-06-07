@@ -58,7 +58,7 @@ namespace GestureSign.Daemon.Filtration
                     {
                         if (!NativeMethods.InitializeTouchInjection(10, TOUCH_FEEDBACK.NONE))
                         {
-                            Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                            LogLastWin32Error("InitializeTouchInjection", "maxCount=10, feedback=NONE");
                             return;
                         }
                         _isInitialized = true;
@@ -70,7 +70,7 @@ namespace GestureSign.Daemon.Filtration
                     }
                     else
                     {
-                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                        LogLastWin32Error("RegisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}, threshold={_blockTouchInputThreshold}");
                     }
                 }
                 else
@@ -81,7 +81,7 @@ namespace GestureSign.Daemon.Filtration
                     }
                     else if (_isRegistered)
                     {
-                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                        LogLastWin32Error("UnregisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}");
                     }
                 }
             }
@@ -191,10 +191,17 @@ namespace GestureSign.Daemon.Filtration
                 {
                     if (!NativeMethods.InjectTouchInput(ptis.Count, ptis.ToArray()))
                     {
-                        Logging.LogException(new Win32Exception(Marshal.GetLastWin32Error()));
+                        LogLastWin32Error("InjectTouchInput", $"contacts={ptis.Count}, sourcePointers={pointerInfos.Length}, threshold={_blockTouchInputThreshold}, state={Input.PointCapture.Instance.State}, tempDisable={_tempDisable}");
                     }
                 }
             }
+        }
+
+        private void LogLastWin32Error(string operation, string context)
+        {
+            Logging.LogException(new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                $"{operation} failed in PointerInputTargetWindow. {context}"));
         }
 
         private POINTER_INFO[] GetPointerInfos(Message message)

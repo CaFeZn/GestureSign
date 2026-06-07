@@ -179,14 +179,24 @@ namespace GestureSign.Daemon.Input
             uint deviceCount = 0;
             int dwSize = Marshal.SizeOf(typeof(RAWINPUTDEVICELIST));
 
-            if (NativeMethods.GetRawInputDeviceList(IntPtr.Zero, ref deviceCount, (uint)dwSize) == 0)
+            uint countResult = NativeMethods.GetRawInputDeviceList(IntPtr.Zero, ref deviceCount, (uint)dwSize);
+            if (countResult == uint.MaxValue)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"GetRawInputDeviceList failed while querying device count. itemSize={dwSize}");
+            }
+
+            if (countResult == 0)
             {
                 IntPtr pRawInputDeviceList = Marshal.AllocHGlobal((int)(dwSize * deviceCount));
                 using (new SafeUnmanagedMemoryHandle(pRawInputDeviceList))
                 {
-                    NativeMethods.GetRawInputDeviceList(pRawInputDeviceList, ref deviceCount, (uint)dwSize);
+                    uint listResult = NativeMethods.GetRawInputDeviceList(pRawInputDeviceList, ref deviceCount, (uint)dwSize);
+                    if (listResult == uint.MaxValue)
+                    {
+                        throw new Win32Exception(Marshal.GetLastWin32Error(), $"GetRawInputDeviceList failed while reading device list. itemSize={dwSize}, deviceCount={deviceCount}");
+                    }
 
-                    for (int i = 0; i < deviceCount; i++)
+                    for (int i = 0; i < listResult; i++)
                     {
                         uint pSize = 0;
 
@@ -232,7 +242,7 @@ namespace GestureSign.Daemon.Input
             }
             else
             {
-                throw new ApplicationException("Error!");
+                throw new InvalidOperationException($"GetRawInputDeviceList returned unexpected query result. result={countResult}, deviceCount={deviceCount}, itemSize={dwSize}");
             }
         }
 

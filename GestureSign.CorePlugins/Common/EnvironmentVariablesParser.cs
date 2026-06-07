@@ -1,5 +1,6 @@
 ﻿using GestureSign.Common.Plugins;
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using ManagedWinapi.Windows;
@@ -61,11 +62,55 @@ namespace GestureSign.CorePlugins.Common
                 command = command.Replace("%GS_PID%", processId.Value.ToString());
             }
 
-            return command.Replace("%GS_StartPoint_X%", _pointInfo.PointLocation.First().X.ToString()).
-              Replace("%GS_StartPoint_Y%", _pointInfo.PointLocation.First().Y.ToString()).
-              Replace("%GS_EndPoint_X%", _pointInfo.Points[0].Last().X.ToString()).
-              Replace("%GS_EndPoint_Y%", _pointInfo.Points[0].Last().Y.ToString()).
-              Replace("%GS_WindowHandle%", _pointInfo.WindowHandle.ToString());
+            Point? startPoint = GetStartPoint();
+            Point? endPoint = GetEndPoint();
+
+            if (startPoint.HasValue)
+            {
+                command = command.Replace("%GS_StartPoint_X%", startPoint.Value.X.ToString())
+                    .Replace("%GS_StartPoint_Y%", startPoint.Value.Y.ToString());
+            }
+
+            if (endPoint.HasValue)
+            {
+                command = command.Replace("%GS_EndPoint_X%", endPoint.Value.X.ToString())
+                    .Replace("%GS_EndPoint_Y%", endPoint.Value.Y.ToString());
+            }
+
+            return command.Replace("%GS_WindowHandle%", _pointInfo.WindowHandle.ToString());
+        }
+
+        private Point? GetStartPoint()
+        {
+            try
+            {
+                if (_pointInfo.PointLocation == null || _pointInfo.PointLocation.Count == 0)
+                    return null;
+
+                return _pointInfo.PointLocation.First();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private Point? GetEndPoint()
+        {
+            try
+            {
+                if (_pointInfo.Points == null ||
+                    _pointInfo.Points.Count == 0 ||
+                    _pointInfo.Points[0] == null ||
+                    _pointInfo.Points[0].Count == 0)
+                    return null;
+
+                return _pointInfo.Points[0].Last();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string GetWindowValue(SystemWindow window, Func<SystemWindow, string> valueSelector)
