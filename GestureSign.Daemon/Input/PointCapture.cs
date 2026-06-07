@@ -622,12 +622,32 @@ namespace GestureSign.Daemon.Input
                 List<Point> capturedPoints = SourceDevice == Devices.TouchPad ? new List<Point>() { _touchPadStartPoint } : pointsInformation.FirstCapturedPoints;
                 OnGestureRecognized(new RecognitionEventArgs(GestureManager.Instance.GestureName, pointsInformation.Points, capturedPoints, _pointsCaptured.Keys.ToList()));
             }
-            //else
-            //    OnGestureNotRecognized(new RecognitionEventArgs(pointsInformation.Points, pointsInformation.FirstCapturedPoints, _pointsCaptured.Keys.ToList()));
+            else if (ShouldPlayUnrecognizedGestureSound())
+            {
+                PlayUnrecognizedGestureSound();
+            }
 
             OnAfterPointsCaptured(pointsInformation);
 
             _pointsCaptured.Clear();
+        }
+
+        private bool ShouldPlayUnrecognizedGestureSound()
+        {
+            return Mode == CaptureMode.Normal &&
+                AppConfig.PlaySoundOnUnrecognizedGesture &&
+                !GestureManager.Instance.IsWaitingForCompositeGesture;
+        }
+
+        private void PlayUnrecognizedGestureSound()
+        {
+            try
+            {
+                System.Media.SystemSounds.Beep.Play();
+            }
+            catch
+            {
+            }
         }
 
         //private void CancelCapture(int num)

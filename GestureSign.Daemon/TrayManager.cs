@@ -169,6 +169,11 @@ namespace GestureSign.Daemon
             }
         }
 
+        public void OpenControlPanel()
+        {
+            StartControlPanel();
+        }
+
         #endregion
 
         #region Events

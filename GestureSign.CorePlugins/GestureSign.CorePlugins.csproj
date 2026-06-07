@@ -136,6 +136,7 @@
       <DependentUpon>OpenFileControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="OpenFile\OpenFilePlugin.cs" />
+    <Compile Include="OpenControlPanel.cs" />
     <Compile Include="SendMessage\Messages.cs" />
     <Compile Include="SendMessage\SendMessagePlugin.cs" />
     <Compile Include="SendMessage\SendMessageSetting.cs" />

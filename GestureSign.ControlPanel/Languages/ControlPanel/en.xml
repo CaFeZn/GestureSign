@@ -268,6 +268,9 @@ Email:ccfyzh@gmail.com
     <IgnoreTouchInputWhenUsingPen>
       <Header>Ignore Touch Input When Using Pen</Header>
     </IgnoreTouchInputWhenUsingPen>
+    <UnrecognizedGestureSound>
+      <Header>Play Sound for Unrecognized Gesture</Header>
+    </UnrecognizedGestureSound>
     <ShowTrayIconSwitch>
       <Header>Show Tray Icon</Header>
       <OnLabel>Show</OnLabel>

@@ -49,6 +49,14 @@ namespace GestureSign.Common.Gestures
             }
         }
 
+        public bool IsWaitingForCompositeGesture
+        {
+            get
+            {
+                return _gestureMatchResult != null && _gestureMatchResult.Count != 0;
+            }
+        }
+
         public Task LoadingTask { get; }
 
         #endregion

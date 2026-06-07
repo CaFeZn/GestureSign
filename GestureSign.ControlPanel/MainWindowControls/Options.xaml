@@ -289,6 +289,11 @@
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"
                                    OffLabel="{localization:LocalisedText Options.OffLabel}"
                                    Click="IgnoreTouchInputWhenUsingPenSwitch_Click" />
+            <controls:ToggleSwitch x:Name="UnrecognizedGestureSoundSwitch"
+                                   Header="{localization:LocalisedText Options.UnrecognizedGestureSound.Header}"
+                                   OnLabel="{localization:LocalisedText Options.OnLabel}"
+                                   OffLabel="{localization:LocalisedText Options.OffLabel}"
+                                   Click="UnrecognizedGestureSoundSwitch_Click" />
             <controls:ToggleSwitch x:Name="ShowTrayIconSwitch"
                                    Header="{localization:LocalisedText Options.ShowTrayIconSwitch.Header}"
                                    OnLabel="{localization:LocalisedText Options.ShowTrayIconSwitch.OnLabel}"

@@ -156,6 +156,10 @@
       <Name>Disable/Enable GestureSign</Name>
       <Description>Disables or enable GestureSign from capturing gestures</Description>
     </ToggleDisableGestures>
+    <OpenControlPanel>
+      <Name>Open GestureSign Control Panel</Name>
+      <Description>Open the GestureSign Control Panel</Description>
+    </OpenControlPanel>
     <MaximizeRestore>
       <Name>Maximize or Restore</Name>
       <Description>Maximize or restore current window</Description>

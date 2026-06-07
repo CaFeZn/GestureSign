@@ -157,6 +157,10 @@
       <Name>关闭/开启手势</Name>
       <Description>停止或打开手势识别功能</Description>
     </ToggleDisableGestures>
+    <OpenControlPanel>
+      <Name>打开 GestureSign 设置</Name>
+      <Description>打开 GestureSign 设置面板</Description>
+    </OpenControlPanel>
     <MaximizeRestore>
       <Name>最大化或还原</Name>
       <Description>最大化或还原当前窗口</Description>

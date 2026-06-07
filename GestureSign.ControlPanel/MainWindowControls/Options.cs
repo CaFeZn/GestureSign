@@ -55,6 +55,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 TouchScreenSwitch.IsChecked = AppConfig.RegisterTouchScreen;
                 IgnoreFullScreenSwitch.IsChecked = AppConfig.IgnoreFullScreen;
                 IgnoreTouchInputWhenUsingPenSwitch.IsChecked = AppConfig.IgnoreTouchInputWhenUsingPen;
+                UnrecognizedGestureSoundSwitch.IsChecked = AppConfig.PlaySoundOnUnrecognizedGesture;
                 if (AppConfig.DrawingButton != MouseActions.None)
                 {
                     MouseSwitch.IsChecked = true;
@@ -378,6 +379,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
             AppConfig.IgnoreTouchInputWhenUsingPen = IgnoreTouchInputWhenUsingPenSwitch.IsChecked.GetValueOrDefault();
         }
 
+        private void UnrecognizedGestureSoundSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            AppConfig.PlaySoundOnUnrecognizedGesture = UnrecognizedGestureSoundSwitch.IsChecked.GetValueOrDefault();
+        }
+
         private void InitialTimeoutSwitch_Click(object sender, RoutedEventArgs e)
         {
             if (InitialTimeoutSwitch.IsChecked.GetValueOrDefault())
@@ -520,9 +526,10 @@ namespace GestureSign.ControlPanel.MainWindowControls
 
         private void RestoreButton_Click(object sender, RoutedEventArgs e)
         {
+            // Legacy .ges archives contain the same actions/gestures payload as .gsb backups, without config.
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog()
             {
-                Filter = $"{LocalizationProvider.Instance.GetTextValue("Options.BackupFile")}|*{GestureSign.Common.Constants.BackupFileExtension}",
+                Filter = $"{LocalizationProvider.Instance.GetTextValue("Options.BackupFile")}|*{GestureSign.Common.Constants.BackupFileExtension};*{GestureSign.Common.Constants.ArchivesExtension}",
                 Title = LocalizationProvider.Instance.GetTextValue("Common.Import"),
                 CheckFileExists = true
             };
