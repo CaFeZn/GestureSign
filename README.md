@@ -80,6 +80,12 @@ Common command examples:
 - `Repeat Last Command` replays the last command that completed successfully.
 - `Next Virtual Desktop` and `Previous Virtual Desktop` switch Windows virtual desktops.
 
+Multiple gestures for the same behavior:
+
+- An action has one assigned gesture, but you can bind several gestures to the same command sequence by duplicating the action.
+- In the `Actions` tab, copy the existing action, use `Paste To New Action`, then edit the pasted action and choose a different gesture.
+- Commands inside each action run from top to bottom, so keep the duplicated command order identical when both gestures should do exactly the same thing.
+
 Gesture and trigger notes:
 
 - Touchscreen, touchpad, pen, and mouse input are separate source devices. Check the action's ignored-device settings if a gesture works from one device but not another.
