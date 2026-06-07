@@ -89,7 +89,7 @@ namespace GestureSign.Daemon.Triggers
             bool isHorizontal = deltaXAbs > deltaYAbs;
             if (isHorizontal)
             {
-                var rate = GetRateOfFire(deltaXAbs);
+                var rate = GetRateOfFire(deltaXAbs, e.FirstCapturedPoints[0]);
                 if (rate >= 1)
                 {
                     FireContinuousGesture(rate, deltaX > 0 ? Gestures.Right : Gestures.Left);
@@ -99,7 +99,7 @@ namespace GestureSign.Daemon.Triggers
             }
             else
             {
-                var rate = GetRateOfFire(deltaYAbs);
+                var rate = GetRateOfFire(deltaYAbs, e.FirstCapturedPoints[0]);
                 if (rate >= 1)
                 {
                     FireContinuousGesture(rate, deltaY > 0 ? Gestures.Down : Gestures.Up);
@@ -129,14 +129,14 @@ namespace GestureSign.Daemon.Triggers
             }
         }
 
-        private double GetRateOfFire(int distance)
+        private double GetRateOfFire(int distance, Point referencePoint)
         {
             var deltaTime = _stopwatch.ElapsedMilliseconds;
             if (deltaTime < 2)
                 return 0;
 
             var velocity = distance / (double)deltaTime;
-            var motionThreshold = GetMotionThreshold();
+            var motionThreshold = GetMotionThreshold(referencePoint);
             if (velocity < 3)
             {
                 return distance / motionThreshold;
@@ -149,9 +149,9 @@ namespace GestureSign.Daemon.Triggers
             }
         }
 
-        private static float GetMotionThreshold()
+        private static float GetMotionThreshold(Point referencePoint)
         {
-            return Math.Max(1, AppConfig.ContinuousGestureDistance) * DpiHelper.GetSystemDpi() / 96f;
+            return Math.Max(1, AppConfig.ContinuousGestureDistance) * DpiHelper.GetScreenDpi(referencePoint) / 96f;
         }
     }
 }
