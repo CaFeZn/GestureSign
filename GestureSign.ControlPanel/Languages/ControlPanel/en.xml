@@ -35,7 +35,7 @@ This can break startup and touch-blocking features. To run gestures against admi
     <Homepage>Homepage</Homepage>
     <HomepageUrl>https://gesturesign.win</HomepageUrl>
     <Store>Microsoft Store</Store>
-    <HelpPageUrl>https://gesturesign.win/#/guide</HelpPageUrl>
+    <HelpPageUrl>https://github.com/CaFeZn/GestureSign#usage</HelpPageUrl>
     <Version>Version  </Version>
     <ReleaseDate>ReleaseDate  </ReleaseDate>
     <Information>Author:TransposonY
