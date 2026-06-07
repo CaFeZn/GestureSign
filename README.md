@@ -53,6 +53,7 @@ Startup notes:
 - `GestureSign.ControlPanel.exe` opens the settings window and starts the daemon when needed.
 - `GestureSign.exe` starts only the background daemon and tray icon. Use it when you want GestureSign to start without opening the control panel.
 - The normal startup option creates a shortcut to `GestureSign.exe`. The administrator startup option creates a startup task for `GestureSign.exe`.
+- For startup without opening the settings window, start `GestureSign.exe`, not `GestureSign.ControlPanel.exe`; the normal startup option targets the daemon for this reason.
 
 Gesture names and defaults:
 
@@ -106,6 +107,7 @@ Multiple gestures for the same behavior:
 Gesture and trigger notes:
 
 - Touchscreen, touchpad, pen, and mouse input are separate source devices. Check the action's ignored-device settings if a gesture works from one device but not another.
+- A single action can allow both touchscreen and touchpad input by leaving both source devices enabled. If the same gesture should run different commands per device, duplicate the action and disable the unwanted source on each copy.
 - Pen gestures require `Options` > `Pen Gesture`, one HID pen activation state (barrel/right-click button or inverted pen), and one draw mode (tip or hover). If a stylus driver exposes its button as a normal mouse right-click instead of HID pen input, try `Mouse Gesture` with the right mouse button.
 - Continuous gestures run while fingers are still moving, but only after movement crosses `Options` > `Continuous Gesture Distance`. That distance is scaled by the DPI of the screen where the gesture is captured. If a short swipe releases before that distance, the matching normal gesture can still run first.
 - `Drawing Start Timeout` cancels only gestures that do not start drawing quickly enough. `Whole Gesture Timeout` cancels the full capture after the configured duration and is exclusive with drawing-start timeout. `Composite Gesture Timeout` only controls how long GestureSign waits for the next segment of a composite gesture.
@@ -114,6 +116,7 @@ Gesture and trigger notes:
 - If the touch keyboard or a browser's native touch behavior breaks while touch blocking is enabled, lower that app's block threshold or disable blocking for that app first.
 - Trigger conditions can use `finger_1_start_X`, `finger_1_start_Y`, `finger_1_end_X`, `finger_1_end_Y`, their percent variants such as `finger_1_start_X%`, and `finger_1_ID`.
 - Edge gestures can be approximated with percent trigger conditions, for example `finger_1_start_X%<5`, `finger_1_start_X%>95`, `finger_1_start_Y%<5`, or `finger_1_start_Y%>95`.
+- Trigger conditions can route the same gesture to different commands by finger position, window state, or held modifier keys. Zone workflows can be approximated with coordinate ranges such as `finger_1_start_X%>=25 AND finger_1_start_X%<50`, but this is not a separate Android-style edge gesture or floating-ball feature.
 - True BetterTouchTool-style tip-tap is not implemented. A one-shot approximation can use trigger conditions such as `finger_1_ID<finger_2_ID` or `finger_1_ID>finger_2_ID`, but both contacts must be captured together and some touchpad drivers do not expose stable contact IDs.
 - Window conditions can use `window_is_maximized`, `window_is_minimized`, and `window_is_fullscreen`.
 - Modifier-key conditions can use `key_is_shift_down`, `key_is_ctrl_down`, `key_is_alt_down`, and `key_is_win_down`.
@@ -131,7 +134,9 @@ Windows 11 touch/gesture conflicts:
 General troubleshooting:
 
 - If no gestures run, confirm the tray daemon is running and restart GestureSign from the control panel.
+- If gestures work only after manually opening GestureSign, enable `Options` > `Start GestureSign on Windows Startup` or add a startup shortcut/task for `GestureSign.exe`, not the control panel executable.
 - If mouse drawing does not start, confirm `Options` > `Mouse Gesture` is on and at least one drawing button is selected.
+- If browser actions do not match Chromium Edge, add or edit an application rule using executable filename or process matching for `msedge.exe`. The bundled browser group matches common browser processes including `msedge`, `chrome`, `firefox`, `iexplore`, and legacy `MicrosoftEdge`.
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
 - If a configured action does not run in one app, check whether that app is in the ignored list or whether the action is configured only for a different application.
 - If GestureSign interferes with one app, bind `Add Current Application to Ignored List` to a gesture and run it while that app is active.
@@ -173,6 +178,7 @@ Implemented or covered:
 | [#50](https://github.com/TransposonY/GestureSign/issues/50) | Gesture trail color can be fixed with `Pick Color` or reset to follow the Windows DWM theme color with `Follow System Color`. |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
+| [#60](https://github.com/TransposonY/GestureSign/issues/60) | Startup guidance now clarifies that unattended startup should target `GestureSign.exe`, while `GestureSign.ControlPanel.exe` is the settings UI. |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
 | [#43](https://github.com/TransposonY/GestureSign/issues/43) | Added `Search or Open Clipboard Text` for browser search/open-URL workflows after selected text is copied to the clipboard. |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | Mouse gestures can use multiple configured drawing buttons, such as right and middle mouse buttons. |
@@ -201,6 +207,9 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#47](https://github.com/TransposonY/GestureSign/issues/47), [#26](https://github.com/TransposonY/GestureSign/issues/26) | Tip-tap can only be approximated with contact-ID conditions, and rotation-insensitive five-finger pinch needs recognizer/model work rather than a small configuration change. |
 | [#46](https://github.com/TransposonY/GestureSign/issues/46) | Full whitelist mode is not implemented; use ignored applications for whole-app exclusion or app-specific disabled-command actions for one-gesture exclusions. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | Portable builds can run from a chosen folder, but installer-directory selection is not implemented in this repository. |
+| [#91](https://github.com/TransposonY/GestureSign/issues/91) | Actions can be scoped to multiple source devices, including touchscreen and touchpad, but compatible raw HID touchpad input is still driver-dependent. |
+| [#83](https://github.com/TransposonY/GestureSign/issues/83), [#89](https://github.com/TransposonY/GestureSign/issues/89), [#69](https://github.com/TransposonY/GestureSign/issues/69) | Conditional, zone-like, and edge-like workflows can be approximated with trigger conditions over finger coordinates, window state, and held modifiers, but there is no dedicated edge-gesture recognizer or floating ball. |
+| [#53](https://github.com/TransposonY/GestureSign/issues/53) | Browser matching guidance now calls out Chromium Edge `msedge.exe`; Edge-specific failures still need per-rule and per-window validation. |
 
 ## Build
 
