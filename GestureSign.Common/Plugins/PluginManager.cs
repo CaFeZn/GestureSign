@@ -289,12 +289,14 @@ namespace GestureSign.Common.Plugins
 
                 if (condition.Contains('%'))
                 {
+                    int left = (int)System.Windows.SystemParameters.VirtualScreenLeft;
+                    int top = (int)System.Windows.SystemParameters.VirtualScreenTop;
                     int width = (int)System.Windows.SystemParameters.VirtualScreenWidth;
                     int height = (int)System.Windows.SystemParameters.VirtualScreenHeight;
-                    condition = ReplaceVariables(condition, i, "start_X%", startX * 100 / width);
-                    condition = ReplaceVariables(condition, i, "start_Y%", startY * 100 / height);
-                    condition = ReplaceVariables(condition, i, "end_X%", endX * 100 / width);
-                    condition = ReplaceVariables(condition, i, "end_Y%", endY * 100 / height);
+                    condition = ReplaceVariables(condition, i, "start_X%", (startX - left) * 100 / width);
+                    condition = ReplaceVariables(condition, i, "start_Y%", (startY - top) * 100 / height);
+                    condition = ReplaceVariables(condition, i, "end_X%", (endX - left) * 100 / width);
+                    condition = ReplaceVariables(condition, i, "end_Y%", (endY - top) * 100 / height);
                 }
 
                 condition = ReplaceVariables(condition, i, "start_X", startX);
