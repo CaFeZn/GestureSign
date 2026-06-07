@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using ManagedWinapi.Windows;
 
 namespace GestureSign.CorePlugins.Common
 {
@@ -34,17 +35,30 @@ namespace GestureSign.CorePlugins.Common
                     command = command.Replace("%GS_Clipboard%", clipboardString);
             }
 
-            if (command.Contains("%GS_ClassName%") && !string.IsNullOrEmpty(_pointInfo.Window.ClassName))
+            SystemWindow window = null;
+            try
             {
-                command = command.Replace("%GS_ClassName%", _pointInfo.Window.ClassName);
+                window = _pointInfo.Window;
             }
-            if (command.Contains("%GS_Title%") && !string.IsNullOrEmpty(_pointInfo.Window.Title))
+            catch
             {
-                command = command.Replace("%GS_Title%", _pointInfo.Window.Title);
             }
-            if (command.Contains("%GS_PID%"))
+
+            string className = GetWindowValue(window, w => w.ClassName);
+            string title = GetWindowValue(window, w => w.Title);
+            int? processId = GetWindowProcessId(window);
+
+            if (command.Contains("%GS_ClassName%") && !string.IsNullOrEmpty(className))
             {
-                command = command.Replace("%GS_PID%", _pointInfo.Window.ProcessId.ToString());
+                command = command.Replace("%GS_ClassName%", className);
+            }
+            if (command.Contains("%GS_Title%") && !string.IsNullOrEmpty(title))
+            {
+                command = command.Replace("%GS_Title%", title);
+            }
+            if (command.Contains("%GS_PID%") && processId.HasValue)
+            {
+                command = command.Replace("%GS_PID%", processId.Value.ToString());
             }
 
             return command.Replace("%GS_StartPoint_X%", _pointInfo.PointLocation.First().X.ToString()).
@@ -52,6 +66,36 @@ namespace GestureSign.CorePlugins.Common
               Replace("%GS_EndPoint_X%", _pointInfo.Points[0].Last().X.ToString()).
               Replace("%GS_EndPoint_Y%", _pointInfo.Points[0].Last().Y.ToString()).
               Replace("%GS_WindowHandle%", _pointInfo.WindowHandle.ToString());
+        }
+
+        private static string GetWindowValue(SystemWindow window, Func<SystemWindow, string> valueSelector)
+        {
+            try
+            {
+                if (window == null || window.HWnd == IntPtr.Zero)
+                    return string.Empty;
+
+                return valueSelector(window);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static int? GetWindowProcessId(SystemWindow window)
+        {
+            try
+            {
+                if (window == null || window.HWnd == IntPtr.Zero)
+                    return null;
+
+                return window.ProcessId;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

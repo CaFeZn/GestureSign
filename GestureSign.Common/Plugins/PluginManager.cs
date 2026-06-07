@@ -285,7 +285,11 @@ namespace GestureSign.Common.Plugins
                 var result = dataTable.Compute(expression, null);
                 return result is DBNull || Convert.ToBoolean(result);
             }
-            catch (EvaluateException)
+            catch (Exception ex) when (ex is EvaluateException ||
+                ex is InvalidExpressionException ||
+                ex is SyntaxErrorException ||
+                ex is FormatException ||
+                ex is InvalidCastException)
             {
                 return false;
             }
@@ -359,21 +363,27 @@ namespace GestureSign.Common.Plugins
             bool isMinimized = IsMinimized(targetWindow);
             bool isFullscreen = IsFullScreen(targetWindow);
 
-            condition = condition.Replace("window_is_maximized", ToExpressionBoolean(isMaximized));
-            condition = condition.Replace("window_is_minimized", ToExpressionBoolean(isMinimized));
-            condition = condition.Replace("window_is_fullscreen", ToExpressionBoolean(isFullscreen));
+            condition = ReplaceToken(condition, "window_is_maximized", ToExpressionBoolean(isMaximized));
+            condition = ReplaceToken(condition, "window_is_minimized", ToExpressionBoolean(isMinimized));
+            condition = ReplaceToken(condition, "window_is_fullscreen", ToExpressionBoolean(isFullscreen));
 
             return condition;
         }
 
         private string ReplaceKeyVariables(string condition)
         {
-            condition = condition.Replace("key_is_shift_down", ToExpressionBoolean(IsAnyKeyDown(VK_LSHIFT, VK_RSHIFT)));
-            condition = condition.Replace("key_is_ctrl_down", ToExpressionBoolean(IsAnyKeyDown(VK_LCONTROL, VK_RCONTROL)));
-            condition = condition.Replace("key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(VK_LMENU, VK_RMENU)));
-            condition = condition.Replace("key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(VK_LWIN, VK_RWIN)));
+            condition = ReplaceToken(condition, "key_is_shift_down", ToExpressionBoolean(IsAnyKeyDown(VK_LSHIFT, VK_RSHIFT)));
+            condition = ReplaceToken(condition, "key_is_ctrl_down", ToExpressionBoolean(IsAnyKeyDown(VK_LCONTROL, VK_RCONTROL)));
+            condition = ReplaceToken(condition, "key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(VK_LMENU, VK_RMENU)));
+            condition = ReplaceToken(condition, "key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(VK_LWIN, VK_RWIN)));
 
             return condition;
+        }
+
+        private static string ReplaceToken(string condition, string token, string value)
+        {
+            string pattern = $@"(?<!\w){Regex.Escape(token)}(?!\w)";
+            return Regex.Replace(condition, pattern, value);
         }
 
         private static string ToExpressionBoolean(bool value)

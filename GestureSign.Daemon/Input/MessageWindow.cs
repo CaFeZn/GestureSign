@@ -188,7 +188,9 @@ namespace GestureSign.Daemon.Input
         {
             usage = 0;
             uint pcbSize = 0;
-            NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, IntPtr.Zero, ref pcbSize);
+            if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, IntPtr.Zero, ref pcbSize, "query device info size"))
+                return false;
+
             if (pcbSize <= 0)
                 return false;
 
@@ -196,7 +198,9 @@ namespace GestureSign.Daemon.Input
             using (new SafeUnmanagedMemoryHandle(pInfo))
             {
                 HidDevice.InitializeRawDeviceInfoBuffer(pInfo);
-                NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pcbSize);
+                if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pcbSize, "read device info"))
+                    return false;
+
                 var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
                 if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
                     return true;
@@ -211,14 +215,18 @@ namespace GestureSign.Daemon.Input
                         return true;
                 }
 
-                NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref pcbSize);
+                if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref pcbSize, "query device name size"))
+                    return false;
+
                 if (pcbSize <= 0)
                     return false;
 
                 IntPtr pData = Marshal.AllocHGlobal((int)pcbSize);
                 using (new SafeUnmanagedMemoryHandle(pData))
                 {
-                    NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, pData, ref pcbSize);
+                    if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, pData, ref pcbSize, "read device name"))
+                        return false;
+
                     string deviceName = Marshal.PtrToStringAnsi(pData);
 
                     if (string.IsNullOrEmpty(deviceName) || deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 || deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -388,13 +396,21 @@ namespace GestureSign.Daemon.Input
         private void ProcessInputCommand(IntPtr LParam)
         {
             uint dwSize = 0;
+            uint headerSize = (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER));
 
             // First call to GetRawInputData sets the value of dwSize
             // dwSize can then be used to allocate the appropriate amount of memore,
             // storing the pointer in "buffer".
-            NativeMethods.GetRawInputData(LParam, NativeMethods.RID_INPUT, IntPtr.Zero,
-                             ref dwSize,
-                             (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER)));
+            uint sizeResult = NativeMethods.GetRawInputData(LParam, NativeMethods.RID_INPUT, IntPtr.Zero, ref dwSize, headerSize);
+            if (sizeResult == uint.MaxValue)
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"GetRawInputData failed while querying input size. lParam=0x{LParam.ToInt64():X}");
+            }
+
+            if (dwSize == 0)
+            {
+                throw new InvalidOperationException($"GetRawInputData returned an empty input size. lParam=0x{LParam.ToInt64():X}");
+            }
 
             IntPtr buffer = Marshal.AllocHGlobal((int)dwSize);
             try
@@ -402,13 +418,21 @@ namespace GestureSign.Daemon.Input
                 // Check that buffer points to something, and if so,
                 // call GetRawInputData again to fill the allocated memory
                 // with information about the input
-                if (buffer == IntPtr.Zero ||
-                   NativeMethods.GetRawInputData(LParam, NativeMethods.RID_INPUT,
-                                     buffer,
-                                     ref dwSize,
-                                     (uint)Marshal.SizeOf(typeof(RAWINPUTHEADER))) != dwSize)
+                if (buffer == IntPtr.Zero)
                 {
-                    throw new ApplicationException("GetRawInputData does not return correct size !\n.");
+                    throw new OutOfMemoryException($"Failed to allocate raw input buffer. size={dwSize}");
+                }
+
+                uint expectedSize = dwSize;
+                uint readSize = NativeMethods.GetRawInputData(LParam, NativeMethods.RID_INPUT, buffer, ref dwSize, headerSize);
+                if (readSize == uint.MaxValue)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), $"GetRawInputData failed while reading input. lParam=0x{LParam.ToInt64():X}, expectedSize={expectedSize}, reportedSize={dwSize}");
+                }
+
+                if (readSize != expectedSize)
+                {
+                    throw new InvalidOperationException($"GetRawInputData returned an unexpected size. lParam=0x{LParam.ToInt64():X}, expectedSize={expectedSize}, readSize={readSize}, reportedSize={dwSize}");
                 }
 
                 RAWINPUT raw = (RAWINPUT)Marshal.PtrToStructure(buffer, typeof(RAWINPUT));
@@ -592,6 +616,18 @@ namespace GestureSign.Daemon.Input
             {
                 Marshal.FreeHGlobal(buffer);
             }
+        }
+
+        private static bool TryGetRawInputDeviceInfo(IntPtr hDevice, uint command, IntPtr data, ref uint size, string operation)
+        {
+            uint result = NativeMethods.GetRawInputDeviceInfo(hDevice, command, data, ref size);
+            if (result != uint.MaxValue)
+                return true;
+
+            Logging.LogException(new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                $"GetRawInputDeviceInfo failed during {operation}. hDevice=0x{hDevice.ToInt64():X}, command=0x{command:X}, size={size}"));
+            return false;
         }
 
         private Screen ResolveTouchScreen(IntPtr hDevice, TouchScreenDevice touchScreen, short numberOfChildren)

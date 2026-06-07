@@ -434,7 +434,7 @@ namespace GestureSign.Common.Applications
             {
                 if (VersionHelper.IsWindows10OrGreater() && "ApplicationFrameWindow".Equals(window.ClassName))
                 {
-                    var realWindow = window.AllChildWindows.FirstOrDefault(w => "Windows.UI.Core.CoreWindow".Equals(w.ClassName));
+                    var realWindow = window.AllDescendantWindows.FirstOrDefault(w => "Windows.UI.Core.CoreWindow".Equals(w.ClassName));
                     if (realWindow != null)
                         return realWindow;
                 }
@@ -500,6 +500,7 @@ namespace GestureSign.Common.Applications
                 case "Shell_SecondaryTrayWnd":
                 case "Shell_TrayWndChild":
                 case "TrayNotifyWnd":
+                case "NotifyIconOverflowWindow":
                 case "MSTaskSwWClass":
                 case "MSTaskListWClass":
                 case "WorkerW":

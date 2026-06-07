@@ -1,6 +1,8 @@
 ﻿using GestureSign.Common.Input;
+using GestureSign.Common.Log;
 using GestureSign.Daemon.Native;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -34,9 +36,18 @@ namespace GestureSign.Daemon.Input
         protected static SafeUnmanagedMemoryHandle GetPreparsedData(IntPtr hDevice)
         {
             uint pcbSize = 0;
-            NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_PREPARSEDDATA, IntPtr.Zero, ref pcbSize);
+            if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_PREPARSEDDATA, IntPtr.Zero, ref pcbSize, "query preparsed-data size") || pcbSize == 0)
+            {
+                throw new InvalidOperationException($"Raw input device preparsed data is unavailable. hDevice=0x{hDevice.ToInt64():X}, size={pcbSize}");
+            }
+
             IntPtr pPreparsedData = Marshal.AllocHGlobal((int)pcbSize);
-            NativeMethods.GetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_PREPARSEDDATA, pPreparsedData, ref pcbSize);
+            if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_PREPARSEDDATA, pPreparsedData, ref pcbSize, "read preparsed data"))
+            {
+                Marshal.FreeHGlobal(pPreparsedData);
+                throw new InvalidOperationException($"Failed to read raw input device preparsed data. hDevice=0x{hDevice.ToInt64():X}, size={pcbSize}");
+            }
+
             return new SafeUnmanagedMemoryHandle(pPreparsedData);
         }
 
@@ -183,7 +194,9 @@ namespace GestureSign.Daemon.Input
                             IntPtr.Add(pRawInputDeviceList, dwSize * i),
                             typeof(RAWINPUTDEVICELIST));
 
-                        NativeMethods.GetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, IntPtr.Zero, ref pSize);
+                        if (!TryGetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, IntPtr.Zero, ref pSize, "query enumerated device info size"))
+                            continue;
+
                         if (pSize <= 0)
                             continue;
 
@@ -191,7 +204,9 @@ namespace GestureSign.Daemon.Input
                         using (new SafeUnmanagedMemoryHandle(pInfo))
                         {
                             InitializeRawDeviceInfoBuffer(pInfo);
-                            NativeMethods.GetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pSize);
+                            if (!TryGetRawInputDeviceInfo(rid.hDevice, NativeMethods.RIDI_DEVICEINFO, pInfo, ref pSize, "read enumerated device info"))
+                                continue;
+
                             var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
                             if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
                                 continue;
@@ -219,6 +234,18 @@ namespace GestureSign.Daemon.Input
             {
                 throw new ApplicationException("Error!");
             }
+        }
+
+        private static bool TryGetRawInputDeviceInfo(IntPtr hDevice, uint command, IntPtr data, ref uint size, string operation)
+        {
+            uint result = NativeMethods.GetRawInputDeviceInfo(hDevice, command, data, ref size);
+            if (result != uint.MaxValue)
+                return true;
+
+            Logging.LogException(new Win32Exception(
+                Marshal.GetLastWin32Error(),
+                $"GetRawInputDeviceInfo failed during {operation}. hDevice=0x{hDevice.ToInt64():X}, command=0x{command:X}, size={size}"));
+            return false;
         }
 
         public static void InitializeRawDeviceInfoBuffer(IntPtr pInfo)
