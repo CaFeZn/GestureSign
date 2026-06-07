@@ -86,9 +86,15 @@
     <None Include="zh.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) "$(TargetDir)\Plugins"</PostBuildEvent>
-  </PropertyGroup>
+  <Target Name="CopyPluginToApplicationOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <ApplicationOutputDir>$(MSBuildProjectDirectory)\..\..\bin\$(Configuration)\</ApplicationOutputDir>
+      <ApplicationPluginOutputDir>$(ApplicationOutputDir)Plugins</ApplicationPluginOutputDir>
+    </PropertyGroup>
+    <Delete Files="$(ApplicationPluginOutputDir)" Condition="$([System.IO.File]::Exists('$(ApplicationPluginOutputDir)'))" />
+    <MakeDir Directories="$(ApplicationPluginOutputDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ApplicationPluginOutputDir)" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

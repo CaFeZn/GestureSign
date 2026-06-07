@@ -2,7 +2,9 @@
 
 GestureSign is a gesture recognition software for Windows tablet. You can automate repetitive tasks by simply drawing a gesture with your fingers or mouse.
 
-[![Release](https://img.shields.io/github/release/TransposonY/GestureSign.svg?style=flat-square)](https://github.com/TransposonY/GestureSign/releases/latest)
+[中文说明](README.zh-CN.md)
+
+[![Release](https://img.shields.io/github/release/CaFeZn/GestureSign.svg?style=flat-square)](https://github.com/CaFeZn/GestureSign/releases/latest)
 
 ## Feature
 
@@ -26,7 +28,7 @@ GestureSign is a gesture recognition software for Windows tablet. You can automa
 
 - Installer edition: `winget install --id TransposonY.GestureSign -e`
 - Update installer edition: `winget upgrade --id TransposonY.GestureSign -e`
-- Portable edition: download the portable package from the releases page, extract it to the folder you want, and run it from there.
+- Portable edition: download the portable package from this fork's [releases page](https://github.com/CaFeZn/GestureSign/releases/latest), extract it to the folder you want, and run it from there.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
 
 ## Usage
@@ -117,12 +119,61 @@ Gesture and trigger notes:
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
 - Use `Options` > `Backup User Data` before testing large configuration changes.
 
+## Upstream Issue Coverage
+
+This fork has targeted fixes, implemented features, or documented workflows for these upstream `TransposonY/GestureSign` issues.
+
+Implemented or covered:
+
+| Issue | Coverage |
+| --- | --- |
+| [#139](https://github.com/TransposonY/GestureSign/issues/139) | Documented the duplicate-action workflow for binding several gestures to the same command sequence. |
+| [#138](https://github.com/TransposonY/GestureSign/issues/138), [#95](https://github.com/TransposonY/GestureSign/issues/95), [#62](https://github.com/TransposonY/GestureSign/issues/62) | Single-finger touchscreen gestures and one-finger touchscreen tap training are supported. |
+| [#137](https://github.com/TransposonY/GestureSign/issues/137) | Added optional sound playback for unrecognized gestures, including a custom `.wav` choice. |
+| [#136](https://github.com/TransposonY/GestureSign/issues/136), [#90](https://github.com/TransposonY/GestureSign/issues/90) | Gesture training help now explains which input sources can draw and when mouse gestures must be enabled first. |
+| [#134](https://github.com/TransposonY/GestureSign/issues/134), [#122](https://github.com/TransposonY/GestureSign/issues/122) | Continuous gesture distance is configurable, documented, and threshold-edge firing no longer drops the first trigger. |
+| [#133](https://github.com/TransposonY/GestureSign/issues/133), [#111](https://github.com/TransposonY/GestureSign/issues/111) | Build scripts and docs cover Windows 11 on Arm64 and optional native Arm64 output. |
+| [#132](https://github.com/TransposonY/GestureSign/issues/132), [#125](https://github.com/TransposonY/GestureSign/issues/125) | The `Fn` limitation is documented, and F1-F24/media/function keys are easier to choose from the Hot Key UI. |
+| [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | Virtual desktop switching actions are available and can be assigned to normal or continuous gestures. |
+| [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | Shell/taskbar activation and modifier-key cleanup around switch-window and switch-desktop actions have been hardened. |
+| [#104](https://github.com/TransposonY/GestureSign/issues/104) | `Add Current Application to Ignored List` is available and documented. |
+| [#93](https://github.com/TransposonY/GestureSign/issues/93), [#92](https://github.com/TransposonY/GestureSign/issues/92) | `Key Down/Up` supports held modifiers, and side-specific Hot Key modifiers are documented in the UI and README. |
+| [#84](https://github.com/TransposonY/GestureSign/issues/84), [#65](https://github.com/TransposonY/GestureSign/issues/65), [#118](https://github.com/TransposonY/GestureSign/issues/118) | This README now replaces the unavailable external guide for setup, usage, troubleshooting, and build notes. |
+| [#76](https://github.com/TransposonY/GestureSign/issues/76) | Composite gesture timeout is configurable. |
+| [#75](https://github.com/TransposonY/GestureSign/issues/75), [#32](https://github.com/TransposonY/GestureSign/issues/32) | Trigger conditions support touch-coordinate variables and multi-condition expressions. |
+| [#74](https://github.com/TransposonY/GestureSign/issues/74) | Re-injected touch `UP` frames preserve `INRANGE` for the final contact. |
+| [#73](https://github.com/TransposonY/GestureSign/issues/73), [#56](https://github.com/TransposonY/GestureSign/issues/56) | Touch Keyboard command behavior and TabTip path lookup have been hardened for Windows 10/11. |
+| [#72](https://github.com/TransposonY/GestureSign/issues/72) | Touchscreen gestures can be disabled from `Options`. |
+| [#70](https://github.com/TransposonY/GestureSign/issues/70) | Touchscreen monitor selection no longer relies only on cursor position. |
+| [#57](https://github.com/TransposonY/GestureSign/issues/57), [#9](https://github.com/TransposonY/GestureSign/issues/9) | Touch-blocking behavior has been hardened and its UIAccess/per-app/initial-frame limits are documented. |
+| [#51](https://github.com/TransposonY/GestureSign/issues/51) | Drawing-start timeout is honored for precision touchpad gestures. |
+| [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
+| [#48](https://github.com/TransposonY/GestureSign/issues/48) | Administrator-window and startup guidance is documented. |
+| [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
+| [#38](https://github.com/TransposonY/GestureSign/issues/38) | Control Panel touchpad scrolling uses fractional wheel-delta handling instead of treating every small delta as a full wheel tick. |
+
+Improved but not fully closed without hardware validation or larger feature design:
+
+| Issue | Current status |
+| --- | --- |
+| [#128](https://github.com/TransposonY/GestureSign/issues/128), [#120](https://github.com/TransposonY/GestureSign/issues/120) | Win11 tablet/touchscreen reliability has several fixes, but device-specific validation is still required. |
+| [#127](https://github.com/TransposonY/GestureSign/issues/127), [#119](https://github.com/TransposonY/GestureSign/issues/119), [#112](https://github.com/TransposonY/GestureSign/issues/112), [#94](https://github.com/TransposonY/GestureSign/issues/94), [#55](https://github.com/TransposonY/GestureSign/issues/55) | Pen settings and docs are clearer, but Wacom/passive pen support still depends on whether the driver exposes HID pen/touchpad input. |
+| [#135](https://github.com/TransposonY/GestureSign/issues/135), [#116](https://github.com/TransposonY/GestureSign/issues/116), [#114](https://github.com/TransposonY/GestureSign/issues/114), [#59](https://github.com/TransposonY/GestureSign/issues/59) | Precision touchpad handling is improved, but third-party/vendor driver support must be validated per device. |
+| [#130](https://github.com/TransposonY/GestureSign/issues/130), [#87](https://github.com/TransposonY/GestureSign/issues/87), [#45](https://github.com/TransposonY/GestureSign/issues/45) | Hold-to-drag workflows need an explicit hold/release feature to avoid stuck mouse buttons. |
+| [#66](https://github.com/TransposonY/GestureSign/issues/66), [#24](https://github.com/TransposonY/GestureSign/issues/24), [#52](https://github.com/TransposonY/GestureSign/issues/52) | Modifier-key conditions and held-key actions are partly supported, but arbitrary-key gesture conditions and keyboard-triggered mouse drawing are not implemented. |
+
 ## Build
 
 - Open `GestureSign.sln` in Visual Studio 2022, or run `.\scripts\build.ps1`
 - The solution now targets `.NET Framework 4.8`
 - NuGet packages are restored with `packages.config`, so restore is required before the first build
 - Windows 11 on Arm64 uses the `Any CPU` build; do not add an `ARM64` solution platform. For native Arm64 .NET Framework output, build on Windows 11 24H2 with VS 2022 17.11 or newer and pass `.\scripts\build.ps1 -Configuration Release -PreferNativeArm64`.
+
+## GitHub Releases
+
+- Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
+- The workflow builds `Release|Any CPU`, packages `bin\Release`, creates or updates the GitHub Release, and uploads `GestureSign-<tag>-win-anycpu.zip`.
+- You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; by default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
 
 ## Administrator Windows
 
