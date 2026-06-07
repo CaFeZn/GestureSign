@@ -65,6 +65,8 @@ Default gesture examples:
 Gesture creation notes:
 
 - Create or edit gestures from the `Gestures` tab or from the gesture picker in an action, then draw the gesture on the screen when the gesture definition window is open.
+- Mouse gestures are disabled by default. To draw gestures with a mouse, open `Options`, turn on `Mouse Gesture`, and select one or more drawing buttons. The default when enabling this option is the right mouse button.
+- When a mouse drawing button is configured, hold that button, move the mouse to draw the gesture, then release the button to finish the sample or run the gesture.
 - Multi-finger gestures require simultaneous contacts. A three-finger gesture is not the same as drawing one line three times.
 - Point and tap gestures are recorded as point samples, so their preview can look like dots instead of strokes.
 - Double-clicking a gesture in the `Gestures` tab opens it for editing; use the edit window to redraw or rename the gesture.
@@ -100,6 +102,7 @@ Gesture and trigger notes:
 ## Troubleshooting
 
 - If no gestures run, confirm the tray daemon is running and restart GestureSign from the control panel.
+- If mouse drawing does not start, confirm `Options` > `Mouse Gesture` is on and at least one drawing button is selected.
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
 - If a configured action does not run in one app, check whether that app is in the ignored list or whether the action is configured only for a different application.
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
