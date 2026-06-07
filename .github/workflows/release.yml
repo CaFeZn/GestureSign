@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -27,36 +29,56 @@ jobs:
         id: resolve
         shell: pwsh
         run: |
+          $isContinuous = $false
+
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $tag = "${{ inputs.tag_name }}"
             $buildRef = "${{ inputs.build_ref }}"
-          } else {
+          } elseif ("${{ github.ref_type }}" -eq "tag") {
             $tag = "${{ github.ref_name }}"
             $buildRef = $tag
+          } else {
+            $tag = "continuous"
+            $buildRef = "${{ github.sha }}"
+            $isContinuous = $true
           }
 
           if ([string]::IsNullOrWhiteSpace($tag)) {
             throw "Release tag is empty."
           }
 
-          if ($tag -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') {
+          if ($tag -eq "continuous") {
+            $isContinuous = $true
+          } elseif ($tag -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') {
             throw "Release tag must look like v8.1.0 or v8.1.0-beta.1."
-          }
-
-          if ([string]::IsNullOrWhiteSpace($buildRef)) {
-            $buildRef = $tag
           }
 
           $artifact = "GestureSign-$tag-win-anycpu.zip"
 
+          if ([string]::IsNullOrWhiteSpace($buildRef)) {
+            if ($isContinuous) {
+              $buildRef = "${{ github.sha }}"
+            } else {
+              $buildRef = $tag
+            }
+          }
+
           "release_tag=$tag" >> $env:GITHUB_OUTPUT
           "build_ref=$buildRef" >> $env:GITHUB_OUTPUT
           "artifact=$artifact" >> $env:GITHUB_OUTPUT
+          "prerelease=$($isContinuous.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.resolve.outputs.build_ref }}
+
+      - name: Update continuous tag
+        if: steps.resolve.outputs.release_tag == 'continuous'
+        shell: pwsh
+        run: |
+          git tag -f continuous ${{ steps.resolve.outputs.build_ref }}
+          git push origin refs/tags/continuous --force
 
       - name: Clean release output
         shell: pwsh
@@ -97,5 +119,7 @@ jobs:
           tag_name: ${{ steps.resolve.outputs.release_tag }}
           name: GestureSign ${{ steps.resolve.outputs.release_tag }}
           target_commitish: ${{ steps.resolve.outputs.build_ref }}
+          prerelease: ${{ steps.resolve.outputs.prerelease }}
+          make_latest: ${{ steps.resolve.outputs.prerelease == 'true' && 'false' || 'legacy' }}
           generate_release_notes: true
           files: ${{ steps.resolve.outputs.artifact }}

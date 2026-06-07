@@ -224,10 +224,11 @@ Improved but not fully closed without hardware validation or larger feature desi
 ## GitHub Releases
 
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
+- Every push to `master` also updates the `continuous` prerelease with the latest portable build for manual testing.
 - The workflow builds `Portable|Any CPU`, packages `bin\Portable`, creates or updates the GitHub Release, and uploads `GestureSign-<tag>-win-anycpu.zip`.
-- You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; by default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
+- You can also run the `Release` workflow manually from GitHub Actions. Provide `tag_name`; use `continuous` for a prerelease test build, or a semver-like tag for a formal release. By default the workflow checks out the same ref as `tag_name`, or you can provide `build_ref` to build a specific branch, commit, or tag. If `tag_name` has not been pushed yet, provide `build_ref`.
 - The release asset is a zip package, not a standalone installer `.exe`. After extracting it, start `GestureSign.ControlPanel.exe`; `GestureSign.exe` is the background daemon.
-- A release is created only after a matching tag is pushed or the workflow is run manually. Until then, the releases page may have no downloadable asset for this fork.
+- The releases page may be empty until the first `master` push, matching tag push, or manual workflow run completes successfully.
 
 ## Donations and Support
 
