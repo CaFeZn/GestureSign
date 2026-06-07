@@ -8,7 +8,7 @@ namespace GestureSign.Common.Applications
 
         public int LimitNumberOfFingers
         {
-            get { return _limitNumberOfFingers < 2 ? _limitNumberOfFingers = 2 : _limitNumberOfFingers; }
+            get { return _limitNumberOfFingers < 1 ? _limitNumberOfFingers = 1 : _limitNumberOfFingers; }
             set { _limitNumberOfFingers = value; }
         }
 

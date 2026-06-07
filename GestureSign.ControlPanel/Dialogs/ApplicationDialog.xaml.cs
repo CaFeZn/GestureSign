@@ -89,7 +89,7 @@ namespace GestureSign.ControlPanel.Dialogs
                     break;
                 case GlobalApp globalApp:
                     showLimitNumberOfFingers = true;
-                    LimitNumberOfFingersSlider.Minimum = 2;
+                    LimitNumberOfFingersSlider.Minimum = 1;
                     LimitNumberOfFingersSlider.Value = globalApp.LimitNumberOfFingers;
                     List<FrameworkElement> elements =
                         new List<FrameworkElement> { chCrosshair, ApplicationNameTextBox, ShowRunningButton, BrowseButton, matchUsingRadio, MatchStringTextBox, RegexCheckBox, MatchActivatedCheckBox };
