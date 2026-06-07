@@ -133,13 +133,13 @@ namespace GestureSign.CorePlugins.MouseActions
                 mouseActions |= MouseActions.XButton2;
             }
 
-            if (legacyStr.Contains("Click"))
-            {
-                mouseActions |= MouseActions.Click;
-            }
-            else if (legacyStr.Contains("DoubleClick"))
+            if (legacyStr.Contains("DoubleClick"))
             {
                 mouseActions |= MouseActions.DoubleClick;
+            }
+            else if (legacyStr.Contains("Click"))
+            {
+                mouseActions |= MouseActions.Click;
             }
             else if (legacyStr.Contains("Down"))
             {
