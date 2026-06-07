@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using GestureSign.Common.Applications;
 using GestureSign.Common.Input;
 using GestureSign.Common.Log;
@@ -28,6 +29,7 @@ namespace GestureSign.Common.Plugins
         private RepeatableCommand _lastCommand;
         private SynchronizationContext _mainContext;
         private static readonly Regex FingerVariablePattern = new Regex(@"(?<!\w)finger_\d+_(?:(?:start_X|start_Y|end_X|end_Y)%?|ID)(?![%\w])", RegexOptions.Compiled);
+        private static readonly Regex KeyVariablePattern = new Regex(@"(?<!\w)key_([A-Za-z0-9]+(?:_[A-Za-z0-9]+)*)_down(?!\w)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         #endregion
 
@@ -395,7 +397,13 @@ namespace GestureSign.Common.Plugins
             condition = ReplaceToken(condition, "key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(VK_LMENU, VK_RMENU)));
             condition = ReplaceToken(condition, "key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(VK_LWIN, VK_RWIN)));
 
-            return condition;
+            return KeyVariablePattern.Replace(condition, match =>
+            {
+                int virtualKey;
+                return TryGetVirtualKey(match.Groups[1].Value, out virtualKey)
+                    ? ToExpressionBoolean(IsAnyKeyDown(virtualKey))
+                    : match.Value;
+            });
         }
 
         private static string ReplaceToken(string condition, string token, string value)
@@ -495,6 +503,21 @@ namespace GestureSign.Common.Plugins
         private static bool IsAnyKeyDown(params int[] virtualKeys)
         {
             return virtualKeys.Any(key => (GetAsyncKeyState(key) & 0x8000) != 0);
+        }
+
+        private static bool TryGetVirtualKey(string keyName, out int virtualKey)
+        {
+            virtualKey = 0;
+            if (string.IsNullOrWhiteSpace(keyName))
+                return false;
+
+            Keys key;
+            string normalizedKeyName = keyName.Replace("_", string.Empty).Replace(" ", string.Empty);
+            if (!Enum.TryParse(normalizedKeyName, true, out key))
+                return false;
+
+            virtualKey = (int)key;
+            return virtualKey > 0 && virtualKey <= 0xFE;
         }
 
         [StructLayout(LayoutKind.Sequential)]

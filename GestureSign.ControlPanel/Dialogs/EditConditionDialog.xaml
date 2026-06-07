@@ -24,6 +24,7 @@
             <RowDefinition Height="64" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="35" />
         </Grid.RowDefinitions>
         <TextBlock x:Name="FingerIDTextBlock"
@@ -107,13 +108,30 @@
                     Click="VariableButton_Click"
                     Focusable="False" />
         </WrapPanel>
+        <StackPanel Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="10,0,10,5"
+                    Orientation="Horizontal">
+            <TextBox x:Name="KeyConditionTextBox"
+                     controls:TextBoxHelper.Watermark="{localization:LocalisedText EditConditionDialog.KeyCaptureWatermark}"
+                     Width="235"
+                     FontSize="14"
+                     IsReadOnly="True"
+                     PreviewKeyDown="KeyConditionTextBox_PreviewKeyDown" />
+            <Button x:Name="InsertKeyButton"
+                    Content="{localization:LocalisedText EditConditionDialog.InsertKey}"
+                    Margin="5,0,0,0"
+                    Click="InsertKeyButton_Click"
+                    Focusable="False" />
+        </StackPanel>
         <TextBox x:Name="ConditionTextBox"
                  controls:TextBoxHelper.Watermark="{localization:LocalisedText EditConditionDialog.Sample}"
                  Loaded="ConditionTextBox_Loaded"
                  TextWrapping="Wrap"
                  MinHeight="52"
                  MaxLines="6"
-                 Grid.Row="2"
+                 Grid.Row="3"
                  Grid.Column="0"
                  Margin="10"
                  FontSize="14"
@@ -121,7 +139,7 @@
         <Button x:Name="CancelButton"
                 Content="{localization:LocalisedText Common.Cancel}"
                 FontSize="14"
-                Grid.Row="3"
+                Grid.Row="4"
                 Grid.Column="0"
                 IsCancel="True" />
         <Button x:Name="OkButton"
@@ -129,7 +147,7 @@
                 Click="OkButton_Click"
                 IsDefault="True"
                 FontSize="14"
-                Grid.Row="3"
+                Grid.Row="4"
                 Grid.Column="1" />
     </Grid>
 </controls:MetroWindow>

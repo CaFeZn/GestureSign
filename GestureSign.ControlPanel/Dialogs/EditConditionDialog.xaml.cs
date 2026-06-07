@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Input;
+using System.Windows.Interop;
 using MahApps.Metro.Controls;
 
 namespace GestureSign.ControlPanel.Dialogs
@@ -8,6 +10,8 @@ namespace GestureSign.ControlPanel.Dialogs
     /// </summary>
     public partial class EditConditionDialog : MetroWindow
     {
+        private string _keyConditionVariable;
+
         public EditConditionDialog(string condition)
         {
             DataContext = condition;
@@ -29,6 +33,23 @@ namespace GestureSign.ControlPanel.Dialogs
         {
             var button = sender as System.Windows.Controls.Button;
             InsertConditionText(button?.Tag as string);
+        }
+
+        private void KeyConditionTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            var key = e.Key == Key.System ? e.SystemKey : e.Key;
+            if (key == Key.None)
+                return;
+
+            int virtualKey = KeyInterop.VirtualKeyFromKey(key);
+            _keyConditionVariable = $"key_{((System.Windows.Forms.Keys)virtualKey).ToString().ToLowerInvariant()}_down";
+            KeyConditionTextBox.Text = _keyConditionVariable;
+            e.Handled = true;
+        }
+
+        private void InsertKeyButton_Click(object sender, RoutedEventArgs e)
+        {
+            InsertConditionText(_keyConditionVariable);
         }
 
         private void InsertConditionText(string variable)

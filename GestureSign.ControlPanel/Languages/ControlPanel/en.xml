@@ -140,7 +140,9 @@ Email:ccfyzh@gmail.com
     <KeyCtrlDown>Ctrl down</KeyCtrlDown>
     <KeyAltDown>Alt down</KeyAltDown>
     <KeyWinDown>Win down</KeyWinDown>
-    <Sample>Sample: finger_2_start_X>100 AND key_is_shift_down</Sample>
+    <KeyCaptureWatermark>Focus here and press a key</KeyCaptureWatermark>
+    <InsertKey>Insert key</InsertKey>
+    <Sample>Sample: finger_2_start_X>100 AND key_space_down</Sample>
   </EditConditionDialog>
   <Action>
     <Header>Action</Header>

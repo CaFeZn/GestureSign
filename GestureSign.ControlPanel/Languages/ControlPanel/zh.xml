@@ -144,7 +144,9 @@ QQ交流群：576981420
     <KeyCtrlDown>按住 Ctrl</KeyCtrlDown>
     <KeyAltDown>按住 Alt</KeyAltDown>
     <KeyWinDown>按住 Win</KeyWinDown>
-    <Sample>示例：finger_2_start_X>100 AND key_is_shift_down</Sample>
+    <KeyCaptureWatermark>聚焦后按一个键</KeyCaptureWatermark>
+    <InsertKey>插入按键</InsertKey>
+    <Sample>示例：finger_2_start_X>100 AND key_space_down</Sample>
   </EditConditionDialog>
   <Action>
     <Header>动作</Header>
