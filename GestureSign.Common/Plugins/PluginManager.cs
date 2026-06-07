@@ -5,9 +5,9 @@ using System.Drawing;
 using System.Linq;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using GestureSign.Common.Applications;
 using GestureSign.Common.Input;
 using GestureSign.Common.Log;
@@ -336,28 +336,14 @@ namespace GestureSign.Common.Plugins
 
         private static bool IsMaximized(SystemWindow targetWindow)
         {
-            try
-            {
-                return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
-                    targetWindow.WindowState == FormWindowState.Maximized;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
+                IsZoomed(targetWindow.HWnd);
         }
 
         private static bool IsMinimized(SystemWindow targetWindow)
         {
-            try
-            {
-                return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
-                    targetWindow.WindowState == FormWindowState.Minimized;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return targetWindow != null && targetWindow.HWnd != IntPtr.Zero &&
+                IsIconic(targetWindow.HWnd);
         }
 
         private static bool IsFullScreen(SystemWindow targetWindow)
@@ -367,20 +353,59 @@ namespace GestureSign.Common.Plugins
                 if (targetWindow == null || targetWindow.HWnd == IntPtr.Zero)
                     return false;
 
-                var windowRect = targetWindow.Rectangle.ToRectangle();
-                if (windowRect.Width <= 0 || windowRect.Height <= 0)
+                if (IsMaximized(targetWindow) || IsMinimized(targetWindow))
                     return false;
 
-                var screen = Screen.FromRectangle(windowRect);
-                return windowRect.Left <= screen.Bounds.Left &&
-                    windowRect.Top <= screen.Bounds.Top &&
-                    windowRect.Right >= screen.Bounds.Right &&
-                    windowRect.Bottom >= screen.Bounds.Bottom;
+                RECT windowRect;
+                if (!GetWindowRect(targetWindow.HWnd, out windowRect) ||
+                    windowRect.Width <= 0 || windowRect.Height <= 0)
+                    return false;
+
+                IntPtr monitor = MonitorFromWindow(targetWindow.HWnd, MONITOR_DEFAULTTONEAREST);
+                if (monitor == IntPtr.Zero)
+                    return false;
+
+                MONITORINFO monitorInfo = new MONITORINFO();
+                monitorInfo.cbSize = Marshal.SizeOf(typeof(MONITORINFO));
+                if (!GetMonitorInfo(monitor, ref monitorInfo))
+                    return false;
+
+                RECT monitorRect = monitorInfo.rcMonitor;
+                return windowRect.Left <= monitorRect.Left &&
+                    windowRect.Top <= monitorRect.Top &&
+                    windowRect.Right >= monitorRect.Right &&
+                    windowRect.Bottom >= monitorRect.Bottom;
             }
             catch (Exception)
             {
                 return false;
             }
+        }
+
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+        [DllImport("user32.dll")]
+        private static extern bool IsZoomed(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MONITORINFO
+        {
+            public int cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
         }
 
         private class RepeatableCommand
