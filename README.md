@@ -151,6 +151,7 @@ General troubleshooting:
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
 - If a configured action does not run in one app, check whether that app is in the ignored list or whether the action is configured only for a different application.
 - If GestureSign interferes with one app, bind `Add Current Application to Ignored List` to a gesture and run it while that app is active.
+- To avoid interference by default, enable `Options` > `Whitelist Mode`. In this mode GestureSign captures gestures and hotkeys only when the target foreground/capture window matches a configured application; unmatched apps are ignored, and matched apps may still fall back to global actions.
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
 - Use `Options` > `Backup User Data` before testing large configuration changes.
 
@@ -191,6 +192,7 @@ Implemented or covered:
 | [#83](https://github.com/TransposonY/GestureSign/issues/83), [#89](https://github.com/TransposonY/GestureSign/issues/89), [#69](https://github.com/TransposonY/GestureSign/issues/69) | Conditioned one-finger precision-touchpad capture supports guarded edge/zone workflows, including right-edge continuous scrolling, without intercepting ordinary one-finger touchpad movement. |
 | [#50](https://github.com/TransposonY/GestureSign/issues/50) | Gesture trail color can be fixed with `Pick Color` or reset to follow the Windows DWM theme color with `Follow System Color`. |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
+| [#46](https://github.com/TransposonY/GestureSign/issues/46) | Added optional whitelist mode so unmatched applications are ignored by default; configured user applications still work and can fall back to global actions. |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | Administrator-window, startup, silent daemon launch, and portable-mode guidance is documented. |
 | [#60](https://github.com/TransposonY/GestureSign/issues/60) | Startup guidance now clarifies that unattended startup should target `GestureSign.exe`, while `GestureSign.ControlPanel.exe` is the settings UI. |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` and `Open GestureSign Control Panel` actions are available. |
@@ -225,7 +227,6 @@ Improved but not fully closed without hardware validation or larger feature desi
 | [#41](https://github.com/TransposonY/GestureSign/issues/41) | Mouse gesture drawing buttons support multiple button choices, but mouse wheel rotation is an output command under `Mouse Actions`, not a standalone drawing trigger. |
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome plus hovering pen/side-button behavior depends on whether the driver exposes HID pen state or mouse input, and needs validation with the affected browser and stylus driver. |
 | [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox detached-tab windows should match by browser executable/default browser rules, but remaining failures require per-window validation on the affected Firefox version. |
-| [#46](https://github.com/TransposonY/GestureSign/issues/46) | Full whitelist mode is not implemented; use ignored applications for whole-app exclusion or app-specific disabled-command actions for one-gesture exclusions. |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | Actions can be scoped to multiple source devices, including touchscreen and touchpad, but compatible raw HID touchpad input is still driver-dependent. |
 | [#53](https://github.com/TransposonY/GestureSign/issues/53) | Browser matching guidance now calls out Chromium Edge `msedge.exe`; Edge-specific failures still need per-rule and per-window validation. |
 

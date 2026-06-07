@@ -22,8 +22,7 @@ namespace GestureSign.Daemon.Triggers
 
         private void Instance_ForegroundApplicationsChanged(object sender, ApplicationChangedEventArgs appsChanged)
         {
-            var hotKeyActions = appsChanged.Applications.Where(application => application is UserApp && application.Actions != null).SelectMany(app => app.Actions).Where(a => a != null && a.Hotkey != null).ToList();
-            hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a.Hotkey != null));
+            var hotKeyActions = GetHotKeyActions(appsChanged.Applications);
 
             if (hotKeyActions.Count == 0)
                 UnloadHotKeys();
@@ -41,13 +40,32 @@ namespace GestureSign.Daemon.Triggers
 
         private void RefreshHotKeys()
         {
-            var hotKeyActions = ApplicationManager.Instance.GetApplicationFromWindow(SystemWindow.ForegroundWindow).Where(app => !(app is IgnoredApp) && app.Actions != null).SelectMany(app => app.Actions).Where(a => a != null && a.Hotkey != null).ToList();
-            hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a != null && a.Hotkey != null));
+            var hotKeyActions = GetHotKeyActions(ApplicationManager.Instance.GetApplicationFromWindow(SystemWindow.ForegroundWindow));
 
             if (hotKeyActions.Count == 0)
                 UnloadHotKeys();
             else
                 RegisterHotKeys(hotKeyActions);
+        }
+
+        private List<IAction> GetHotKeyActions(IEnumerable<IApplication> applications)
+        {
+            var appList = applications?.ToList() ?? new List<IApplication>();
+            if (GestureSign.Common.Configuration.AppConfig.WhitelistedApplicationsOnly && !appList.Any(application => application is UserApp))
+                return new List<IAction>();
+
+            var hotKeyActions = appList
+                .Where(application => !(application is IgnoredApp) && !(application is GlobalApp) && application.Actions != null)
+                .SelectMany(app => app.Actions)
+                .Where(a => a != null && a.Hotkey != null)
+                .ToList();
+
+            if (!GestureSign.Common.Configuration.AppConfig.WhitelistedApplicationsOnly || appList.Any(application => application is UserApp))
+            {
+                hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a != null && a.Hotkey != null));
+            }
+
+            return hotKeyActions;
         }
 
         private void RegisterHotKeys(List<IAction> actions)

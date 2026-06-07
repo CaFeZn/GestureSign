@@ -57,6 +57,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 TouchPadSwitch.IsChecked = AppConfig.RegisterTouchPad;
                 TouchScreenSwitch.IsChecked = AppConfig.RegisterTouchScreen;
                 IgnoreFullScreenSwitch.IsChecked = AppConfig.IgnoreFullScreen;
+                WhitelistedApplicationsOnlySwitch.IsChecked = AppConfig.WhitelistedApplicationsOnly;
                 IgnoreTouchInputWhenUsingPenSwitch.IsChecked = AppConfig.IgnoreTouchInputWhenUsingPen;
                 UnrecognizedGestureSoundSwitch.IsChecked = AppConfig.PlaySoundOnUnrecognizedGesture;
                 UnrecognizedGestureSoundPathTextBox.Text = AppConfig.UnrecognizedGestureSoundPath;
@@ -427,6 +428,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
         private void IgnoreFullScreenSwitch_Click(object sender, RoutedEventArgs e)
         {
             AppConfig.IgnoreFullScreen = IgnoreFullScreenSwitch.IsChecked.GetValueOrDefault();
+        }
+
+        private void WhitelistedApplicationsOnlySwitch_Click(object sender, RoutedEventArgs e)
+        {
+            AppConfig.WhitelistedApplicationsOnly = WhitelistedApplicationsOnlySwitch.IsChecked.GetValueOrDefault();
         }
 
         private void IgnoreTouchInputWhenUsingPenSwitch_Click(object sender, RoutedEventArgs e)

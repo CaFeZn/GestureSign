@@ -278,6 +278,9 @@ Email:ccfyzh@gmail.com
     <IgnoreFullScreen>
       <Header>Ignore Full Screen Window</Header>
     </IgnoreFullScreen>
+    <WhitelistedApplicationsOnly>
+      <Header>Whitelist Mode: only capture gestures in configured applications</Header>
+    </WhitelistedApplicationsOnly>
     <IgnoreTouchInputWhenUsingPen>
       <Header>Ignore Touch Input When Using Pen</Header>
     </IgnoreTouchInputWhenUsingPen>

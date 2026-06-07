@@ -151,6 +151,7 @@ Windows 11 触摸/手势冲突：
 - 如果手势只在 Task Manager、Device Manager、安装程序或其他管理员窗口中失败，请查看下方“管理员窗口”说明。
 - 如果某个动作在一个应用里不运行，检查该应用是否在忽略列表中，或者该动作是否只配置给了其他应用。
 - 如果 GestureSign 干扰某个应用，把 `Add Current Application to Ignored List` 绑定到一个手势，在该应用激活时运行它。
+- 如果希望默认不干扰任何未配置应用，请启用 `Options` > `白名单模式`。该模式下 GestureSign 只在目标前台/捕获窗口匹配已配置应用时捕获手势和热键；未匹配应用会被忽略，已匹配应用仍可按规则回退到全局动作。
 - 如果触摸板手势延迟或丢失，提高 `Options` 中的 drawing-start timeout。
 - 测试大规模配置变更前，先使用 `Options` > `Backup User Data`。
 
@@ -191,6 +192,7 @@ Windows 11 触摸/手势冲突：
 | [#83](https://github.com/TransposonY/GestureSign/issues/83), [#89](https://github.com/TransposonY/GestureSign/issues/89), [#69](https://github.com/TransposonY/GestureSign/issues/69) | 带条件的一指精确触摸板捕获支持受保护的边缘/区域工作流，包括右边缘连续滚动，同时不会截获普通一指触摸板移动。 |
 | [#50](https://github.com/TransposonY/GestureSign/issues/50) | 手势轨迹颜色可用 `Pick Color` 固定，也可用 `Follow System Color` 重置为跟随 Windows DWM 主题色。 |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | 备份/设置恢复支持当前备份和旧版动作/手势导出。 |
+| [#46](https://github.com/TransposonY/GestureSign/issues/46) | 添加可选白名单模式，未匹配应用默认被忽略；已配置用户应用仍可使用并可回退到全局动作。 |
 | [#48](https://github.com/TransposonY/GestureSign/issues/48), [#27](https://github.com/TransposonY/GestureSign/issues/27) | 管理员窗口、开机启动、静默启动 daemon 和便携模式已文档化。 |
 | [#60](https://github.com/TransposonY/GestureSign/issues/60) | 开机启动说明现在明确无人值守启动应指向 `GestureSign.exe`；`GestureSign.ControlPanel.exe` 是设置界面。 |
 | [#44](https://github.com/TransposonY/GestureSign/issues/44), [#37](https://github.com/TransposonY/GestureSign/issues/37) | `Repeat Last Command` 和 `Open GestureSign Control Panel` 动作可用。 |
@@ -225,7 +227,6 @@ Windows 11 触摸/手势冲突：
 | [#41](https://github.com/TransposonY/GestureSign/issues/41) | 鼠标手势绘制按钮支持多个按钮选择，但鼠标滚轮旋转是 `Mouse Actions` 下的输出命令，不是独立绘制触发器。 |
 | [#34](https://github.com/TransposonY/GestureSign/issues/34) | Chrome 与悬停笔/侧键组合的行为取决于驱动暴露 HID pen state 还是鼠标输入，需要结合受影响浏览器和触控笔驱动验证。 |
 | [#28](https://github.com/TransposonY/GestureSign/issues/28) | Firefox 分离标签页窗口理论上应按浏览器可执行文件/默认浏览器规则匹配，但剩余失败需要在受影响 Firefox 版本上逐窗口验证。 |
-| [#46](https://github.com/TransposonY/GestureSign/issues/46) | 完整白名单模式尚未实现；整应用排除可用 ignored applications，单个手势排除可用应用专属的禁用命令动作。 |
 | [#91](https://github.com/TransposonY/GestureSign/issues/91) | 动作可以限定到多个输入来源，包括触摸屏和触摸板，但兼容的 raw HID 触摸板输入仍取决于驱动。 |
 | [#53](https://github.com/TransposonY/GestureSign/issues/53) | 浏览器匹配说明现在明确 Chromium Edge 的 `msedge.exe`；Edge 特定失败仍需要按规则和窗口验证。 |
 

@@ -313,6 +313,11 @@
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"
                                    OffLabel="{localization:LocalisedText Options.OffLabel}"
                                    Click="IgnoreFullScreenSwitch_Click" />
+            <controls:ToggleSwitch x:Name="WhitelistedApplicationsOnlySwitch"
+                                   Header="{localization:LocalisedText Options.WhitelistedApplicationsOnly.Header}"
+                                   OnLabel="{localization:LocalisedText Options.OnLabel}"
+                                   OffLabel="{localization:LocalisedText Options.OffLabel}"
+                                   Click="WhitelistedApplicationsOnlySwitch_Click" />
             <controls:ToggleSwitch x:Name="IgnoreTouchInputWhenUsingPenSwitch"
                                    Header="{localization:LocalisedText Options.IgnoreTouchInputWhenUsingPen.Header}"
                                    OnLabel="{localization:LocalisedText Options.OnLabel}"

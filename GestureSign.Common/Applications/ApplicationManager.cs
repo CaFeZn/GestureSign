@@ -83,6 +83,12 @@ namespace GestureSign.Common.Applications
 
             CaptureWindow = GetWindowFromPoint(e.FirstCapturedPoints.FirstOrDefault());
             _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            if (ShouldCancelForWhitelistMode(pointCapture.Mode, _recognizedApplication))
+            {
+                e.Cancel = true;
+                return;
+            }
+
             bool allowSingleFingerTouchPad = pointCapture.SourceDevice == Devices.TouchPad &&
                 e.Points.Count == 1 &&
                 HasConditionedSingleFingerTouchPadAction(_recognizedApplication);
@@ -313,12 +319,13 @@ namespace GestureSign.Common.Applications
 
         public IEnumerable<IAction> GetRecognizedDefinedAction(string GestureName)
         {
-            return GetDefinedAction(GestureName, _recognizedApplication, true).Where(a => a.ContinuousGesture == null);
+            return GetDefinedAction(GestureName, _recognizedApplication, ShouldUseGlobalFallback(_recognizedApplication))
+                .Where(a => a.ContinuousGesture == null);
         }
 
         public List<IAction> GetRecognizedDefinedAction(Func<IAction, bool> predicate)
         {
-            return GetDefinedAction(_recognizedApplication, predicate, true);
+            return GetDefinedAction(_recognizedApplication, predicate, ShouldUseGlobalFallback(_recognizedApplication));
         }
 
         public List<IAction> GetDefinedAction(IEnumerable<IApplication> application, Func<IAction, bool> predicate, bool useGlobal)
@@ -598,6 +605,23 @@ namespace GestureSign.Common.Applications
             return useRegEx
                 ? Regex.IsMatch(windowMatchString, compareMatchString, RegexOptions.Singleline | RegexOptions.IgnoreCase)
                 : string.Equals(windowMatchString.Trim(), compareMatchString.Trim(), StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private static bool ShouldCancelForWhitelistMode(CaptureMode mode, IEnumerable<IApplication> applications)
+        {
+            return mode != CaptureMode.Training &&
+                AppConfig.WhitelistedApplicationsOnly &&
+                !HasUserApplication(applications);
+        }
+
+        private static bool ShouldUseGlobalFallback(IEnumerable<IApplication> applications)
+        {
+            return !AppConfig.WhitelistedApplicationsOnly || HasUserApplication(applications);
+        }
+
+        private static bool HasUserApplication(IEnumerable<IApplication> applications)
+        {
+            return applications != null && applications.Any(app => app is UserApp);
         }
 
         private static bool HasCommands(IAction action)

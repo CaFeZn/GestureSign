@@ -309,6 +309,18 @@ namespace GestureSign.Common.Configuration
             }
         }
 
+        public static bool WhitelistedApplicationsOnly
+        {
+            get
+            {
+                return GetValue(nameof(WhitelistedApplicationsOnly), false);
+            }
+            set
+            {
+                SetValue(nameof(WhitelistedApplicationsOnly), value);
+            }
+        }
+
         public static bool IgnoreTouchInputWhenUsingPen
         {
             get
