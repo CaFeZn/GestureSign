@@ -562,23 +562,31 @@ namespace GestureSign.Daemon.Input
         {
             var touchPadStartPoint = System.Windows.Forms.Cursor.Position;
             var targetWindow = ApplicationManager.Instance.GetWindowFromPoint(touchPadStartPoint);
-            var applications = ApplicationManager.Instance.GetApplicationFromWindow(targetWindow);
+            var applications = ApplicationManager.Instance.GetApplicationFromWindow(targetWindow)?.ToList() ?? new List<IApplication>();
             var conditionPoints = new List<List<Point>>(new[] { new List<Point>(new[] { point.Point }) });
             var contactIdentifiers = new List<int>(new[] { point.ContactIdentifier });
-            var actions = GetConditionedSingleFingerTouchPadActions(applications);
 
+            if (HasMatchingConditionedSingleFingerTouchPadAction(
+                GetConditionedSingleFingerTouchPadActionsInApplications(applications),
+                conditionPoints,
+                contactIdentifiers,
+                targetWindow))
+                return true;
+
+            return !applications.Any(app => app is GlobalApp) &&
+                ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
+                HasMatchingConditionedSingleFingerTouchPadAction(
+                    GetConditionedSingleFingerTouchPadActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }),
+                    conditionPoints,
+                    contactIdentifiers,
+                    targetWindow);
+        }
+
+        private bool HasMatchingConditionedSingleFingerTouchPadAction(IEnumerable<IAction> actions, List<List<Point>> conditionPoints, List<int> contactIdentifiers, SystemWindow targetWindow)
+        {
             return actions.Any(action =>
                 HasEnabledCommands(action) &&
                 PluginManager.Instance.EvaluateCondition(action.Condition, conditionPoints, contactIdentifiers, targetWindow));
-        }
-
-        private static List<IAction> GetConditionedSingleFingerTouchPadActions(IEnumerable<IApplication> applications)
-        {
-            var actions = GetConditionedSingleFingerTouchPadActionsInApplications(applications);
-            if (actions.Count != 0)
-                return actions;
-
-            return GetConditionedSingleFingerTouchPadActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() });
         }
 
         private static List<IAction> GetConditionedSingleFingerTouchPadActionsInApplications(IEnumerable<IApplication> applications)
