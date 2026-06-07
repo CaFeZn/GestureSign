@@ -86,13 +86,25 @@ namespace GestureSign.Daemon.Input
 
         public virtual int GetContactCount()
         {
-            int contactCount = 0;
-            if (HidNativeApi.HIDP_STATUS_SUCCESS != HidNativeApi.HidP_GetUsageValue(HidReportType.Input, NativeMethods.DigitizerUsagePage, 0, NativeMethods.ContactCountId,
-                ref contactCount, _hPreparsedData.DangerousGetHandle(), _pRawData, _dwSizHid))
+            int contactCount;
+            if (!TryGetContactCount(out contactCount))
             {
                 throw new ApplicationException(Common.Localization.LocalizationProvider.Instance.GetTextValue("Messages.ContactCountError"));
             }
             return contactCount;
+        }
+
+        public virtual bool TryGetContactCount(out int contactCount)
+        {
+            contactCount = 0;
+            int status = HidNativeApi.HidP_GetUsageValue(HidReportType.Input, NativeMethods.DigitizerUsagePage, 0, NativeMethods.ContactCountId,
+                ref contactCount, _hPreparsedData.DangerousGetHandle(), _pRawData, _dwSizHid);
+
+            if (status != HidNativeApi.HIDP_STATUS_SUCCESS)
+                return false;
+
+            contactCount = Math.Max(0, contactCount);
+            return true;
         }
 
         public virtual HidNativeApi.HIDP_LINK_COLLECTION_NODE[] GetLinkCollectionNodes()
@@ -106,9 +118,21 @@ namespace GestureSign.Daemon.Input
 
         public virtual int GetContactId(short nodeIndex, IntPtr pRawDataPacket)
         {
-            int contactIdentifier = 0;
-            HidNativeApi.HidP_GetUsageValue(HidReportType.Input, NativeMethods.DigitizerUsagePage, nodeIndex, NativeMethods.ContactIdentifierId, ref contactIdentifier, _hPreparsedData.DangerousGetHandle(), pRawDataPacket, _dwSizHid);
-            return contactIdentifier;
+            int contactIdentifier;
+            return TryGetContactId(nodeIndex, pRawDataPacket, out contactIdentifier)
+                ? contactIdentifier
+                : nodeIndex;
+        }
+
+        protected virtual bool TryGetContactId(short nodeIndex, IntPtr pRawDataPacket, out int contactIdentifier)
+        {
+            contactIdentifier = 0;
+            return HidNativeApi.HIDP_STATUS_SUCCESS == HidNativeApi.HidP_GetUsageValue(HidReportType.Input, NativeMethods.DigitizerUsagePage, nodeIndex, NativeMethods.ContactIdentifierId, ref contactIdentifier, _hPreparsedData.DangerousGetHandle(), pRawDataPacket, _dwSizHid);
+        }
+
+        public virtual int InferContactCount(short numberOfChildren)
+        {
+            return Math.Max(0, _dwCount) * Math.Max(0, (int)numberOfChildren);
         }
 
         public static void GetCurrentScreenOrientation()
@@ -196,16 +220,42 @@ namespace GestureSign.Daemon.Input
             }
         }
 
-        public void GetPhysicalMax(int collectionCount)
+        public bool TryGetPhysicalMax(int collectionCount)
         {
             short valueCapsLength = (short)(collectionCount > 0 ? collectionCount : 1);
             HidNativeApi.HidP_Value_Caps[] hvc = new HidNativeApi.HidP_Value_Caps[valueCapsLength];
 
-            HidNativeApi.HidP_GetSpecificValueCaps(HidReportType.Input, NativeMethods.GenericDesktopPage, 0, NativeMethods.XCoordinateId, hvc, ref valueCapsLength, _hPreparsedData.DangerousGetHandle());
+            if (HidNativeApi.HIDP_STATUS_SUCCESS != HidNativeApi.HidP_GetSpecificValueCaps(HidReportType.Input, NativeMethods.GenericDesktopPage, 0, NativeMethods.XCoordinateId, hvc, ref valueCapsLength, _hPreparsedData.DangerousGetHandle()) ||
+                valueCapsLength <= 0)
+            {
+                _physicalMax = Point.Empty;
+                return false;
+            }
             _physicalMax.X = hvc[0].PhysicalMax != 0 ? hvc[0].PhysicalMax : hvc[0].LogicalMax;
 
-            HidNativeApi.HidP_GetSpecificValueCaps(HidReportType.Input, NativeMethods.GenericDesktopPage, 0, NativeMethods.YCoordinateId, hvc, ref valueCapsLength, _hPreparsedData.DangerousGetHandle());
+            valueCapsLength = (short)(collectionCount > 0 ? collectionCount : 1);
+            hvc = new HidNativeApi.HidP_Value_Caps[valueCapsLength];
+            if (HidNativeApi.HIDP_STATUS_SUCCESS != HidNativeApi.HidP_GetSpecificValueCaps(HidReportType.Input, NativeMethods.GenericDesktopPage, 0, NativeMethods.YCoordinateId, hvc, ref valueCapsLength, _hPreparsedData.DangerousGetHandle()) ||
+                valueCapsLength <= 0)
+            {
+                _physicalMax = Point.Empty;
+                return false;
+            }
             _physicalMax.Y = hvc[0].PhysicalMax != 0 ? hvc[0].PhysicalMax : hvc[0].LogicalMax;
+
+            if (_physicalMax.X <= 0 || _physicalMax.Y <= 0)
+            {
+                _physicalMax = Point.Empty;
+                return false;
+            }
+
+            return true;
+        }
+
+        public void GetPhysicalMax(int collectionCount)
+        {
+            if (!TryGetPhysicalMax(collectionCount))
+                throw new ApplicationException("Invalid HID coordinate range.");
         }
 
         protected virtual void Dispose(bool disposing)

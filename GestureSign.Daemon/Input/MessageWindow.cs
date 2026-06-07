@@ -468,7 +468,11 @@ namespace GestureSign.Daemon.Input
                             }
                             if (!IsCurrentScreenValid() && !TrySetCurrentScreenFromCursor(true))
                                 return;
-                            penDevice.GetPhysicalMax(1);
+                            if (!penDevice.TryGetPhysicalMax(1))
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
                             Point point = penDevice.GetCoordinate(0, _currentScr);
                             _outputTouchs = new List<RawData>(1) { new RawData(state, 0, point) };
                         }
@@ -482,14 +486,21 @@ namespace GestureSign.Daemon.Input
 
                         using (TouchScreenDevice touchScreen = new TouchScreenDevice(buffer, ref raw))
                         {
-                            int contactCount = touchScreen.GetContactCount();
                             HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchScreen.GetLinkCollectionNodes();
                             if (linkCollection.Length == 0)
                             {
                                 ResetSourceDevice(true);
                                 return;
                             }
-                            touchScreen.GetPhysicalMax(linkCollection.Length);
+                            if (!touchScreen.TryGetPhysicalMax(linkCollection.Length))
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+
+                            int contactCount;
+                            if (!touchScreen.TryGetContactCount(out contactCount))
+                                contactCount = touchScreen.InferContactCount(linkCollection[0].NumberOfChildren);
 
                             if (contactCount != 0)
                             {
@@ -528,14 +539,21 @@ namespace GestureSign.Daemon.Input
 
                         using (TouchPadDevice touchPad = new TouchPadDevice(buffer, ref raw))
                         {
-                            int contactCount = touchPad.GetContactCount();
                             HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollection = touchPad.GetLinkCollectionNodes();
                             if (linkCollection.Length == 0)
                             {
                                 ResetSourceDevice(true);
                                 return;
                             }
-                            touchPad.GetPhysicalMax(linkCollection.Length);
+                            if (!touchPad.TryGetPhysicalMax(linkCollection.Length))
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
+
+                            int contactCount;
+                            if (!touchPad.TryGetContactCount(out contactCount))
+                                contactCount = touchPad.InferContactCount(linkCollection[0].NumberOfChildren);
 
                             if (contactCount != 0)
                             {
