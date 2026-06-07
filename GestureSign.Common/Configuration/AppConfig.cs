@@ -18,6 +18,9 @@ namespace GestureSign.Common.Configuration
         static System.Configuration.Configuration _config;
         static Timer Timer;
         public static event EventHandler ConfigChanged;
+        private const DeviceStates PenActivationButtons = DeviceStates.RightClickButton | DeviceStates.Invert;
+        private const DeviceStates PenDrawingModes = DeviceStates.Tip | DeviceStates.InRange;
+        private const DeviceStates SupportedPenGestureButtonStates = PenActivationButtons | PenDrawingModes;
 
         private static ExeConfigurationFileMap ExeMap;
         private static string _applicationDataPath;
@@ -327,12 +330,25 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (DeviceStates)GetValue(nameof(PenGestureButton), 0);
+                return NormalizePenGestureButton((DeviceStates)GetValue(nameof(PenGestureButton), 0));
             }
             set
             {
-                SetValue(nameof(PenGestureButton), (int)value);
+                SetValue(nameof(PenGestureButton), (int)NormalizePenGestureButton(value));
             }
+        }
+
+        private static DeviceStates NormalizePenGestureButton(DeviceStates value)
+        {
+            value &= SupportedPenGestureButtonStates;
+
+            if (value == DeviceStates.None)
+                return DeviceStates.None;
+
+            bool hasActivationButton = (value & PenActivationButtons) != 0;
+            bool hasDrawingMode = (value & PenDrawingModes) != 0;
+
+            return hasActivationButton && hasDrawingMode ? value : DeviceStates.None;
         }
 
         public static bool RunAsAdmin

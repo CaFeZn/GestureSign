@@ -511,50 +511,50 @@ namespace GestureSign.ControlPanel.MainWindowControls
 
         private void RightClickButtonCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            if (RightClickButtonCheckBox.IsChecked.GetValueOrDefault())
-            {
-                AppConfig.PenGestureButton |= DeviceStates.RightClickButton;
-            }
-            else
-            {
-                AppConfig.PenGestureButton &= ~DeviceStates.RightClickButton;
-            }
+            if (!RightClickButtonCheckBox.IsChecked.GetValueOrDefault() && !EraserCheckBox.IsChecked.GetValueOrDefault())
+                RightClickButtonCheckBox.IsChecked = true;
+
+            SavePenGestureButton();
         }
 
         private void EraserCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            if (EraserCheckBox.IsChecked.GetValueOrDefault())
-            {
-                AppConfig.PenGestureButton |= DeviceStates.Invert;
-            }
-            else
-            {
-                AppConfig.PenGestureButton &= ~DeviceStates.Invert;
-            }
+            if (!EraserCheckBox.IsChecked.GetValueOrDefault() && !RightClickButtonCheckBox.IsChecked.GetValueOrDefault())
+                EraserCheckBox.IsChecked = true;
+
+            SavePenGestureButton();
         }
 
         private void TipCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            if (TipCheckBox.IsChecked.GetValueOrDefault())
-            {
-                AppConfig.PenGestureButton |= DeviceStates.Tip;
-            }
-            else
-            {
-                AppConfig.PenGestureButton &= ~DeviceStates.Tip;
-            }
+            if (!TipCheckBox.IsChecked.GetValueOrDefault() && !HoverCheckBox.IsChecked.GetValueOrDefault())
+                TipCheckBox.IsChecked = true;
+
+            SavePenGestureButton();
         }
 
         private void HoverCheckBox_Click(object sender, RoutedEventArgs e)
         {
+            if (!HoverCheckBox.IsChecked.GetValueOrDefault() && !TipCheckBox.IsChecked.GetValueOrDefault())
+                HoverCheckBox.IsChecked = true;
+
+            SavePenGestureButton();
+        }
+
+        private void SavePenGestureButton()
+        {
+            DeviceStates penGestureButton = DeviceStates.None;
+
+            if (RightClickButtonCheckBox.IsChecked.GetValueOrDefault())
+                penGestureButton |= DeviceStates.RightClickButton;
+            if (EraserCheckBox.IsChecked.GetValueOrDefault())
+                penGestureButton |= DeviceStates.Invert;
+            if (TipCheckBox.IsChecked.GetValueOrDefault())
+                penGestureButton |= DeviceStates.Tip;
             if (HoverCheckBox.IsChecked.GetValueOrDefault())
-            {
-                AppConfig.PenGestureButton |= DeviceStates.InRange;
-            }
-            else
-            {
-                AppConfig.PenGestureButton &= ~DeviceStates.InRange;
-            }
+                penGestureButton |= DeviceStates.InRange;
+
+            AppConfig.PenGestureButton = penGestureButton;
         }
 
         private void GestureTrailSwitch_Click(object sender, RoutedEventArgs e)

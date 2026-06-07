@@ -92,6 +92,7 @@ Multiple gestures for the same behavior:
 Gesture and trigger notes:
 
 - Touchscreen, touchpad, pen, and mouse input are separate source devices. Check the action's ignored-device settings if a gesture works from one device but not another.
+- Pen gestures require `Options` > `Pen Gesture`, one HID pen activation state (barrel/right-click button or inverted pen), and one draw mode (tip or hover). If a stylus driver exposes its button as a normal mouse right-click instead of HID pen input, try `Mouse Gesture` with the right mouse button.
 - `Block Touch Input` is available only in UIAccess builds and is configured per matched application. It starts blocking after GestureSign has enough touch contacts to identify a gesture, so very early touch frames may still reach the target app.
 - If the touch keyboard or a browser's native touch behavior breaks while touch blocking is enabled, lower that app's block threshold or disable blocking for that app first.
 - Trigger conditions can use `finger_1_start_X`, `finger_1_start_Y`, `finger_1_end_X`, `finger_1_end_Y`, their percent variants such as `finger_1_start_X%`, and `finger_1_ID`.

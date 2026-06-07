@@ -261,8 +261,8 @@ QQ交流群：576981420
     <PenGesture>触控笔手势</PenGesture>
     <DeviceNotFound>（未找到可用设备）</DeviceNotFound>
     <PenGestureButtonDescription>请选择画出手势的方式:</PenGestureButtonDescription>
-    <RightClickButton>按住触控笔右键按钮</RightClickButton>
-    <Eraser>将笔颠倒/按住橡皮擦按钮</Eraser>
+    <RightClickButton>按住触控笔侧键/右键按钮</RightClickButton>
+    <Eraser>将笔翻转</Eraser>
     <And>同时</And>
     <Tip>在屏幕上画手势</Tip>
     <Hover>保持悬空画出手势</Hover>
