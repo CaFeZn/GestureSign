@@ -301,6 +301,11 @@ namespace GestureSign.Daemon.Input
             return string.IsNullOrWhiteSpace(deviceName) ? "<empty>" : deviceName;
         }
 
+        private static bool ShouldSuppressTouchForPenState(DeviceStates state)
+        {
+            return (state & (DeviceStates.Tip | DeviceStates.RightClickButton | DeviceStates.Invert | DeviceStates.Eraser)) != 0;
+        }
+
         protected override void WndProc(ref Message message)
         {
             switch (message.Msg)
@@ -604,7 +609,7 @@ namespace GestureSign.Daemon.Input
                         {
                             DeviceStates state = penDevice.GetPenState();
                             if (_ignoreTouchInputWhenUsingPen)
-                                _penLastActivity = state != DeviceStates.None ? Environment.TickCount : (int?)null;
+                                _penLastActivity = ShouldSuppressTouchForPenState(state) ? Environment.TickCount : (int?)null;
                             else
                                 _penLastActivity = null;
 
