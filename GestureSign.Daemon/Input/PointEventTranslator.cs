@@ -167,23 +167,10 @@ namespace GestureSign.Daemon.Input
                 {
                     if (_lastPointsCount == 1 && SourceDevice == Devices.Pen)
                     {
-                        if (tip)
-                        {
-                            OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
-                            _lastPointsCount = -1;
-                        }
-                        else
-                        {
-                            OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
-                        }
+                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                     else if (_lastPointsCount >= 0)
                     {
-                        if (tip)
-                        {
-                            _lastPointsCount = -1;
-                            return;
-                        }
                         _lastPointsCount = 1;
                         OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
