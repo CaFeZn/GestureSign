@@ -76,17 +76,14 @@ namespace GestureSign.Common.Plugins
             var target = ApplicationManager.Instance.CaptureWindow;
             var pointsForCondition = conditionPoints ?? points;
             var contactIdentifiersForCondition = conditionContactIdentifiers ?? contactIdentifiers;
+            var resolvedActions = GetExecutableActions(executableActions, mode, devices, contactIdentifiersForCondition, pointsForCondition);
+            if (resolvedActions.Count == 0)
+                return;
             var pointInfo = new PointInfo(firstCapturedPoints, points, target, _mainContext);
             var action = new Action<object>(o =>
             {
-                foreach (IAction executableAction in executableActions)
+                foreach (IAction executableAction in resolvedActions)
                 {
-                    // Exit if there is no action configured
-                    if (executableAction == null || (executableAction.IgnoredDevices & devices) != 0 ||
-                    IsUnsafeSingleFingerTouchPadAction(executableAction, devices, pointsForCondition) ||
-                    executableAction.Commands == null || !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target))
-                        continue;
-
                     var commandList = executableAction.Commands.Where(command => command != null && command.IsEnabled).ToList();
                     foreach (var command in commandList)
                     {
