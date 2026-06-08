@@ -232,6 +232,7 @@ QQ交流群：576981420
     <DrawGesture>请画出手势</DrawGesture>
     <DrawGestureHelp>请按住 {0}，或使用触摸屏、触摸板、触控笔在屏幕上画出手势，松开后完成。预览区域不是绘图区。</DrawGestureHelp>
     <DrawGestureHelpMouseDisabled>请使用触摸屏、触摸板或触控笔在屏幕上画出手势。如需使用鼠标，请先启用“选项”>“鼠标手势”。预览区域不是绘图区。</DrawGestureHelpMouseDisabled>
+    <EnableMouseGesture>启用鼠标手势（右键）</EnableMouseGesture>
     <Redraw>重画</Redraw>
   </GestureDefinition>
   <Ignored>

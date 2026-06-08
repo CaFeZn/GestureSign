@@ -71,7 +71,7 @@ namespace GestureSign.ControlPanel.UserControls
             if (state)
             {
                 CurrentGesture = null;
-                DrawGestureHelpTextBlock.Text = GetDrawGestureHelpText();
+                UpdateTrainingPrompt();
                 DrawGestureTextBlock.Visibility = Visibility.Visible;
                 DrawGestureHelpTextBlock.Visibility = Visibility.Visible;
                 ExistingTextBlock.Visibility = RedrawButton.Visibility = Visibility.Collapsed;
@@ -82,10 +82,19 @@ namespace GestureSign.ControlPanel.UserControls
             {
                 DrawGestureTextBlock.Visibility = Visibility.Collapsed;
                 DrawGestureHelpTextBlock.Visibility = Visibility.Collapsed;
+                EnableMouseGestureButton.Visibility = Visibility.Collapsed;
                 RedrawButton.Visibility = Visibility.Visible;
                 MessageProcessor.GotNewPattern -= MessageProcessor_GotNewPattern;
                 NamedPipe.SendMessageAsync(IpcCommands.StopTraining, Constants.Daemon);
             }
+        }
+
+        private void UpdateTrainingPrompt()
+        {
+            DrawGestureHelpTextBlock.Text = GetDrawGestureHelpText();
+            EnableMouseGestureButton.Visibility = AppConfig.DrawingButton == MouseActions.None
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
         private string GetDrawGestureHelpText()
@@ -101,6 +110,12 @@ namespace GestureSign.ControlPanel.UserControls
         private void RedrawButton_Click(object sender, RoutedEventArgs e)
         {
             SetTrainingState(true);
+        }
+
+        private void EnableMouseGestureButton_Click(object sender, RoutedEventArgs e)
+        {
+            AppConfig.DrawingButton = MouseActions.Right;
+            UpdateTrainingPrompt();
         }
 
         private void imgGestureThumbnail_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
