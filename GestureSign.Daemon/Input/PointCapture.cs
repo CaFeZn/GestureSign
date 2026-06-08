@@ -783,6 +783,11 @@ namespace GestureSign.Daemon.Input
 
             if (captureStartedArgs.Cancel)
             {
+                if ((SourceDevice & Devices.TouchDevice) != 0)
+                {
+                    _pointEventTranslator.ResetTouchDeviceSource();
+                    _inputProvider.ReleaseCurrentTouchSource();
+                }
                 CapturePressedVirtualKeys = new List<int>();
                 return false;
             }
