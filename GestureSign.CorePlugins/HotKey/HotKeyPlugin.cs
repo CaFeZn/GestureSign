@@ -239,6 +239,7 @@ namespace GestureSign.CorePlugins.HotKey
             if (settings?.KeyCode == null || settings.KeyCode.Count == 0)
                 return false;
 
+            var modifierKeys = GetShortcutModifierKeys(settings);
             var nonModifierKeys = settings.KeyCode
                 .Where(k => !IsModifierKey(k))
                 .Distinct()
@@ -249,37 +250,61 @@ namespace GestureSign.CorePlugins.HotKey
 
             var key = nonModifierKeys[0];
             if (key == Keys.Tab)
-                return settings.Alt;
+                return modifierKeys.Any(k => k == Keys.LMenu || k == Keys.RMenu);
 
             return (key == Keys.Left || key == Keys.Right) &&
-                settings.Windows &&
-                settings.Control;
+                modifierKeys.Any(k => k == Keys.LWin || k == Keys.RWin) &&
+                modifierKeys.Any(k => k == Keys.LControlKey || k == Keys.RControlKey);
         }
 
         private static Keys[] GetModifierResetKeys(HotKeySettings settings)
         {
+            var shortcutModifierKeys = GetShortcutModifierKeys(settings);
             var keys = new List<Keys>(8);
-            if (settings.Alt)
+            if (shortcutModifierKeys.Any(k => k == Keys.LMenu || k == Keys.RMenu))
             {
                 keys.Add(Keys.LMenu);
                 keys.Add(Keys.RMenu);
             }
-            if (settings.Shift)
+            if (shortcutModifierKeys.Any(k => k == Keys.LShiftKey || k == Keys.RShiftKey))
             {
                 keys.Add(Keys.LShiftKey);
                 keys.Add(Keys.RShiftKey);
             }
-            if (settings.Control)
+            if (shortcutModifierKeys.Any(k => k == Keys.LControlKey || k == Keys.RControlKey))
             {
                 keys.Add(Keys.LControlKey);
                 keys.Add(Keys.RControlKey);
             }
-            if (settings.Windows)
+            if (shortcutModifierKeys.Any(k => k == Keys.LWin || k == Keys.RWin))
             {
                 keys.Add(Keys.LWin);
                 keys.Add(Keys.RWin);
             }
             return keys.Distinct().ToArray();
+        }
+
+        private static List<Keys> GetShortcutModifierKeys(HotKeySettings settings)
+        {
+            var keys = new List<Keys>(8);
+            if (settings == null)
+                return keys;
+
+            if (settings.Alt)
+                keys.Add(Keys.LMenu);
+            if (settings.Shift)
+                keys.Add(Keys.LShiftKey);
+            if (settings.Control)
+                keys.Add(Keys.LControlKey);
+            if (settings.Windows)
+                keys.Add(Keys.LWin);
+
+            if (settings.KeyCode != null)
+            {
+                keys.AddRange(settings.KeyCode.Where(IsModifierKey));
+            }
+
+            return keys.Distinct().ToList();
         }
 
         public bool Deserialize(string SerializedData)
