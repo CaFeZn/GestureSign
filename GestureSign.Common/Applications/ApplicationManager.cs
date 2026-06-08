@@ -684,7 +684,12 @@ namespace GestureSign.Common.Applications
 
         private bool HasSingleFingerTouchAction(IEnumerable<IApplication> applications, Devices sourceDevice)
         {
-            return HasSingleFingerTouchActionInApplications(applications, sourceDevice);
+            if (HasSingleFingerTouchActionInApplications(applications, sourceDevice))
+                return true;
+
+            return !applications.Any(app => app is GlobalApp) &&
+                ShouldUseGlobalFallback(applications) &&
+                HasSingleFingerTouchActionInApplications(new[] { GetGlobalApplication() }, sourceDevice);
         }
 
         private static bool HasConditionedSingleFingerTouchActionInApplications(IEnumerable<IApplication> applications, Devices sourceDevice)
