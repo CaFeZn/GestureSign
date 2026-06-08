@@ -7,14 +7,40 @@
 
         public int LimitNumberOfFingers
         {
-            get { return _limitNumberOfFingers < 1 ? _limitNumberOfFingers = 2 : _limitNumberOfFingers; }
-            set { _limitNumberOfFingers = value; }
+            get
+            {
+                if (_limitNumberOfFingers < 1)
+                    _limitNumberOfFingers = 2;
+                else if (_limitNumberOfFingers > 10)
+                    _limitNumberOfFingers = 10;
+                return _limitNumberOfFingers;
+            }
+            set
+            {
+                if (value < 1) value = 1;
+                if (value > 10) value = 10;
+                _limitNumberOfFingers = value;
+            }
         }
 
         public int BlockTouchInputThreshold
         {
-            get { return _blockTouchInputThreshold >= 2 ? _blockTouchInputThreshold : 0; }
-            set { _blockTouchInputThreshold = value >= 2 ? value : 0; }
+            get
+            {
+                if (_blockTouchInputThreshold < 2)
+                    return 0;
+                return _blockTouchInputThreshold > 10 ? 10 : _blockTouchInputThreshold;
+            }
+            set
+            {
+                if (value < 2)
+                {
+                    _blockTouchInputThreshold = 0;
+                    return;
+                }
+
+                _blockTouchInputThreshold = value > 10 ? 10 : value;
+            }
         }
     }
 }
