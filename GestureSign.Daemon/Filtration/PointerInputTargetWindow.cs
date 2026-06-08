@@ -82,14 +82,15 @@ namespace GestureSign.Daemon.Filtration
                         _isRegistered = false;
                         ResetPointerState();
                     }
-                    else if (_isRegistered)
-                    {
-                        LogLastWin32Error("UnregisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}");
-                    }
-                    else
-                    {
-                        ResetPointerState();
-                    }
+                else if (_isRegistered)
+                {
+                    LogLastWin32Error("UnregisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}");
+                    ResetPointerState();
+                }
+                else
+                {
+                    ResetPointerState();
+                }
                 }
             }
         }
