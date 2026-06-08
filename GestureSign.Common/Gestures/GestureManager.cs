@@ -8,6 +8,7 @@ using GestureSign.Common.Applications;
 using GestureSign.Common.Configuration;
 using GestureSign.PointPatterns;
 using GestureSign.Common.Input;
+using GestureSign.Common.Plugins;
 using Newtonsoft.Json;
 
 namespace GestureSign.Common.Gestures
@@ -117,7 +118,7 @@ namespace GestureSign.Common.Gestures
 
             if (pointCapture.Mode != CaptureMode.Training)
             {
-                if (HasExecutableAction(GestureName))
+                if (HasExecutableAction(pointCapture, GestureName, e.Points))
                 {
                     _gestureLevel = 0;
                     _gestureMatchResult = null;
@@ -125,7 +126,7 @@ namespace GestureSign.Common.Gestures
                 }
                 else if (_gestureMatchResult != null && _gestureMatchResult.Count != 0)
                 {
-                    if (_gestureMatchResult.Any(g => HasExecutableAction(g.Name)))
+                    if (_gestureMatchResult.Any(g => HasExecutableAction(pointCapture, g.Name, e.Points)))
                     {
                         _gestureLevel++;
                         _lastGestureTime = Environment.TickCount;
@@ -145,10 +146,17 @@ namespace GestureSign.Common.Gestures
             }
         }
 
-        private bool HasExecutableAction(string gestureName)
+        private static bool HasExecutableAction(IPointCapture pointCapture, string gestureName, List<List<Point>> points)
         {
-            return !string.IsNullOrEmpty(gestureName) &&
-                ApplicationManager.Instance.GetRecognizedDefinedAction(gestureName).Any();
+            if (pointCapture == null || string.IsNullOrEmpty(gestureName))
+                return false;
+
+            return PluginManager.Instance.HasExecutableAction(
+                gestureName,
+                pointCapture.Mode,
+                pointCapture.SourceDevice,
+                pointCapture.InputContactIdentifiers,
+                points);
         }
 
         #endregion

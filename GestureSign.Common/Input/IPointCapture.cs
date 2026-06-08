@@ -1,4 +1,6 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace GestureSign.Common.Input
 {
@@ -11,6 +13,8 @@ namespace GestureSign.Common.Input
         event PointsCapturedEventHandler CaptureCanceled;
         event RecognitionEventHandler GestureRecognized;
         event PointsCapturedEventHandler PointCaptured;
+        List<Point>[] InputPoints { get; }
+        List<int> InputContactIdentifiers { get; }
         bool TemporarilyDisableCapture { get; set; }
         Devices SourceDevice { get; }
         CaptureState State { get; set; }

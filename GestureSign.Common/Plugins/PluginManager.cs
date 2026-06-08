@@ -188,6 +188,46 @@ namespace GestureSign.Common.Plugins
             return ExecuteCommand(command.ToCommand(), pluginInfo, actionPoint, target, command.ActivateWindow, false, false);
         }
 
+        public bool HasExecutableAction(string gestureName, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points)
+        {
+            if (string.IsNullOrWhiteSpace(gestureName))
+                return false;
+
+            var executableActions = ApplicationManager.Instance.GetRecognizedDefinedAction(gestureName)?.ToList();
+            if (executableActions == null || executableActions.Count == 0)
+                return false;
+
+            var target = ApplicationManager.Instance.CaptureWindow;
+            var pointsForCondition = points ?? new List<List<Point>>();
+            var contactIdentifiersForCondition = contactIdentifiers ?? new List<int>();
+
+            foreach (var executableAction in executableActions)
+            {
+                if (executableAction == null ||
+                    (executableAction.IgnoredDevices & devices) != 0 ||
+                    IsUnsafeSingleFingerTouchPadAction(executableAction, devices, pointsForCondition) ||
+                    executableAction.Commands == null ||
+                    !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target))
+                {
+                    continue;
+                }
+
+                foreach (var command in executableAction.Commands.Where(command => command != null && command.IsEnabled))
+                {
+                    if (mode == CaptureMode.UserDisabled &&
+                        !"GestureSign.CorePlugins.ToggleDisableGestures".Equals(command.PluginClass))
+                    {
+                        continue;
+                    }
+
+                    if (FindPluginByClassAndFilename(command.PluginClass, command.PluginFilename) != null)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         #endregion
 
         #region Private Methods
