@@ -136,6 +136,14 @@ namespace GestureSign.Daemon.Input
             UpdateRegisterState(AppConfig.RegisterTouchPad, NativeMethods.TouchPadUsage);
         }
 
+        public void ReleaseCurrentTouchSource()
+        {
+            if ((_sourceDevice & Devices.TouchDevice) == 0)
+                return;
+
+            ResetSourceDevice(true);
+        }
+
         private void UpdateRegisterState(bool register, ushort usage)
         {
             try

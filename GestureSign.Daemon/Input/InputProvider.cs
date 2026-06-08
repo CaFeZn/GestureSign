@@ -143,6 +143,11 @@ namespace GestureSign.Daemon.Input
                     action.Commands.Any(command => command != null && command.IsEnabled));
         }
 
+        internal void ReleaseCurrentTouchSource()
+        {
+            _messageWindow?.ReleaseCurrentTouchSource();
+        }
+
         #region IDisposable Support
 
         protected virtual void Dispose(bool disposing)

@@ -498,6 +498,7 @@ namespace GestureSign.Daemon.Input
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
                         _pointEventTranslator.ResetTouchDeviceSource();
+                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     CancelCaptureByInitialTimeout();
                 }
@@ -532,6 +533,7 @@ namespace GestureSign.Daemon.Input
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
                         _pointEventTranslator.ResetTouchDeviceSource();
+                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     CancelCaptureByGestureTimeout();
                 }
