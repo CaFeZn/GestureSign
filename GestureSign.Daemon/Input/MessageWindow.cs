@@ -746,7 +746,16 @@ namespace GestureSign.Daemon.Input
         {
             Screen screen;
             if (TryGetCachedTouchScreen(hDevice, out screen))
-                return screen;
+            {
+                Point touchPoint;
+                if (!touchScreen.TryGetFirstTipPoint(numberOfChildren, screen, out touchPoint) ||
+                    screen.Bounds.Contains(touchPoint))
+                {
+                    return screen;
+                }
+
+                _touchScreenDeviceScreens.Remove(hDevice);
+            }
 
             Screen[] screens;
             if (!TryGetScreens(out screens))
