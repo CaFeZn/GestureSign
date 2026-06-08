@@ -227,7 +227,7 @@ Email:ccfyzh@gmail.com
     <ExistingGesture>Exist similar gesture.Use it?</ExistingGesture>
     <DrawGesture>Please draw a gesture</DrawGesture>
     <DrawGestureHelp>Hold {0}, use a touchscreen, touchpad, or pen to draw on the screen, then release to finish. The preview area is not a drawing canvas.</DrawGestureHelp>
-    <DrawGestureHelpMouseDisabled>Use a touchscreen, touchpad, or pen to draw on the screen. To draw with a mouse, enable Options > Mouse Gesture first. The preview area is not a drawing canvas.</DrawGestureHelpMouseDisabled>
+    <DrawGestureHelpMouseDisabled>Use a touchscreen, touchpad, or pen to draw on the screen. In training mode, you can also draw temporarily with the right mouse button even if Mouse Gesture is off; use the button below if you want to enable mouse gestures permanently. The preview area is not a drawing canvas.</DrawGestureHelpMouseDisabled>
     <EnableMouseGesture>Enable Mouse Gesture (Right Button)</EnableMouseGesture>
     <Redraw>Redraw</Redraw>
   </GestureDefinition>

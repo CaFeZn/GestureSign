@@ -100,7 +100,18 @@ namespace GestureSign.Daemon.Input
 
         private static bool IsDrawingButton(MouseActions button)
         {
-            return button != MouseActions.None && (AppConfig.DrawingButton & button) == button;
+            var drawingButtons = GetEffectiveDrawingButtons();
+            return button != MouseActions.None && (drawingButtons & button) == button;
+        }
+
+        private static MouseActions GetEffectiveDrawingButtons()
+        {
+            if (AppConfig.DrawingButton != MouseActions.None)
+                return AppConfig.DrawingButton;
+
+            return PointCapture.Instance.Mode == CaptureMode.Training
+                ? MouseActions.Right
+                : MouseActions.None;
         }
 
         private void TranslateTouchEvent(object sender, RawPointsDataMessageEventArgs e)

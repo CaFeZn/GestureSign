@@ -231,7 +231,7 @@ QQ交流群：576981420
     <ExistingGesture>已保存有相似的手势，是否使用该手势？</ExistingGesture>
     <DrawGesture>请画出手势</DrawGesture>
     <DrawGestureHelp>请按住 {0}，或使用触摸屏、触摸板、触控笔在屏幕上画出手势，松开后完成。预览区域不是绘图区。</DrawGestureHelp>
-    <DrawGestureHelpMouseDisabled>请使用触摸屏、触摸板或触控笔在屏幕上画出手势。如需使用鼠标，请先启用“选项”>“鼠标手势”。预览区域不是绘图区。</DrawGestureHelpMouseDisabled>
+    <DrawGestureHelpMouseDisabled>请使用触摸屏、触摸板或触控笔在屏幕上画出手势。训练模式下，即使“鼠标手势”处于关闭状态，也可以临时使用鼠标右键绘制；如果希望在训练之外也启用鼠标手势，请使用下方按钮永久开启。预览区域不是绘图区。</DrawGestureHelpMouseDisabled>
     <EnableMouseGesture>启用鼠标手势（右键）</EnableMouseGesture>
     <Redraw>重画</Redraw>
   </GestureDefinition>
