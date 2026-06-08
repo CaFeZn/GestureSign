@@ -1,4 +1,6 @@
-﻿using GestureSign.Common.Applications;
+using GestureSign.Common.Applications;
+using GestureSign.Common.Input;
+using GestureSign.Common.Plugins;
 using GestureSign.Daemon.Input;
 using ManagedWinapi;
 using ManagedWinapi.Windows;
@@ -57,12 +59,12 @@ namespace GestureSign.Daemon.Triggers
             var hotKeyActions = appList
                 .Where(application => !(application is IgnoredApp) && !(application is GlobalApp) && application.Actions != null)
                 .SelectMany(app => app.Actions)
-                .Where(a => a != null && a.Hotkey != null)
+                .Where(a => a != null && a.Hotkey != null && HasEnabledCommands(a))
                 .ToList();
 
             if (!GestureSign.Common.Configuration.AppConfig.WhitelistedApplicationsOnly || appList.Any(application => application is UserApp))
             {
-                hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a != null && a.Hotkey != null));
+                hotKeyActions.AddRange(ApplicationManager.Instance.GetGlobalApplication().Actions.Where(a => a != null && a.Hotkey != null && HasEnabledCommands(a)));
             }
 
             return hotKeyActions;
@@ -124,8 +126,22 @@ namespace GestureSign.Daemon.Triggers
             if (index >= 0)
             {
                 var window = ApplicationManager.Instance.GetForegroundApplications();
-                OnTriggerFired(new TriggerFiredEventArgs(_hotKeyMap[index].Value, window.Rectangle.Location));
+                var executableActions = PluginManager.Instance.GetExecutableActions(
+                    _hotKeyMap[index].Value,
+                    PointCapture.Instance.Mode,
+                    Devices.None,
+                    new List<int>(),
+                    new List<List<System.Drawing.Point>>());
+                if (executableActions.Count > 0)
+                {
+                    OnTriggerFired(new TriggerFiredEventArgs(executableActions, window.Rectangle.Location));
+                }
             }
+        }
+
+        private static bool HasEnabledCommands(IAction action)
+        {
+            return action?.Commands != null && action.Commands.Any(command => command != null && command.IsEnabled);
         }
     }
 }
