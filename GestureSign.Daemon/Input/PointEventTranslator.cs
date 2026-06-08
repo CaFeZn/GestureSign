@@ -287,6 +287,22 @@ namespace GestureSign.Daemon.Input
             bool hasNewContacts = activeRawData.Count > _lastPointsCount ||
                 activeContactIdentifiers.Any(id => !_activeTouchContacts.Contains(id));
 
+            if (releasedTrackedContacts &&
+                hasNewContacts &&
+                PointCapture.Instance.State == CaptureState.CapturingInvalid)
+            {
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                ClearActiveTouchContacts();
+
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                if (IsCurrentSource(e))
+                {
+                    SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                    SetTouchContactIdMapIdentity(activeContactIdentifiers);
+                }
+                return;
+            }
+
             if (hasNewContacts &&
                 (e.SourceDevice & Devices.TouchDevice) != 0 &&
                 TryContinueTouchGestureAfterContactIdRollover(activeRawData, out var continuedActiveRawData, out var continuedRawToStableContactMap))
