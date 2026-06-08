@@ -206,7 +206,14 @@ namespace GestureSign.CorePlugins.HotKey
                     SendKeysSeparately(_Settings);
                 }
                 else
+                {
                     SendShortcutKeys(_Settings);
+                }
+
+                if (RequiresSystemModifierReset(_Settings))
+                {
+                    KeyboardHelper.ResetKeyState(ActionPoint?.Window, GetModifierResetKeys(_Settings));
+                }
             }
             catch (Exception)
             {
@@ -225,6 +232,54 @@ namespace GestureSign.CorePlugins.HotKey
                 KeyboardHelper.ResetKeyState(ActionPoint.Window, keyList.ToArray());
             }
             return true;
+        }
+
+        private static bool RequiresSystemModifierReset(HotKeySettings settings)
+        {
+            if (settings?.KeyCode == null || settings.KeyCode.Count == 0)
+                return false;
+
+            var nonModifierKeys = settings.KeyCode
+                .Where(k => !IsModifierKey(k))
+                .Distinct()
+                .ToList();
+
+            if (nonModifierKeys.Count != 1)
+                return false;
+
+            var key = nonModifierKeys[0];
+            if (key == Keys.Tab)
+                return settings.Alt;
+
+            return (key == Keys.Left || key == Keys.Right) &&
+                settings.Windows &&
+                settings.Control;
+        }
+
+        private static Keys[] GetModifierResetKeys(HotKeySettings settings)
+        {
+            var keys = new List<Keys>(8);
+            if (settings.Alt)
+            {
+                keys.Add(Keys.LMenu);
+                keys.Add(Keys.RMenu);
+            }
+            if (settings.Shift)
+            {
+                keys.Add(Keys.LShiftKey);
+                keys.Add(Keys.RShiftKey);
+            }
+            if (settings.Control)
+            {
+                keys.Add(Keys.LControlKey);
+                keys.Add(Keys.RControlKey);
+            }
+            if (settings.Windows)
+            {
+                keys.Add(Keys.LWin);
+                keys.Add(Keys.RWin);
+            }
+            return keys.Distinct().ToArray();
         }
 
         public bool Deserialize(string SerializedData)
@@ -401,6 +456,24 @@ namespace GestureSign.CorePlugins.HotKey
                 key == VirtualKeyCode.LCONTROL || key == VirtualKeyCode.RCONTROL ||
                 key == VirtualKeyCode.LMENU || key == VirtualKeyCode.RMENU ||
                 key == VirtualKeyCode.LSHIFT || key == VirtualKeyCode.RSHIFT;
+        }
+
+        private static bool IsModifierKey(Keys key)
+        {
+            switch (key)
+            {
+                case Keys.LWin:
+                case Keys.RWin:
+                case Keys.LControlKey:
+                case Keys.RControlKey:
+                case Keys.LMenu:
+                case Keys.RMenu:
+                case Keys.LShiftKey:
+                case Keys.RShiftKey:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private static void AddDistinct(List<VirtualKeyCode> keys, VirtualKeyCode key)

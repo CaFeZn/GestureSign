@@ -61,11 +61,11 @@ namespace GestureSign.CorePlugins
             try
             {
                 KeyboardHelper.SwitchToPreviousApplication();
-                KeyboardHelper.ReleaseKeyState(Keys.LMenu, Keys.LShiftKey);
+                KeyboardHelper.ResetKeyState(ActionPoint?.Window, Keys.LMenu, Keys.RMenu, Keys.LShiftKey, Keys.RShiftKey);
             }
             catch (Exception)
             {
-                KeyboardHelper.ResetKeyState(ActionPoint?.Window, Keys.LMenu, Keys.LShiftKey);
+                KeyboardHelper.ResetKeyState(ActionPoint?.Window, Keys.LMenu, Keys.RMenu, Keys.LShiftKey, Keys.RShiftKey);
 
                 return false;
             }
