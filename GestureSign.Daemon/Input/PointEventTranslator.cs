@@ -277,6 +277,17 @@ namespace GestureSign.Daemon.Input
             _lastPointsCount = 0;
         }
 
+        internal void ResetTouchDeviceSource()
+        {
+            if ((SourceDevice & Devices.TouchDevice) == 0)
+                return;
+
+            ClearActiveTouchContacts();
+            SourceDevice = Devices.None;
+            _sourceDeviceHandle = IntPtr.Zero;
+            SourceDeviceHandle = IntPtr.Zero;
+        }
+
         private bool IsMatchingSource(InputPointsEventArgs args, bool allowPenTransition = false)
         {
             if (SourceDevice == Devices.None)

@@ -497,6 +497,7 @@ namespace GestureSign.Daemon.Input
                     else if (SourceDevice == Devices.TouchPad)
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
+                        _pointEventTranslator.ResetTouchDeviceSource();
                     }
                     CancelCaptureByInitialTimeout();
                 }
@@ -530,6 +531,7 @@ namespace GestureSign.Daemon.Input
                     else if (SourceDevice == Devices.TouchPad)
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
+                        _pointEventTranslator.ResetTouchDeviceSource();
                     }
                     CancelCaptureByGestureTimeout();
                 }
