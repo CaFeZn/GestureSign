@@ -275,7 +275,7 @@ Windows 11 触摸/手势冲突：
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | setup `.exe` 现在会显示安装目录选择页；静默安装可使用 Inno Setup 的 `/DIR=` 覆盖目标目录。 |
 | [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | 虚拟桌面切换动作可用，可分配给普通手势或连续手势。 |
 | [#113](https://github.com/TransposonY/GestureSign/issues/113) | 应用专属的同手势动作即使命令被禁用，也会阻止回退到全局动作，因此可以只在某个应用中排除一个全局手势，而不影响该应用中的其他全局手势。启用 `匹配当前激活的窗口` 的应用规则现在也会从捕获开始阶段、命令执行阶段以及独立带条件滚轮触发中一致生效，让按应用限制、`%GS_WindowHandle%` 和受保护触摸板捕获与最终命中的应用保持一致。 |
-| [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | 对切换窗口/桌面动作的 shell/taskbar 激活和修饰键释放做了加固。内置的 Alt+Tab / Shift+Alt+Tab / Win+Ctrl+方向键动作，以及等价的 `Hot Key` 快捷键，现在在成功路径上也会强制复位相关修饰键，而不只是依赖普通的 key-up 注入。 |
+| [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | 对切换窗口/桌面动作的 shell/taskbar 激活和修饰键释放做了加固。内置的 Alt+Tab / Shift+Alt+Tab / Win+Ctrl+方向键动作，以及等价的 `Hot Key` 快捷键，现在在成功路径上也会强制复位相关修饰键，而不只是依赖普通的 key-up 注入；并且在系统已经完成切窗/切桌面后，这一步修饰键清理不再把切换前的目标窗口强行抢回前台。 |
 | [#97](https://github.com/TransposonY/GestureSign/issues/97), [#31](https://github.com/TransposonY/GestureSign/issues/31) | 控制面板启动时会容忍 Windows Application Event Log 不可用；配置写入会 flush、串行化，并在 Desktop Bridge 构建中写入 package local state。 |
 | [#104](https://github.com/TransposonY/GestureSign/issues/104) | `Add Current Application to Ignored List` 可用并已文档化。 |
 | [#93](https://github.com/TransposonY/GestureSign/issues/93), [#92](https://github.com/TransposonY/GestureSign/issues/92) | `Key Down/Up` 支持保持修饰键按下，Hot Key 中区分左右的修饰键已在 UI 和 README 中说明。 |

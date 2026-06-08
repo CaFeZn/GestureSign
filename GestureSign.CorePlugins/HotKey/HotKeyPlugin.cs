@@ -212,7 +212,7 @@ namespace GestureSign.CorePlugins.HotKey
 
                 if (RequiresSystemModifierReset(_Settings))
                 {
-                    KeyboardHelper.ResetKeyState(ActionPoint?.Window, GetModifierResetKeys(_Settings));
+                    KeyboardHelper.ResetKeyStateWithoutWindowRestore(GetModifierResetKeys(_Settings));
                 }
             }
             catch (Exception)
@@ -229,7 +229,14 @@ namespace GestureSign.CorePlugins.HotKey
 
                 keyList.AddRange(_Settings.KeyCode);
 
-                KeyboardHelper.ResetKeyState(ActionPoint.Window, keyList.ToArray());
+                if (RequiresSystemModifierReset(_Settings))
+                {
+                    KeyboardHelper.ResetKeyStateWithoutWindowRestore(keyList.ToArray());
+                }
+                else
+                {
+                    KeyboardHelper.ResetKeyState(ActionPoint.Window, keyList.ToArray());
+                }
             }
             return true;
         }

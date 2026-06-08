@@ -113,6 +113,16 @@ namespace GestureSign.CorePlugins
 
         public static void ResetKeyState(SystemWindow targetWindow, params Keys[] keys)
         {
+            ResetKeyStateInternal(targetWindow, true, keys);
+        }
+
+        public static void ResetKeyStateWithoutWindowRestore(params Keys[] keys)
+        {
+            ResetKeyStateInternal(null, false, keys);
+        }
+
+        private static void ResetKeyStateInternal(SystemWindow targetWindow, bool restoreTargetWindow, params Keys[] keys)
+        {
             if (keys == null || keys.Length == 0)
                 return;
 
@@ -150,7 +160,7 @@ namespace GestureSign.CorePlugins
             }
             finally
             {
-                if (targetWindow != null && !ApplicationManager.IsShellUiWindow(targetWindow))
+                if (restoreTargetWindow && targetWindow != null && !ApplicationManager.IsShellUiWindow(targetWindow))
                     SystemWindow.ForegroundWindow = targetWindow;
                 shieldWindow.DestroyHandle();
 
