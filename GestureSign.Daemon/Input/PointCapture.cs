@@ -877,6 +877,12 @@ namespace GestureSign.Daemon.Input
 
             OnAfterPointsCaptured(pointsInformation);
 
+            if ((SourceDevice & Devices.TouchDevice) != 0)
+            {
+                _pointEventTranslator.ResetTouchDeviceSource();
+                _inputProvider.ReleaseCurrentTouchSource();
+            }
+
             _pointsCaptured.Clear();
             CapturePressedVirtualKeys = new List<int>();
         }
