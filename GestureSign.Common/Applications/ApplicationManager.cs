@@ -359,7 +359,7 @@ namespace GestureSign.Common.Applications
                     .ToList();
             // If there is was no action found on given application, try to get an action for global application
             if (finalAction.Count == 0 && useGlobal)
-                return GetGlobalApplication().Actions.Where(a => a.GestureName == gestureName);
+                return GetGlobalApplication().Actions.Where(a => a != null && a.GestureName == gestureName && HasCommands(a));
 
             // Return whatever the result was
             return finalAction;
@@ -540,6 +540,7 @@ namespace GestureSign.Common.Applications
 
         private IApplication[] FindMatchApplications(IEnumerable<IApplication> applications, string className, string title, string fileName)
         {
+            var byAll = new List<IApplication>();
             var byFileName = new List<IApplication>();
             var byTitle = new List<IApplication>();
             var byClass = new List<IApplication>();
@@ -557,12 +558,13 @@ namespace GestureSign.Common.Applications
                         byFileName.Add(app);
                         break;
                     case MatchUsing.All:
+                        byAll.Add(app);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
             }
-            List<IApplication> result = new List<IApplication>();
+            List<IApplication> result = new List<IApplication>(byAll);
             if (byClass.Count != 0)
             {
                 try

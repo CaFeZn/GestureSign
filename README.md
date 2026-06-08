@@ -132,6 +132,7 @@ Continuous Gesture capture:
 One-finger touchpad edge workflows:
 
 - One-finger precision-touchpad capture is protected because ordinary one-finger touchpad movement controls the pointer. GestureSign captures a one-finger touchpad action only when the action allows `TouchPad`, uses one contact, has at least one enabled command, and has a trigger condition that is already true at touch start. Capture gating checks the current application's matching one-finger touchpad actions first, then falls back to global one-finger touchpad actions only when normal global fallback would apply, so an unrelated app-specific one-finger action does not block a global edge gesture from starting.
+- This protection depends on the condition being narrow enough for your workflow. A broad condition such as only `key_is_alt_down` can still capture ordinary one-finger pointer movement while that condition is true.
 - For a right-edge scrollbar-like area, create two actions: one `Continuous Gesture` with one finger `Up`, and one with one finger `Down`. Enable `TouchPad` for both actions and add `Mouse Actions` > `Vertical Scroll` commands with opposite scroll directions.
 - Suggested setup:
   1. Create an `Up` action and a `Down` action.
@@ -149,6 +150,7 @@ Standalone wheel triggers:
 - `Wheel Forward` and `Wheel Backward` can be selected in an action's `Mouse HotKey` field.
 - Standalone wheel triggers must have a non-empty trigger condition and at least one enabled command. This keeps ordinary scrolling from being captured globally.
 - Standalone wheel triggers also respect `Match Activated Window`, so app-specific conditioned wheel actions follow the same activated-window matching path as gesture capture.
+- Standalone wheel triggers and mouse-hotkey triggers now consume the underlying wheel/button input only when at least one matching action still has an enabled command and its current trigger condition evaluates true. If every matching action is empty, disabled, or currently condition-false, the original input is passed through.
 - Use them for deliberate edge or corner workflows, for example only when the cursor or gesture condition is in a configured zone. Do not configure unconditioned global wheel actions.
 
 Default browser matching:
@@ -185,6 +187,7 @@ Gesture and trigger notes:
 - Trigger conditions can use `finger_1_start_X`, `finger_1_start_Y`, `finger_1_end_X`, `finger_1_end_Y`, their percent variants such as `finger_1_start_X%`, and `finger_1_ID`.
 - Edge gestures can be approximated with percent trigger conditions, for example `finger_1_start_X%<5`, `finger_1_start_X%>95`, `finger_1_start_Y%<5`, or `finger_1_start_Y%>95`.
 - Trigger conditions can route the same gesture to different commands by finger position, window state, or held modifier keys. Zone workflows can be approximated with coordinate ranges such as `finger_1_start_X%>=25 AND finger_1_start_X%<50`, but this is not a separate Android-style edge gesture or floating-ball feature.
+- Application rules imported or manually edited with `Match Using = All` now match consistently in the main runtime app-matching path as well. This mostly matters for legacy or hand-edited configs; the built-in global application still provides the normal catch-all scope.
 - For one-finger touchpad protection, the capture gate is evaluated at touch start. Use `start_*`, modifier-key, and window-state variables for the edge guard; `end_*` variables still reflect the latest captured point during action execution, but cannot be the only reason to start capturing a one-finger touchpad stroke.
 - True BetterTouchTool-style tip-tap is not implemented. A one-shot approximation can use trigger conditions such as `finger_1_ID<finger_2_ID` or `finger_1_ID>finger_2_ID`, but both contacts must be captured together and some touchpad drivers do not expose stable contact IDs. Separate tap-vs-tip-tap recognition and left/right tip-tap require recognizer/model work.
 - Window conditions can use `window_is_maximized`, `window_is_minimized`, and `window_is_fullscreen`.
@@ -257,7 +260,7 @@ Implemented or covered:
 | [#70](https://github.com/TransposonY/GestureSign/issues/70) | Touchscreen monitor selection no longer relies only on cursor position: cached mappings can be updated from a unique current foreground-window match, unreliable unmatched frames are dropped instead of being blindly mapped onto the foreground or cursor screen, and cursor-driven pen/touchpad fallback now prefers the cursor monitor before the foreground-window monitor. |
 | [#57](https://github.com/TransposonY/GestureSign/issues/57), [#9](https://github.com/TransposonY/GestureSign/issues/9) | Touch-blocking behavior has been hardened, pointer capture-loss/canceled frames release internal injected-touch IDs, and UIAccess/per-app/initial-frame limits are documented. |
 | [#51](https://github.com/TransposonY/GestureSign/issues/51) | Drawing-start timeout is honored for precision touchpad gestures. |
-| [#83](https://github.com/TransposonY/GestureSign/issues/83), [#89](https://github.com/TransposonY/GestureSign/issues/89), [#69](https://github.com/TransposonY/GestureSign/issues/69) | Conditioned one-finger precision-touchpad capture supports guarded edge/zone workflows, including right-edge continuous scrolling, without intercepting ordinary one-finger touchpad movement. |
+| [#83](https://github.com/TransposonY/GestureSign/issues/83), [#89](https://github.com/TransposonY/GestureSign/issues/89), [#69](https://github.com/TransposonY/GestureSign/issues/69) | Conditioned one-finger precision-touchpad capture supports guarded edge/zone workflows, including right-edge continuous scrolling; with a narrow enough start condition, it avoids intercepting ordinary one-finger touchpad movement. |
 | [#50](https://github.com/TransposonY/GestureSign/issues/50) | Gesture trail color can be fixed with `Pick Color` or reset to follow the Windows DWM theme color with `Follow System Color`. |
 | [#49](https://github.com/TransposonY/GestureSign/issues/49) | Backup/settings restore accepts current backups and legacy action/gesture exports. |
 | [#46](https://github.com/TransposonY/GestureSign/issues/46) | Added optional whitelist mode so unmatched applications are ignored by default; configured user applications still work and can fall back to global actions. |
@@ -268,7 +271,7 @@ Implemented or covered:
 | [#43](https://github.com/TransposonY/GestureSign/issues/43) | Added `Search or Open Clipboard Text` for browser search/open-URL workflows after selected text is copied to the clipboard. |
 | [#33](https://github.com/TransposonY/GestureSign/issues/33) | Mouse gestures can use multiple configured drawing buttons, such as right and middle mouse buttons. |
 | [#38](https://github.com/TransposonY/GestureSign/issues/38) | Control Panel touchpad scrolling uses fractional wheel-delta handling instead of treating every small delta as a full wheel tick. |
-| [#41](https://github.com/TransposonY/GestureSign/issues/41) | Mouse wheel rotation can be used as a standalone conditioned mouse trigger, so edge/corner wheel workflows do not need a held drawing button. |
+| [#41](https://github.com/TransposonY/GestureSign/issues/41) | Mouse wheel rotation can be used as a standalone conditioned mouse trigger, so edge/corner wheel workflows do not need a held drawing button, and empty/condition-false wheel or mouse-hotkey triggers no longer swallow the original input. |
 | [#19](https://github.com/TransposonY/GestureSign/issues/19), [#126](https://github.com/TransposonY/GestureSign/issues/126) | Hot Key and built-in window commands cover common accessibility shortcuts and hide-window workflows. |
 
 Improved but not fully closed without hardware validation or larger feature design:

@@ -2,6 +2,7 @@
 using GestureSign.Common.Gestures;
 using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
+using GestureSign.Common.Plugins;
 using GestureSign.Daemon.Input;
 using ManagedWinapi.Hooks;
 using System.Collections.Generic;
@@ -27,7 +28,9 @@ namespace GestureSign.Daemon.Triggers
             if (PointCapture.Instance.SourceDevice == Devices.Mouse &&
                 (PointCapture.Instance.State == CaptureState.CapturingInvalid || PointCapture.Instance.State == CaptureState.TriggerFired))
             {
-                var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == wheelAction);
+                var actions = GetExecutableMouseActions(
+                    ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == wheelAction),
+                    e.Point);
                 FireMouseWheelActions(actions, e.Point, ref handled, true);
                 return;
             }
@@ -46,8 +49,9 @@ namespace GestureSign.Daemon.Triggers
                         (a.IgnoredDevices & Devices.Mouse) == 0 &&
                         !string.IsNullOrWhiteSpace(a.Condition),
                     ApplicationManager.Instance.ShouldUseGlobalFallback(wheelApps))
-                .Where(a => a.Commands != null && a.Commands.Any(command => command != null && command.IsEnabled))
                 .ToList();
+
+            wheelActions = GetExecutableMouseActions(wheelActions, e.Point);
 
             FireMouseWheelActions(wheelActions, e.Point, ref handled, false);
         }
@@ -74,7 +78,9 @@ namespace GestureSign.Daemon.Triggers
             if (PointCapture.Instance.SourceDevice == Devices.Mouse)
                 if (PointCapture.Instance.State == CaptureState.CapturingInvalid || PointCapture.Instance.State == CaptureState.TriggerFired)
                 {
-                    var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == (MouseActions)evt.Button);
+                    var actions = GetExecutableMouseActions(
+                        ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == (MouseActions)evt.Button),
+                        evt.Point);
                     if (actions != null && actions.Count != 0)
                     {
                         handled = PointCapture.Instance.Mode != CaptureMode.UserDisabled;
@@ -87,7 +93,9 @@ namespace GestureSign.Daemon.Triggers
             if (PointCapture.Instance.SourceDevice == Devices.Mouse)
                 if (PointCapture.Instance.State == CaptureState.CapturingInvalid || PointCapture.Instance.State == CaptureState.TriggerFired)
                 {
-                    var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == (MouseActions)e.Button);
+                    var actions = GetExecutableMouseActions(
+                        ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.MouseHotkey == (MouseActions)e.Button),
+                        e.Point);
                     if (actions != null && actions.Count != 0)
                     {
                         OnTriggerFired(new TriggerFiredEventArgs(actions, e.Point));
@@ -95,6 +103,42 @@ namespace GestureSign.Daemon.Triggers
                         handled = PointCapture.Instance.Mode != CaptureMode.UserDisabled;
                     }
                 }
+        }
+
+        private static List<IAction> GetExecutableMouseActions(IEnumerable<IAction> actions, System.Drawing.Point triggerPoint)
+        {
+            var inputPoints = PointCapture.Instance.InputPoints;
+            var inputContactIdentifiers = PointCapture.Instance.InputContactIdentifiers;
+            var conditionPoints = new List<List<System.Drawing.Point>>(inputPoints.Length);
+            var conditionContactIdentifiers = new List<int>(inputPoints.Length);
+
+            for (int i = 0; i < inputPoints.Length && i < inputContactIdentifiers.Count; i++)
+            {
+                if (inputPoints[i].Count == 0)
+                    continue;
+
+                conditionPoints.Add(new List<System.Drawing.Point>(inputPoints[i]));
+                conditionContactIdentifiers.Add(inputContactIdentifiers[i]);
+            }
+
+            if (conditionPoints.Count == 0)
+            {
+                conditionPoints.Add(new List<System.Drawing.Point>(new[] { triggerPoint }));
+                conditionContactIdentifiers.Add(1);
+            }
+
+            var targetWindow = ApplicationManager.Instance.CaptureWindow;
+            return actions?
+                .Where(action => action != null &&
+                    (action.IgnoredDevices & Devices.Mouse) == 0 &&
+                    HasEnabledCommands(action) &&
+                    PluginManager.Instance.EvaluateCondition(action.Condition, conditionPoints, conditionContactIdentifiers, targetWindow))
+                .ToList() ?? new List<IAction>();
+        }
+
+        private static bool HasEnabledCommands(IAction action)
+        {
+            return action?.Commands != null && action.Commands.Any(command => command != null && command.IsEnabled);
         }
     }
 }
