@@ -6,6 +6,7 @@ using ManagedWinapi;
 using ManagedWinapi.Windows;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace GestureSign.Daemon.Triggers
@@ -131,7 +132,7 @@ namespace GestureSign.Daemon.Triggers
                     PointCapture.Instance.Mode,
                     Devices.None,
                     new List<int>(),
-                    new List<List<System.Drawing.Point>>());
+                    new List<List<Point>>());
                 if (executableActions.Count > 0)
                 {
                     OnTriggerFired(new TriggerFiredEventArgs(executableActions, window.Rectangle.Location));
