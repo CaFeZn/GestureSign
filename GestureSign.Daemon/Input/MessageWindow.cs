@@ -779,6 +779,15 @@ namespace GestureSign.Daemon.Input
                     return foregroundMatchedScreen;
                 }
 
+                var physicalSizeMatchedScreen = touchScreen.GetScreenFromPhysicalSize(screens);
+                if (physicalSizeMatchedScreen != null &&
+                    (!string.Equals(physicalSizeMatchedScreen.DeviceName, screen.DeviceName, StringComparison.OrdinalIgnoreCase) ||
+                     !physicalSizeMatchedScreen.Bounds.Equals(screen.Bounds)))
+                {
+                    _touchScreenDeviceScreens[hDevice] = physicalSizeMatchedScreen;
+                    return physicalSizeMatchedScreen;
+                }
+
                 return screen;
             }
 
