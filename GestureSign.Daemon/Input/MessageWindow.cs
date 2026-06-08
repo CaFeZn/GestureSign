@@ -755,16 +755,7 @@ namespace GestureSign.Daemon.Input
         {
             Screen screen;
             if (TryGetCachedTouchScreen(hDevice, out screen))
-            {
-                Point touchPoint;
-                if (!touchScreen.TryGetFirstTipPoint(numberOfChildren, screen, out touchPoint) ||
-                    screen.Bounds.Contains(touchPoint))
-                {
-                    return screen;
-                }
-
-                _touchScreenDeviceScreens.Remove(hDevice);
-            }
+                return screen;
 
             Screen[] screens;
             if (!TryGetScreens(out screens))
@@ -790,7 +781,9 @@ namespace GestureSign.Daemon.Input
                 return screen;
             }
 
-            return GetFallbackScreen();
+            // For multi-screen touch setups, a guessed fallback screen can mis-map the
+            // whole stroke onto the wrong monitor. Skip this unreliable frame instead.
+            return null;
         }
 
         private bool TryGetCachedTouchScreen(IntPtr hDevice, out Screen screen)

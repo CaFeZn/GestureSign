@@ -191,7 +191,7 @@ General troubleshooting:
 - If gestures fail only in Task Manager, Device Manager, installers, or other administrator windows, see the administrator-window notes below.
 - If a configured action does not run in one app, check whether that app is in the ignored list or whether the action is configured only for a different application.
 - Some Win11 touchscreen drivers report a small active `ContactCount` while still placing live contacts in later logical slots. GestureSign now parses the full logical touchscreen report width in that case, so later-slot touches are less likely to be skipped.
-- Cached touchscreen-to-screen mappings are now revalidated against the current tip point, so if a cached screen no longer fits the current touch location after a topology or device-state change, GestureSign will fall back to screen re-resolution instead of trusting the stale cache.
+- Touchscreen screen resolution is now more conservative when the current frame cannot be matched reliably. If cached mapping is unavailable and both the foreground-window heuristic and physical-size matching fail, GestureSign skips that unreliable touchscreen frame instead of blindly falling back to the foreground or cursor screen.
 - If GestureSign interferes with one app, bind `Add Current Application to Ignored List` to a gesture and run it while that app is active.
 - To avoid interference by default, enable `Options` > `Whitelist Mode`. In this mode GestureSign captures gestures and hotkeys only when the target foreground/capture window matches a configured application; unmatched apps are ignored, and matched apps may still fall back to global actions.
 - If touchpad gestures are delayed or dropped, increase the drawing-start timeout in `Options`.
