@@ -61,14 +61,14 @@ namespace GestureSign.Common.Plugins
             // Get action to be executed
             var executableActions = ApplicationManager.Instance.GetRecognizedDefinedAction(e.GestureName)?.ToList();
             if (executableActions == null) return;
-            ExecuteAction(executableActions, pointCapture.Mode, pointCapture.SourceDevice, e.ContactIdentifiers, e.FirstCapturedPoints, e.Points);
+            ExecuteAction(executableActions, pointCapture.Mode, pointCapture.SourceDevice, e.ContactIdentifiers, e.FirstCapturedPoints, e.Points, pressedVirtualKeys: e.PressedVirtualKeys);
         }
 
         #endregion
 
         #region Public Methods
 
-        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points, List<int> conditionContactIdentifiers = null, List<List<Point>> conditionPoints = null)
+        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points, List<int> conditionContactIdentifiers = null, List<List<Point>> conditionPoints = null, List<int> pressedVirtualKeys = null)
         {
             // Exit if we're teaching
             if (mode == CaptureMode.Training)
@@ -76,7 +76,7 @@ namespace GestureSign.Common.Plugins
             var target = ApplicationManager.Instance.CaptureWindow;
             var pointsForCondition = conditionPoints ?? points;
             var contactIdentifiersForCondition = conditionContactIdentifiers ?? contactIdentifiers;
-            var resolvedActions = GetExecutableActions(executableActions, mode, devices, contactIdentifiersForCondition, pointsForCondition);
+            var resolvedActions = GetExecutableActions(executableActions, mode, devices, contactIdentifiersForCondition, pointsForCondition, pressedVirtualKeys);
             if (resolvedActions.Count == 0)
                 return;
             var pointInfo = new PointInfo(firstCapturedPoints, points, target, _mainContext);
@@ -185,7 +185,7 @@ namespace GestureSign.Common.Plugins
             return ExecuteCommand(command.ToCommand(), pluginInfo, actionPoint, target, command.ActivateWindow, false, false);
         }
 
-        public bool HasExecutableAction(string gestureName, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points)
+        public bool HasExecutableAction(string gestureName, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points, List<int> pressedVirtualKeys = null)
         {
             if (string.IsNullOrWhiteSpace(gestureName))
                 return false;
@@ -194,10 +194,10 @@ namespace GestureSign.Common.Plugins
             if (executableActions == null || executableActions.Count == 0)
                 return false;
 
-            return GetExecutableActions(executableActions, mode, devices, contactIdentifiers, points).Count != 0;
+            return GetExecutableActions(executableActions, mode, devices, contactIdentifiers, points, pressedVirtualKeys).Count != 0;
         }
 
-        public List<IAction> GetExecutableActions(IEnumerable<IAction> candidateActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points)
+        public List<IAction> GetExecutableActions(IEnumerable<IAction> candidateActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points, List<int> pressedVirtualKeys = null)
         {
             var executableActions = candidateActions?.ToList();
             if (executableActions == null || executableActions.Count == 0)
@@ -214,7 +214,7 @@ namespace GestureSign.Common.Plugins
                     (executableAction.IgnoredDevices & devices) != 0 ||
                     IsUnsafeSingleFingerTouchPadAction(executableAction, devices, pointsForCondition) ||
                     executableAction.Commands == null ||
-                    !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target))
+                    !Compute(executableAction.Condition, pointsForCondition, contactIdentifiersForCondition, target, pressedVirtualKeys))
                 {
                     continue;
                 }
@@ -309,7 +309,7 @@ namespace GestureSign.Common.Plugins
 
         public bool EvaluateCondition(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
-            return Compute(condition, pointList, contactIdentifiers, targetWindow);
+            return Compute(condition, pointList, contactIdentifiers, targetWindow, null);
         }
 
         private static bool ShouldActivateWindow(IAction executableAction, IPlugin plugin)
@@ -346,13 +346,13 @@ namespace GestureSign.Common.Plugins
             return contactCount == 1 && string.IsNullOrWhiteSpace(action.Condition);
         }
 
-        private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
+        private bool Compute(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow, List<int> pressedVirtualKeys)
         {
             if (string.IsNullOrWhiteSpace(condition)) return true;
             pointList = pointList ?? new List<List<Point>>();
             contactIdentifiers = contactIdentifiers ?? new List<int>();
 
-            string expression = GetExpression(condition, pointList, contactIdentifiers, targetWindow);
+            string expression = GetExpression(condition, pointList, contactIdentifiers, targetWindow, pressedVirtualKeys);
             if (FingerVariablePattern.IsMatch(expression))
                 return false;
 
@@ -372,7 +372,7 @@ namespace GestureSign.Common.Plugins
             }
         }
 
-        private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow)
+        private string GetExpression(string condition, List<List<Point>> pointList, List<int> contactIdentifiers, SystemWindow targetWindow, List<int> pressedVirtualKeys)
         {
             bool hasPercentVariables = condition.Contains("%");
             Rectangle virtualScreenBounds = Rectangle.Empty;
@@ -404,7 +404,7 @@ namespace GestureSign.Common.Plugins
                 condition = ReplaceVariables(condition, i, "ID", contactIdentifiers[i - 1]);
             }
             condition = ReplaceWindowVariables(condition, targetWindow);
-            condition = ReplaceKeyVariables(condition);
+            condition = ReplaceKeyVariables(condition, pressedVirtualKeys);
 
             return condition;
         }
@@ -447,18 +447,18 @@ namespace GestureSign.Common.Plugins
             return condition;
         }
 
-        private string ReplaceKeyVariables(string condition)
+        private string ReplaceKeyVariables(string condition, List<int> pressedVirtualKeys)
         {
-            condition = ReplaceToken(condition, "key_is_shift_down", ToExpressionBoolean(IsAnyKeyDown(VK_LSHIFT, VK_RSHIFT)));
-            condition = ReplaceToken(condition, "key_is_ctrl_down", ToExpressionBoolean(IsAnyKeyDown(VK_LCONTROL, VK_RCONTROL)));
-            condition = ReplaceToken(condition, "key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(VK_LMENU, VK_RMENU)));
-            condition = ReplaceToken(condition, "key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(VK_LWIN, VK_RWIN)));
+            condition = ReplaceToken(condition, "key_is_shift_down", ToExpressionBoolean(IsAnyKeyDown(pressedVirtualKeys, VK_LSHIFT, VK_RSHIFT)));
+            condition = ReplaceToken(condition, "key_is_ctrl_down", ToExpressionBoolean(IsAnyKeyDown(pressedVirtualKeys, VK_LCONTROL, VK_RCONTROL)));
+            condition = ReplaceToken(condition, "key_is_alt_down", ToExpressionBoolean(IsAnyKeyDown(pressedVirtualKeys, VK_LMENU, VK_RMENU)));
+            condition = ReplaceToken(condition, "key_is_win_down", ToExpressionBoolean(IsAnyKeyDown(pressedVirtualKeys, VK_LWIN, VK_RWIN)));
 
             return KeyVariablePattern.Replace(condition, match =>
             {
                 int virtualKey;
                 return TryGetVirtualKey(match.Groups[1].Value, out virtualKey)
-                    ? ToExpressionBoolean(IsAnyKeyDown(virtualKey))
+                    ? ToExpressionBoolean(IsAnyKeyDown(pressedVirtualKeys, virtualKey))
                     : match.Value;
             });
         }
@@ -557,8 +557,11 @@ namespace GestureSign.Common.Plugins
         [DllImport("user32.dll")]
         private static extern int GetSystemMetrics(int nIndex);
 
-        private static bool IsAnyKeyDown(params int[] virtualKeys)
+        private static bool IsAnyKeyDown(List<int> pressedVirtualKeys, params int[] virtualKeys)
         {
+            if (pressedVirtualKeys != null)
+                return virtualKeys.Any(key => pressedVirtualKeys.Contains(key));
+
             return virtualKeys.Any(key => (GetAsyncKeyState(key) & 0x8000) != 0);
         }
 

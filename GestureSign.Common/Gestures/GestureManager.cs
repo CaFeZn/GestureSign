@@ -156,7 +156,8 @@ namespace GestureSign.Common.Gestures
                 pointCapture.Mode,
                 pointCapture.SourceDevice,
                 pointCapture.InputContactIdentifiers,
-                points);
+                points,
+                pointCapture.CapturePressedVirtualKeys);
         }
 
         #endregion

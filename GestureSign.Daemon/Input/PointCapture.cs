@@ -110,6 +110,8 @@ namespace GestureSign.Daemon.Input
             }
         }
 
+        public List<int> CapturePressedVirtualKeys { get; private set; } = new List<int>();
+
         public CaptureState State
         {
             get { return _state; }
@@ -734,6 +736,7 @@ namespace GestureSign.Daemon.Input
                 _pointsCaptured.Clear();
             }
 
+            CapturePressedVirtualKeys = new List<int>();
             State = CaptureState.Ready;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
         }
@@ -754,12 +757,15 @@ namespace GestureSign.Daemon.Input
                 OnCaptureEnded();
             }
 
+            CapturePressedVirtualKeys = new List<int>();
             State = CaptureState.Ready;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Normal;
         }
 
         private bool TryBeginCapture(List<InputPoint> firstPoint)
         {
+            CapturePressedVirtualKeys = CapturePressedVirtualKeysSnapshot();
+
             // Create capture args so we can notify subscribers that capture has started and allow them to cancel if they want.
             PointsCapturedEventArgs captureStartedArgs;
             if (SourceDevice == Devices.TouchPad)
@@ -776,7 +782,10 @@ namespace GestureSign.Daemon.Input
             UpdateBlockTouchInputThreshold(Mode == CaptureMode.Normal ? captureStartedArgs.BlockTouchInputThreshold : 0);
 
             if (captureStartedArgs.Cancel)
+            {
+                CapturePressedVirtualKeys = new List<int>();
                 return false;
+            }
 
             State = CaptureState.CapturingInvalid;
 
@@ -837,6 +846,7 @@ namespace GestureSign.Daemon.Input
             if (pointsInformation.Cancel)
             {
                 _pointsCaptured.Clear();
+                CapturePressedVirtualKeys = new List<int>();
                 return;
             }
 
@@ -853,7 +863,12 @@ namespace GestureSign.Daemon.Input
             if (GestureManager.Instance.GestureName != null)
             {
                 List<Point> capturedPoints = SourceDevice == Devices.TouchPad ? new List<Point>() { _touchPadStartPoint } : pointsInformation.FirstCapturedPoints;
-                OnGestureRecognized(new RecognitionEventArgs(GestureManager.Instance.GestureName, pointsInformation.Points, capturedPoints, _pointsCaptured.Keys.ToList()));
+                OnGestureRecognized(new RecognitionEventArgs(
+                    GestureManager.Instance.GestureName,
+                    pointsInformation.Points,
+                    capturedPoints,
+                    _pointsCaptured.Keys.ToList(),
+                    new List<int>(CapturePressedVirtualKeys)));
             }
             else if (ShouldPlayUnrecognizedGestureSound())
             {
@@ -863,6 +878,7 @@ namespace GestureSign.Daemon.Input
             OnAfterPointsCaptured(pointsInformation);
 
             _pointsCaptured.Clear();
+            CapturePressedVirtualKeys = new List<int>();
         }
 
         private bool ShouldRecordTrainingGesture()
@@ -879,6 +895,17 @@ namespace GestureSign.Daemon.Input
         private bool IsSinglePointTap()
         {
             return _pointsCaptured.Count == 1 && _pointsCaptured.Values.First().Count == 1;
+        }
+
+        private static List<int> CapturePressedVirtualKeysSnapshot()
+        {
+            var pressedKeys = new List<int>(16);
+            for (int virtualKey = 1; virtualKey <= 0xFE; virtualKey++)
+            {
+                if ((GetAsyncKeyState(virtualKey) & 0x8000) != 0)
+                    pressedKeys.Add(virtualKey);
+            }
+            return pressedKeys;
         }
 
         private bool ShouldPlayUnrecognizedGestureSound()
@@ -935,6 +962,9 @@ namespace GestureSign.Daemon.Input
         //    // Notify subscribers that gesture capture has been canceled
         //    OnCaptureCanceled(new PointsCapturedEventArgs(new List<List<Point>>(_pointsCaptured.Values)));
         //}
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
 
         private void AddPoint(List<InputPoint> point)
         {

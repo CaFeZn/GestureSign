@@ -15,6 +15,7 @@ namespace GestureSign.Common.Input
         event PointsCapturedEventHandler PointCaptured;
         List<Point>[] InputPoints { get; }
         List<int> InputContactIdentifiers { get; }
+        List<int> CapturePressedVirtualKeys { get; }
         bool TemporarilyDisableCapture { get; set; }
         Devices SourceDevice { get; }
         CaptureState State { get; set; }
