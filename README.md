@@ -36,7 +36,7 @@ The current codebase remains a Windows desktop app targeting `.NET Framework 4.8
 - Update upstream installer package: `winget upgrade --id TransposonY.GestureSign -e`
 - Fork installer: download `GestureSign-<tag>-setup-win-anycpu.exe` from the [releases page](https://github.com/CaFeZn/GestureSign/releases) and run it. The installer shows a destination-folder page; silent installs can pass `/DIR="D:\Tools\GestureSign"`.
 - Fork portable edition: download `GestureSign-<tag>-portable-win-anycpu.zip`, extract it to the folder you want, and run `GestureSign.ControlPanel.exe`.
-- Latest manual-test build: open the rolling `continuous` prerelease on the releases page and download `GestureSign-continuous-setup-win-anycpu.exe` for a normal installer or `GestureSign-continuous-portable-win-anycpu.zip` for a portable run.
+- Latest manual-test build: open the rolling `continuous` prerelease on the releases page and download `GestureSign-continuous-setup-win-anycpu.exe` for a normal installer or `GestureSign-continuous-portable-win-anycpu.zip` for a portable run. This `continuous` name only means a rolling test-build channel; it is unrelated to the `Continuous Gesture` action setting described below.
 - If this fork has no published release asset yet, use the upstream installer package above or build locally with `.\scripts\build.ps1 -Configuration Portable`.
 - Portable builds write configuration and backups under the program folder's `AppData` directory. Installer builds write user data under `%APPDATA%\GestureSign`.
 
@@ -114,18 +114,30 @@ Multiple gestures for the same behavior:
 - The same activated-window alignment now carries through command execution as well, so window-targeting plugins and `%GS_WindowHandle%` use the same non-shell foreground target instead of drifting back to a point-based window lookup mid-action.
 - For non-regex application rules, Match String comparisons now treat leading/trailing whitespace as insignificant in save/import conflict checks, matching the same trimmed comparison already used at runtime. Regex-based rules still require the exact pattern text and are validated when saved.
 
-Continuous gestures:
+Continuous Gesture capture:
 
-- `Continuous Gesture` is an action setting, not a GitHub release tag. It means GestureSign runs the action repeatedly while the current finger, pen, touchpad, or mouse capture is still moving.
-- Implementation summary: `PointCapture` collects raw input points and raises `PointCaptured` on accepted movement. `ContinuousGestureTrigger` listens during active capture, compares the latest points with the previous points, chooses `Up`, `Down`, `Left`, or `Right`, checks the DPI-scaled `Options` > `Continuous Gesture Distance`, and fires matching continuous actions immediately. If a continuous action fired, the normal finger-up gesture match for that same capture is canceled to avoid duplicate commands.
-- To configure one, edit or create an action, turn on `Continuous Gesture`, set the contact count and direction, choose commands, then tune `Options` > `Continuous Gesture Distance`. Smaller distances trigger more often; larger distances trigger less often.
-- Continuous commands are good for repeated behaviors such as scrolling, volume, brightness, virtual-desktop switching, or repeated hotkeys. Avoid commands that should run exactly once unless you intentionally want repeats.
+- On GitHub Releases, `continuous` means the rolling prerelease build channel. In the action editor, `Continuous Gesture` means repeated action firing during one still-active input capture. They are separate concepts that only share the same English word.
+- In practical terms, `Continuous Gesture` does not wait for finger-up recognition. Once GestureSign has accepted the current stroke/capture, matching commands can start firing while the finger, pen, touchpad, or mouse is still moving.
+- Runtime path: `PointCapture` starts the capture and emits `PointCaptured` updates on accepted movement. `ContinuousGestureTrigger` listens during that active capture, compares the newest points with the previous accepted points, determines the dominant direction (`Up`, `Down`, `Left`, `Right`), and calculates how many times to fire from movement distance, elapsed time, and the DPI-scaled `Options` > `Continuous Gesture Distance`.
+- Each full threshold crossing fires the matching continuous action immediately. Faster movement can produce multiple firings from one update. If any continuous action fired during that capture, the normal finger-up gesture match for the same capture is canceled so the same stroke does not run commands twice.
+- Configuration steps:
+  1. Create or edit an action.
+  2. Turn on `Continuous Gesture`.
+  3. Choose the contact count and one direction.
+  4. Add commands that are safe to repeat.
+  5. Tune `Options` > `Continuous Gesture Distance`.
+- Continuous commands are good for repeated behaviors such as scrolling, volume, brightness, virtual-desktop switching, repeated hotkeys, or page-style navigation with repeated `Page Up` / `Page Down`. Avoid commands that should run exactly once unless you intentionally want repeats.
 - `Mouse Actions` > `Hold Down` is automatically released when the continuous capture ends or is canceled, reducing stuck-button risk for continuous drag-like workflows.
 
 One-finger touchpad edge workflows:
 
 - One-finger precision-touchpad capture is protected because ordinary one-finger touchpad movement controls the pointer. GestureSign captures a one-finger touchpad action only when the action allows `TouchPad`, uses one contact, has at least one enabled command, and has a trigger condition that is already true at touch start. Capture gating checks the current application's matching one-finger touchpad actions first, then falls back to global one-finger touchpad actions only when normal global fallback would apply, so an unrelated app-specific one-finger action does not block a global edge gesture from starting.
 - For a right-edge scrollbar-like area, create two actions: one `Continuous Gesture` with one finger `Up`, and one with one finger `Down`. Enable `TouchPad` for both actions and add `Mouse Actions` > `Vertical Scroll` commands with opposite scroll directions.
+- Suggested setup:
+  1. Create an `Up` action and a `Down` action.
+  2. Leave `TouchPad` enabled and disable other source devices if you want this workflow to stay touchpad-only.
+  3. Add a repeatable command such as `Mouse Actions` > `Vertical Scroll`, or repeated `Page Up` / `Page Down` hotkeys if you want larger page-like jumps.
+  4. Add the same start-zone condition to both actions so ordinary one-finger pointer movement is not captured.
 - Use a start-zone condition so normal touchpad movement is not captured. Example middle strip on the right edge: `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
 - If you want a modifier guard, add it to the same condition, for example `key_is_alt_down AND finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
 - The scroll is dynamic: movement events trigger while the finger slides. You do not need to lift the finger before scrolling begins.
