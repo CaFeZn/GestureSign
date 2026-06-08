@@ -408,6 +408,13 @@ namespace GestureSign.Daemon.Input
                 return true;
             }
 
+            bool touchSourceStillActive = (_sourceDevice & Devices.TouchDevice) != 0 &&
+                (Input.PointCapture.Instance.State == Common.Input.CaptureState.Capturing ||
+                 Input.PointCapture.Instance.State == Common.Input.CaptureState.CapturingInvalid ||
+                 Input.PointCapture.Instance.State == Common.Input.CaptureState.TriggerFired);
+            if (touchSourceStillActive)
+                return false;
+
             if (_lastSourceDeviceInputTick != 0 && unchecked(Environment.TickCount - _lastSourceDeviceInputTick) > SourceDeviceStaleTimeout)
             {
                 ResetSourceDevice(true);
