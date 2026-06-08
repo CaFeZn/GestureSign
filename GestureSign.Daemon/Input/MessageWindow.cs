@@ -236,12 +236,28 @@ namespace GestureSign.Daemon.Input
 
                     string deviceName = Marshal.PtrToStringAnsi(pData);
 
-                    if (string.IsNullOrEmpty(deviceName) || deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 || deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (ShouldIgnoreValidatedDevice(info.hid.usUsage, deviceName))
                         return true;
                     usage = info.hid.usUsage;
                     return true;
                 }
             }
+        }
+
+        private static bool ShouldIgnoreValidatedDevice(ushort usage, string deviceName)
+        {
+            if (string.IsNullOrEmpty(deviceName))
+                return true;
+
+            // Some third-party precision touchpad drivers expose a standard HID touchpad
+            // through a ROOT/VIRTUAL_DIGITIZER device path. Keep filtering those names for
+            // touchscreen/pen paths, but allow standard touchpad usage so these drivers can
+            // still participate in GestureSign's raw-input touchpad pipeline.
+            if (usage == NativeMethods.TouchPadUsage)
+                return false;
+
+            return deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                   deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         protected override void WndProc(ref Message message)
