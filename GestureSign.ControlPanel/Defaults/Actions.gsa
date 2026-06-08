@@ -138,7 +138,7 @@
   {
     "$type": "GestureSign.Common.Applications.UserApp, GestureSign.Common",
     "LimitNumberOfFingers": 2,
-    "BlockTouchInputThreshold": 1,
+    "BlockTouchInputThreshold": 2,
     "Name": "Browsers(Chrome, Edge, Firefox, IE)",
     "MatchUsing": 2,
     "MatchString": "^(MicrosoftEdge|firefox|chrome|iexplore|msedge)(\\.exe)?$",
@@ -228,7 +228,7 @@
   {
     "$type": "GestureSign.Common.Applications.UserApp, GestureSign.Common",
     "LimitNumberOfFingers": 2,
-    "BlockTouchInputThreshold": 1,
+    "BlockTouchInputThreshold": 2,
     "Name": "Windows Explorer",
     "MatchUsing": 2,
     "MatchString": "explorer.exe",
@@ -270,7 +270,7 @@
   {
     "$type": "GestureSign.Common.Applications.UserApp, GestureSign.Common",
     "LimitNumberOfFingers": 2,
-    "BlockTouchInputThreshold": 1,
+    "BlockTouchInputThreshold": 2,
     "Name": "UWP App",
     "MatchString": "Windows.UI.Core.CoreWindow",
     "Actions": [
