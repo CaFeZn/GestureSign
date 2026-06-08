@@ -12,6 +12,7 @@ namespace GestureSign.Daemon.Input
         private int _lastPointsCount;
         private readonly HashSet<int> _activeTouchContacts = new HashSet<int>();
         private HashSet<MouseActions> _pressedMouseButton;
+        private IntPtr _sourceDeviceHandle;
 
         internal Devices SourceDevice { get; private set; }
         internal MouseActions CurrentDrawingButton { get; private set; }
@@ -31,8 +32,9 @@ namespace GestureSign.Daemon.Input
 
         protected virtual void OnPointDown(InputPointsEventArgs args)
         {
-            if (SourceDevice != Devices.None && SourceDevice != args.PointSource && args.PointSource != Devices.Pen) return;
+            if (!IsMatchingSource(args, allowPenTransition: true)) return;
             SourceDevice = args.PointSource;
+            _sourceDeviceHandle = args.DeviceHandle;
             PointDown?.Invoke(this, args);
         }
 
@@ -40,18 +42,19 @@ namespace GestureSign.Daemon.Input
 
         protected virtual void OnPointUp(InputPointsEventArgs args)
         {
-            if (SourceDevice != Devices.None && SourceDevice != args.PointSource) return;
+            if (!IsMatchingSource(args)) return;
 
             PointUp?.Invoke(this, args);
 
             SourceDevice = Devices.None;
+            _sourceDeviceHandle = IntPtr.Zero;
         }
 
         public event EventHandler<InputPointsEventArgs> PointMove;
 
         protected virtual void OnPointMove(InputPointsEventArgs args)
         {
-            if (SourceDevice != args.PointSource) return;
+            if (!IsMatchingSource(args)) return;
             PointMove?.Invoke(this, args);
         }
 
@@ -109,7 +112,7 @@ namespace GestureSign.Daemon.Input
 
                 if (release)
                 {
-                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     _lastPointsCount = 0;
                     return;
                 }
@@ -122,12 +125,12 @@ namespace GestureSign.Daemon.Input
                 {
                     if (_lastPointsCount == 1 && SourceDevice == Devices.Pen)
                     {
-                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                     else if (_lastPointsCount >= 0)
                     {
                         _lastPointsCount = 1;
-                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                 }
                 else if (drawByTip)
@@ -136,7 +139,7 @@ namespace GestureSign.Daemon.Input
                     {
                         if (SourceDevice == Devices.Pen)
                         {
-                            OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                            OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                             _lastPointsCount = 0;
                         }
                         return;
@@ -144,12 +147,12 @@ namespace GestureSign.Daemon.Input
 
                     if (_lastPointsCount == 1 && SourceDevice == Devices.Pen)
                     {
-                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                        OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                     else if (_lastPointsCount >= 0)
                     {
                         _lastPointsCount = 1;
-                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                 }
                 else if (drawByHover)
@@ -158,12 +161,12 @@ namespace GestureSign.Daemon.Input
                     {
                         if (tip)
                         {
-                            OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                            OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                             _lastPointsCount = -1;
                         }
                         else
                         {
-                            OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                            OnPointMove(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                         }
                     }
                     else if (_lastPointsCount >= 0)
@@ -174,7 +177,7 @@ namespace GestureSign.Daemon.Input
                             return;
                         }
                         _lastPointsCount = 1;
-                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                        OnPointDown(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                     }
                 }
             }
@@ -197,27 +200,27 @@ namespace GestureSign.Daemon.Input
             if (activeRawData.Count != 0 && hadActiveTouchContacts && releasedTrackedContacts && _activeTouchContacts.Count == 0)
             {
                 // Rapid taps can report the previous release and the next press in one raw frame.
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
-                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
-                if (SourceDevice == e.SourceDevice)
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                if (IsCurrentSource(e))
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
                 return;
             }
 
             if (activeRawData.Count == 0)
             {
-                if (_activeTouchContacts.Count == 0 && SourceDevice == e.SourceDevice)
-                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                if (_activeTouchContacts.Count == 0 && IsCurrentSource(e))
+                    OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                 _lastPointsCount = _activeTouchContacts.Count;
                 return;
             }
 
             if (_activeTouchContacts.Count == 0)
             {
-                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
-                if (SourceDevice == e.SourceDevice)
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                if (IsCurrentSource(e))
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
                 return;
             }
@@ -228,11 +231,11 @@ namespace GestureSign.Daemon.Input
 
             if (trackedActiveRawData.Count == 0)
             {
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice));
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
-                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
-                if (SourceDevice == e.SourceDevice)
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                if (IsCurrentSource(e))
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
                 return;
             }
@@ -242,15 +245,15 @@ namespace GestureSign.Daemon.Input
 
             if (hasNewContacts && !PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
             {
-                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice));
-                if (SourceDevice == e.SourceDevice)
+                OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                if (IsCurrentSource(e))
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
                 return;
             }
 
             _activeTouchContacts.IntersectWith(activeContactIdentifiers);
             _lastPointsCount = trackedActiveRawData.Count;
-            OnPointMove(new InputPointsEventArgs(trackedActiveRawData, e.SourceDevice));
+            OnPointMove(new InputPointsEventArgs(trackedActiveRawData, e.SourceDevice, e.DeviceHandle));
         }
 
         private static bool IsActiveTouchContact(RawData rawData)
@@ -269,6 +272,29 @@ namespace GestureSign.Daemon.Input
         {
             _activeTouchContacts.Clear();
             _lastPointsCount = 0;
+        }
+
+        private bool IsMatchingSource(InputPointsEventArgs args, bool allowPenTransition = false)
+        {
+            if (SourceDevice == Devices.None)
+                return true;
+
+            if (allowPenTransition && args.PointSource == Devices.Pen)
+                return SourceDevice == Devices.TouchScreen || IsSameSource(args);
+
+            return IsSameSource(args);
+        }
+
+        private bool IsCurrentSource(RawPointsDataMessageEventArgs args)
+        {
+            return SourceDevice == args.SourceDevice &&
+                (_sourceDeviceHandle == IntPtr.Zero || args.DeviceHandle == IntPtr.Zero || _sourceDeviceHandle == args.DeviceHandle);
+        }
+
+        private bool IsSameSource(InputPointsEventArgs args)
+        {
+            return SourceDevice == args.PointSource &&
+                (_sourceDeviceHandle == IntPtr.Zero || args.DeviceHandle == IntPtr.Zero || _sourceDeviceHandle == args.DeviceHandle);
         }
 
         #endregion

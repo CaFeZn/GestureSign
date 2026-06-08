@@ -29,6 +29,7 @@ namespace GestureSign.Daemon.Input
         private readonly SynchronizationContext _messageContext;
 
         private Devices _sourceDevice;
+        private IntPtr _sourceDeviceHandle;
         private int _lastSourceDeviceInputTick;
         private List<ushort> _registeredDeviceList = new List<ushort>(1);
         private int? _penLastActivity;
@@ -362,6 +363,7 @@ namespace GestureSign.Daemon.Input
             if (notifyRelease)
                 ReleaseSourceDevice();
             _sourceDevice = Devices.None;
+            _sourceDeviceHandle = IntPtr.Zero;
             _requiringContactCount = 0;
             _outputTouchs = new List<RawData>(1);
             _lastSourceDeviceOutput = new List<RawData>(1);
@@ -380,19 +382,20 @@ namespace GestureSign.Daemon.Input
             var releaseOutput = sourceOutput
                 .Select(rd => new RawData(DeviceStates.None, rd.ContactIdentifier, rd.RawPoints))
                 .ToList();
-            PointsIntercepted(this, new RawPointsDataMessageEventArgs(releaseOutput, _sourceDevice));
+            PointsIntercepted(this, new RawPointsDataMessageEventArgs(releaseOutput, _sourceDevice, _sourceDeviceHandle));
         }
 
-        private bool TryAcceptSourceDevice(Devices sourceDevice)
+        private bool TryAcceptSourceDevice(Devices sourceDevice, IntPtr sourceDeviceHandle)
         {
             if (_sourceDevice == Devices.None)
             {
                 _sourceDevice = sourceDevice;
+                _sourceDeviceHandle = sourceDeviceHandle;
                 _lastSourceDeviceInputTick = Environment.TickCount;
                 return true;
             }
 
-            if (_sourceDevice == sourceDevice)
+            if (_sourceDevice == sourceDevice && _sourceDeviceHandle == sourceDeviceHandle)
             {
                 return true;
             }
@@ -401,6 +404,7 @@ namespace GestureSign.Daemon.Input
             {
                 ResetSourceDevice(true);
                 _sourceDevice = sourceDevice;
+                _sourceDeviceHandle = sourceDeviceHandle;
                 _lastSourceDeviceInputTick = Environment.TickCount;
                 return true;
             }
@@ -567,7 +571,7 @@ namespace GestureSign.Daemon.Input
                                 {
                                     if (!TrySetCurrentScreenFromCursor(true))
                                         return;
-                                    if (!TryAcceptSourceDevice(Devices.Pen))
+                                    if (!TryAcceptSourceDevice(Devices.Pen, raw.header.hDevice))
                                         return;
                                 }
                                 else
@@ -595,7 +599,7 @@ namespace GestureSign.Daemon.Input
                     {
                         if (_penLastActivity != null && Environment.TickCount - _penLastActivity < 100)
                             return;
-                        if (!TryAcceptSourceDevice(Devices.TouchScreen))
+                        if (!TryAcceptSourceDevice(Devices.TouchScreen, raw.header.hDevice))
                             return;
 
                         using (TouchScreenDevice touchScreen = new TouchScreenDevice(buffer, ref raw))
@@ -643,7 +647,7 @@ namespace GestureSign.Daemon.Input
                     }
                     else if (usage == NativeMethods.TouchPadUsage)
                     {
-                        if (!TryAcceptSourceDevice(Devices.TouchPad))
+                        if (!TryAcceptSourceDevice(Devices.TouchPad, raw.header.hDevice))
                             return;
                         if (_currentScr == null || !IsCurrentScreenValid())
                         {
@@ -693,7 +697,7 @@ namespace GestureSign.Daemon.Input
 
                 if (_requiringContactCount == 0 && PointsIntercepted != null)
                 {
-                    PointsIntercepted(this, new RawPointsDataMessageEventArgs(_outputTouchs, _sourceDevice));
+                    PointsIntercepted(this, new RawPointsDataMessageEventArgs(_outputTouchs, _sourceDevice, _sourceDeviceHandle));
                     _lastSourceDeviceOutput = _outputTouchs;
                     _lastSourceDeviceInputTick = Environment.TickCount;
                     if (_outputTouchs.TrueForAll(rd => rd.State == DeviceStates.None))
