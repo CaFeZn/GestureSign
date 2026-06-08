@@ -197,9 +197,19 @@ namespace GestureSign.Common.Plugins
             if (executableActions == null || executableActions.Count == 0)
                 return false;
 
+            return GetExecutableActions(executableActions, mode, devices, contactIdentifiers, points).Count != 0;
+        }
+
+        public List<IAction> GetExecutableActions(IEnumerable<IAction> candidateActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<List<Point>> points)
+        {
+            var executableActions = candidateActions?.ToList();
+            if (executableActions == null || executableActions.Count == 0)
+                return new List<IAction>();
+
             var target = ApplicationManager.Instance.CaptureWindow;
             var pointsForCondition = points ?? new List<List<Point>>();
             var contactIdentifiersForCondition = contactIdentifiers ?? new List<int>();
+            var result = new List<IAction>();
 
             foreach (var executableAction in executableActions)
             {
@@ -221,11 +231,14 @@ namespace GestureSign.Common.Plugins
                     }
 
                     if (FindPluginByClassAndFilename(command.PluginClass, command.PluginFilename) != null)
-                        return true;
+                    {
+                        result.Add(executableAction);
+                        break;
+                    }
                 }
             }
 
-            return false;
+            return result;
         }
 
         #endregion

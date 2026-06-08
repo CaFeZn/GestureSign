@@ -1,6 +1,7 @@
 ﻿using GestureSign.Common.Applications;
 using GestureSign.Common.Gestures;
 using GestureSign.Common.Input;
+using GestureSign.Common.Plugins;
 using GestureSign.Daemon.Input;
 using GestureSign.Daemon.Native;
 using GestureSign.PointPatterns;
@@ -121,13 +122,19 @@ namespace GestureSign.Daemon.Triggers
         private void OnGesturerRecognized(int contactCount, Gestures gesture)
         {
             var actions = ApplicationManager.Instance.GetRecognizedDefinedAction(a => a.ContinuousGesture != null &&
-            a.ContinuousGesture.ContactCount == contactCount &&
-            a.ContinuousGesture.Gesture == gesture &&
-            IsSafeSingleFingerTouchPadAction(a, contactCount));
-            if (actions.Count > 0)
+                a.ContinuousGesture.ContactCount == contactCount &&
+                a.ContinuousGesture.Gesture == gesture &&
+                IsSafeSingleFingerTouchPadAction(a, contactCount));
+            var executableActions = PluginManager.Instance.GetExecutableActions(
+                actions,
+                PointCapture.Instance.Mode,
+                PointCapture.Instance.SourceDevice,
+                PointCapture.Instance.InputContactIdentifiers,
+                PointCapture.Instance.InputPoints.Select(points => new List<Point>(points)).ToList());
+            if (executableActions.Count > 0)
             {
                 _continuousGestureFired = true;
-                OnTriggerFired(new TriggerFiredEventArgs(actions, _startPoint));
+                OnTriggerFired(new TriggerFiredEventArgs(executableActions, _startPoint, PointCapture.Instance.SourceDevice));
             }
         }
 
