@@ -53,6 +53,7 @@ namespace GestureSign.Daemon.Filtration
                 if (value)
                 {
                     if (_isRegistered || !AppConfig.UiAccess) return;
+                    ResetPointerState();
 
                     if (!_isInitialized)
                     {
@@ -71,6 +72,7 @@ namespace GestureSign.Daemon.Filtration
                     else
                     {
                         LogLastWin32Error("RegisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}, threshold={_blockTouchInputThreshold}");
+                        ResetPointerState();
                     }
                 }
                 else
@@ -78,10 +80,15 @@ namespace GestureSign.Daemon.Filtration
                     if (_isRegistered && NativeMethods.UnregisterPointerInputTarget(Handle, POINTER_INPUT_TYPE.TOUCH))
                     {
                         _isRegistered = false;
+                        ResetPointerState();
                     }
                     else if (_isRegistered)
                     {
                         LogLastWin32Error("UnregisterPointerInputTarget", $"handle=0x{Handle.ToInt64():X}, pointerType={POINTER_INPUT_TYPE.TOUCH}");
+                    }
+                    else
+                    {
+                        ResetPointerState();
                     }
                 }
             }
@@ -118,6 +125,7 @@ namespace GestureSign.Daemon.Filtration
             _pointerIdList.Clear();
             ResetIdPool();
             _tempDisable = false;
+            _lastFrameID = 0;
         }
 
         private void ReleasePointerId(int pointerId)
