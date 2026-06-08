@@ -489,9 +489,6 @@ namespace GestureSign.Daemon.Input
                     {
                         if (_pointerInputTargetWindow != null && _pointerInputTargetWindow.BlockTouchInputThreshold > 1)
                             _pointerInputTargetWindow.TemporarilyDisable();
-
-                        _pointEventTranslator.ResetTouchDeviceSource();
-                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     else if (SourceDevice == Devices.Mouse)
                     {
@@ -500,10 +497,13 @@ namespace GestureSign.Daemon.Input
                     else if (SourceDevice == Devices.TouchPad)
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
+                    }
+                    CancelCaptureByInitialTimeout();
+                    if ((SourceDevice & Devices.TouchDevice) != 0)
+                    {
                         _pointEventTranslator.ResetTouchDeviceSource();
                         _inputProvider.ReleaseCurrentTouchSource();
                     }
-                    CancelCaptureByInitialTimeout();
                 }
                 catch
                 {
@@ -527,9 +527,6 @@ namespace GestureSign.Daemon.Input
                     {
                         if (_pointerInputTargetWindow != null && _pointerInputTargetWindow.BlockTouchInputThreshold > 1)
                             _pointerInputTargetWindow.TemporarilyDisable();
-
-                        _pointEventTranslator.ResetTouchDeviceSource();
-                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     else if (SourceDevice == Devices.Mouse)
                     {
@@ -538,10 +535,13 @@ namespace GestureSign.Daemon.Input
                     else if (SourceDevice == Devices.TouchPad)
                     {
                         _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
+                    }
+                    CancelCaptureByGestureTimeout();
+                    if ((SourceDevice & Devices.TouchDevice) != 0)
+                    {
                         _pointEventTranslator.ResetTouchDeviceSource();
                         _inputProvider.ReleaseCurrentTouchSource();
                     }
-                    CancelCaptureByGestureTimeout();
                 }
                 catch
                 {
