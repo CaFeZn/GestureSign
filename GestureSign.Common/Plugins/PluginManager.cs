@@ -238,6 +238,13 @@ namespace GestureSign.Common.Plugins
                 }
             }
 
+            if (result.Any(action => !string.IsNullOrWhiteSpace(action.Condition)))
+            {
+                result = result
+                    .Where(action => !string.IsNullOrWhiteSpace(action.Condition))
+                    .ToList();
+            }
+
             return result;
         }
 
