@@ -86,6 +86,8 @@ Email:ccfyzh@gmail.com
       <IgnoredAppExists>The Match String you provided already exists, please provide a different Match String</IgnoredAppExists>
       <StringConflictTitle>Match String Conflict</StringConflictTitle>
       <StringConflict>The Match String "{0}" already exists in {1}, please provide a different Match String.</StringConflict>
+      <InvalidRegexTitle>Invalid Pattern</InvalidRegexTitle>
+      <InvalidRegex>The match pattern is not a valid regular expression. {0}</InvalidRegex>
       <NoApplicationNameTitle>No Application Name Specified</NoApplicationNameTitle>
       <NoApplicationName>Please provide a name for the application</NoApplicationName>
       <AppExistsTitle>Name Already Exists</AppExistsTitle>

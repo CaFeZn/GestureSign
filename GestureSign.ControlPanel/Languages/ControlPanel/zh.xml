@@ -90,6 +90,8 @@ QQ交流群：576981420
       <IgnoredAppExists>该忽略程序已存在，请重新输入匹配字段</IgnoredAppExists>
       <StringConflictTitle>匹配字段冲突</StringConflictTitle>
       <StringConflict>匹配字段 "{0}" 已经存在于程序{1}中，请输入不同的匹配字段。</StringConflict>
+      <InvalidRegexTitle>无效的正则表达式</InvalidRegexTitle>
+      <InvalidRegex>匹配模式不是有效的正则表达式。{0}</InvalidRegex>
       <NoApplicationNameTitle>无程序名</NoApplicationNameTitle>
       <NoApplicationName>请提供程序名</NoApplicationName>
       <AppExistsTitle>该程序名已经存在</AppExistsTitle>

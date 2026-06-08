@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 using Point = System.Drawing.Point;
@@ -327,6 +328,20 @@ namespace GestureSign.ControlPanel.Dialogs
                 return ShowErrorMessage(
                         LocalizationProvider.Instance.GetTextValue("ApplicationDialog.Messages.EmptyStringTitle"),
                         LocalizationProvider.Instance.GetTextValue("ApplicationDialog.Messages.EmptyString"));
+            }
+
+            if (RegexCheckBox.IsChecked.GetValueOrDefault())
+            {
+                try
+                {
+                    _ = new Regex(matchString, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                }
+                catch (ArgumentException ex)
+                {
+                    return ShowErrorMessage(
+                        LocalizationProvider.Instance.GetTextValue("ApplicationDialog.Messages.InvalidRegexTitle"),
+                        string.Format(LocalizationProvider.Instance.GetTextValue("ApplicationDialog.Messages.InvalidRegex"), ex.Message));
+                }
             }
 
             string name = ApplicationNameTextBox.Text.Trim();
