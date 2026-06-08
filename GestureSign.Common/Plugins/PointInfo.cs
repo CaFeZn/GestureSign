@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
+using GestureSign.Common.Applications;
 using ManagedWinapi.Windows;
 
 namespace GestureSign.Common.Plugins
@@ -39,19 +40,13 @@ namespace GestureSign.Common.Plugins
             }
         }
 
-        public IntPtr WindowHandle => _targetWindow?.HWnd ?? IntPtr.Zero;
+        public IntPtr WindowHandle => ResolveTargetWindow()?.HWnd ?? IntPtr.Zero;
 
         public SystemWindow Window
         {
             get
             {
-                // change target window if foreground window changed
-                var foregroundWindow = SystemWindow.ForegroundWindow;
-                if (_targetWindow == null || foregroundWindow == null || _targetWindow.HWnd != foregroundWindow.HWnd)
-                {
-                    _targetWindow = GestureSign.Common.Applications.ApplicationManager.Instance.GetWindowFromPoint(_pointLocation[0]);
-                }
-                return _targetWindow;
+                return ResolveTargetWindow();
             }
         }
 
@@ -61,9 +56,32 @@ namespace GestureSign.Common.Plugins
 
         #region Public Methods
 
-        public void Invoke(Action action)
+        public void Invoke(System.Action action)
         {
             _syncContext.Send((o) => action.Invoke(), null);
+        }
+
+        private SystemWindow ResolveTargetWindow()
+        {
+            var foregroundWindow = SystemWindow.ForegroundWindow;
+            if (foregroundWindow != null &&
+                foregroundWindow.HWnd != IntPtr.Zero &&
+                !ApplicationManager.IsShellUiWindow(foregroundWindow))
+            {
+                if (_targetWindow == null || _targetWindow.HWnd != foregroundWindow.HWnd)
+                    _targetWindow = foregroundWindow;
+
+                return _targetWindow;
+            }
+
+            if ((_targetWindow == null || _targetWindow.HWnd == IntPtr.Zero) &&
+                _pointLocation != null &&
+                _pointLocation.Count != 0)
+            {
+                _targetWindow = ApplicationManager.Instance.GetWindowFromPoint(_pointLocation[0]);
+            }
+
+            return _targetWindow;
         }
 
         #endregion
