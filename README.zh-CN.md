@@ -186,6 +186,7 @@ Windows 11 触摸/手势冲突：
 - 如果 GestureSign 干扰某个应用，把 `Add Current Application to Ignored List` 绑定到一个手势，在该应用激活时运行它。
 - 如果希望默认不干扰任何未配置应用，请启用 `Options` > `白名单模式`。该模式下 GestureSign 只在目标前台/捕获窗口匹配已配置应用时捕获手势和热键；未匹配应用会被忽略，已匹配应用仍可按规则回退到全局动作。
 - 如果触摸板手势延迟或丢失，提高 `Options` 中的 drawing-start timeout。
+- 如果触摸屏输入结束后，触摸板手势还会暂时被上一种输入源卡住，请使用包含 raw-input source-staleness 修复的版本。现在触摸屏/触摸板输入源的超时刷新会基于“完整输出帧完成”而不是每个半截 raw 包，因此有噪声或不完整的触摸屏 raw 包流不容易在触摸停止后继续把触摸板挡住。
 - 鼠标滚轮旋转可以作为独立鼠标触发器使用：在动作的 mouse hotkey 字段选择 `向前滚动` 或 `向后滚动`。独立滚轮触发必须设置触发条件，例如角落或边缘条件，避免普通滚动被全局截获。
 - 单指触摸板手势默认会被忽略，只有动作设置了触发条件并且触摸开始时已经满足条件才会捕获。右侧边缘中段可以使用 `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`；再配合 `Continuous Gesture` 的单指 `Up`/`Down` 和鼠标垂直滚动命令，就能在手指移动过程中实现类似滚动条的快速翻页。如果某个应用自己也配置了一指触摸板动作，不相关的应用专属条件也不会再阻止原本应当允许全局回退的受保护一指动作启动。
 - 测试大规模配置变更前，先使用 `Options` > `Backup User Data`。
@@ -251,7 +252,7 @@ Windows 11 触摸/手势冲突：
 | [#79](https://github.com/TransposonY/GestureSign/issues/79), [#81](https://github.com/TransposonY/GestureSign/issues/81) | Windows Store/UWP 启动和匹配路径已存在，包括 `Launch Windows Store App` 以及把 `ApplicationFrameWindow` 展开到 `Windows.UI.Core.CoreWindow`；但 Microsoft 应用失败仍需要按应用和 package 状态验证。 |
 | [#85](https://github.com/TransposonY/GestureSign/issues/85) | 触摸板延迟、重复和轨迹锯齿报告按驱动/设备相关问题处理。触摸板/raw-input 处理已有改进，但仍需要受影响的 Synaptics 或厂商驱动硬件才能关闭。 |
 | [#103](https://github.com/TransposonY/GestureSign/issues/103) | 显示器变化处理现在会释放活跃 raw input、清理触摸屏幕缓存、在 UI 消息上下文重新注册 raw input、重置手势轨迹表面，并在系统临时拿不到显示器边界时跳过输入帧；外接显示器热拔仍需要在对应笔记本/外接显示拓扑上验证。 |
-| [#128](https://github.com/TransposonY/GestureSign/issues/128), [#120](https://github.com/TransposonY/GestureSign/issues/120) | Win11 平板/触摸屏解析对缺少标准 contact-count 或坐标范围数据的 HID 报告更宽容，会按 Win32 要求初始化 raw-device info buffer，支持无序 tip usage，并改进 raw-input 诊断；但仍需要具体设备验证。 |
+| [#128](https://github.com/TransposonY/GestureSign/issues/128), [#120](https://github.com/TransposonY/GestureSign/issues/120) | Win11 平板/触摸屏解析对缺少标准 contact-count 或坐标范围数据的 HID 报告更宽容，会按 Win32 要求初始化 raw-device info buffer，支持无序 tip usage，改进 raw-input 诊断，并把输入源 stale-timeout 的刷新改为基于完整输出帧，降低卡住的触摸屏 raw 包流持续阻塞后续触摸板输入的概率；但仍需要具体设备验证。 |
 | [#123](https://github.com/TransposonY/GestureSign/issues/123) | 快速点击时，如果新的活跃触点帧替换了过期触点集合，现在不会再直接丢掉该帧；同时会拆分“上一轮释放 + 下一轮按下”合并在同一 raw 帧里的情况，让上一次 tap 先结束、下一次 tap 再开始；但高频触摸屏场景仍需要真实硬件验证。 |
 | [#127](https://github.com/TransposonY/GestureSign/issues/127), [#119](https://github.com/TransposonY/GestureSign/issues/119), [#112](https://github.com/TransposonY/GestureSign/issues/112), [#94](https://github.com/TransposonY/GestureSign/issues/94), [#55](https://github.com/TransposonY/GestureSign/issues/55) | 触控笔设置和文档更清晰，但 Wacom/无源笔支持仍取决于驱动是否暴露 HID pen/touchpad input。 |
 | [#135](https://github.com/TransposonY/GestureSign/issues/135), [#116](https://github.com/TransposonY/GestureSign/issues/116), [#114](https://github.com/TransposonY/GestureSign/issues/114), [#59](https://github.com/TransposonY/GestureSign/issues/59) | 精确触摸板处理已有改进，包括更安全的一指捕获开闸：会先检查应用专属的带条件触摸板动作，再在允许时回退到全局动作；但第三方/厂商驱动支持仍必须按设备验证。 |

@@ -378,7 +378,6 @@ namespace GestureSign.Daemon.Input
 
             if (_sourceDevice == sourceDevice)
             {
-                _lastSourceDeviceInputTick = Environment.TickCount;
                 return true;
             }
 
@@ -680,6 +679,7 @@ namespace GestureSign.Daemon.Input
                 {
                     PointsIntercepted(this, new RawPointsDataMessageEventArgs(_outputTouchs, _sourceDevice));
                     _lastSourceDeviceOutput = _outputTouchs;
+                    _lastSourceDeviceInputTick = Environment.TickCount;
                     if (_outputTouchs.TrueForAll(rd => rd.State == DeviceStates.None))
                     {
                         ResetSourceDevice();
