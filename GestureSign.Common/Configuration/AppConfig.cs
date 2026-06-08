@@ -145,10 +145,15 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (double)GetValue("Opacity", 0.35);
+                double value = (double)GetValue("Opacity", 0.35);
+                if (value < 0d) return 0d;
+                if (value > 1d) return 1d;
+                return value;
             }
             set
             {
+                if (value < 0d) value = 0d;
+                if (value > 1d) value = 1d;
                 SetValue("Opacity", value);
             }
         }
