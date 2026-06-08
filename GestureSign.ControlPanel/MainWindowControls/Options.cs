@@ -87,7 +87,7 @@ namespace GestureSign.ControlPanel.MainWindowControls
                 }
 
                 var penState = AppConfig.PenGestureButton;
-                if ((penState & (DeviceStates.InRange | DeviceStates.Tip)) != 0 && (penState & (DeviceStates.RightClickButton | DeviceStates.Invert)) != 0)
+                if ((penState & (DeviceStates.InRange | DeviceStates.Tip)) != 0)
                 {
                     PenGestureSwitch.IsChecked = true;
                     TipCheckBox.IsChecked = penState.HasFlag(DeviceStates.Tip);
@@ -546,17 +546,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
 
         private void RightClickButtonCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            if (!RightClickButtonCheckBox.IsChecked.GetValueOrDefault() && !EraserCheckBox.IsChecked.GetValueOrDefault())
-                RightClickButtonCheckBox.IsChecked = true;
-
             SavePenGestureButton();
         }
 
         private void EraserCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            if (!EraserCheckBox.IsChecked.GetValueOrDefault() && !RightClickButtonCheckBox.IsChecked.GetValueOrDefault())
-                EraserCheckBox.IsChecked = true;
-
             SavePenGestureButton();
         }
 

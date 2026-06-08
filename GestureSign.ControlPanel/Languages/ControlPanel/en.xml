@@ -261,10 +261,10 @@ Email:ccfyzh@gmail.com
     <TouchPad>Precision Touchpad Gesture</TouchPad>
     <PenGesture>Pen Gesture</PenGesture>
     <DeviceNotFound>(Device Not Found)</DeviceNotFound>
-    <PenGestureButtonDescription>Start drawing gesture by:</PenGestureButtonDescription>
+    <PenGestureButtonDescription>Optional activation gate:</PenGestureButtonDescription>
     <RightClickButton>Hold the pen barrel/right-click button</RightClickButton>
     <Eraser>Flip the pen over</Eraser>
-    <And>And</And>
+    <And>Draw using:</And>
     <Tip>Draw on the screen</Tip>
     <Hover>Hover over the screen</Hover>
     <InitialTimeoutTitle>Drawing Start Timeout</InitialTimeoutTitle>

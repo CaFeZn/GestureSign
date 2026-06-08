@@ -110,8 +110,17 @@ namespace GestureSign.Daemon.Input
             }
             else if (e.SourceDevice == Devices.Pen)
             {
-                bool release = (e.RawData[0].State & (DeviceStates.Invert | DeviceStates.RightClickButton)) == 0 || (e.RawData[0].State & DeviceStates.InRange) == 0;
+                var penSetting = AppConfig.PenGestureButton;
+                bool drawByTip = (penSetting & DeviceStates.Tip) != 0;
+                bool drawByHover = (penSetting & DeviceStates.InRange) != 0;
+                bool hasActivationButton = (penSetting & (DeviceStates.Invert | DeviceStates.RightClickButton)) != 0;
+                bool activationPressed = (e.RawData[0].State & (DeviceStates.Invert | DeviceStates.RightClickButton)) != 0;
+                bool inRange = (e.RawData[0].State & DeviceStates.InRange) != 0;
                 bool tip = (e.RawData[0].State & (DeviceStates.Eraser | DeviceStates.Tip)) != 0;
+                bool active = hasActivationButton
+                    ? activationPressed && inRange
+                    : (drawByHover && inRange) || (drawByTip && tip);
+                bool release = !active;
 
                 if (release)
                 {
@@ -119,10 +128,6 @@ namespace GestureSign.Daemon.Input
                     _lastPointsCount = 0;
                     return;
                 }
-
-                var penSetting = AppConfig.PenGestureButton;
-                bool drawByTip = (penSetting & DeviceStates.Tip) != 0;
-                bool drawByHover = (penSetting & DeviceStates.InRange) != 0;
 
                 if (drawByHover && drawByTip)
                 {

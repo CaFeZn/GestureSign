@@ -35,6 +35,7 @@ namespace GestureSign.Daemon.Input
         private int? _penLastActivity;
         private bool _ignoreTouchInputWhenUsingPen;
         private DeviceStates _penGestureButton;
+        private DeviceStates _penGestureSetting;
         private bool _disposed;
         private int _displaySettingsRefreshQueued;
 
@@ -126,13 +127,14 @@ namespace GestureSign.Daemon.Input
             ResetSourceDevice(true);
             _ignoreTouchInputWhenUsingPen = AppConfig.IgnoreTouchInputWhenUsingPen;
             var penSetting = AppConfig.PenGestureButton;
+            _penGestureSetting = penSetting;
             _penGestureButton = penSetting & (DeviceStates.Invert | DeviceStates.RightClickButton);
 
             _validDevices.Clear();
             _touchScreenDeviceScreens.Clear();
 
             UpdateRegisterState(AppConfig.RegisterTouchScreen, NativeMethods.TouchScreenUsage);
-            UpdateRegisterState(_ignoreTouchInputWhenUsingPen || _penGestureButton != 0 && (penSetting & (DeviceStates.InRange | DeviceStates.Tip)) != 0, NativeMethods.PenUsage);
+            UpdateRegisterState(_ignoreTouchInputWhenUsingPen || (penSetting & (DeviceStates.InRange | DeviceStates.Tip)) != 0, NativeMethods.PenUsage);
             UpdateRegisterState(AppConfig.RegisterTouchPad, NativeMethods.TouchPadUsage);
         }
 
@@ -613,12 +615,23 @@ namespace GestureSign.Daemon.Input
                             else
                                 _penLastActivity = null;
 
-                            if (_penGestureButton == 0)
+                            bool drawByTip = (_penGestureSetting & DeviceStates.Tip) != 0;
+                            bool drawByHover = (_penGestureSetting & DeviceStates.InRange) != 0;
+                            bool tipActive = (state & (DeviceStates.Eraser | DeviceStates.Tip)) != 0;
+                            bool hoverActive = (state & DeviceStates.InRange) != 0;
+                            bool activationPressed = (state & _penGestureButton) != 0;
+                            bool hasActivationGate = _penGestureButton != 0;
+                            bool hasDrawingMode = drawByTip || drawByHover;
+                            bool isDrawingState = hasActivationGate
+                                ? activationPressed && ((drawByTip && tipActive) || (drawByHover && hoverActive))
+                                : (drawByTip && tipActive) || (drawByHover && hoverActive);
+
+                            if (!hasDrawingMode)
                                 return;
 
                             if (_sourceDevice == Devices.None || _sourceDevice == Devices.TouchScreen)
                             {
-                                if ((state & _penGestureButton) != 0)
+                                if (isDrawingState)
                                 {
                                     if (!TrySetCurrentScreenFromCursor(true))
                                         return;
@@ -630,7 +643,7 @@ namespace GestureSign.Daemon.Input
                             }
                             else if (_sourceDevice == Devices.Pen)
                             {
-                                if ((state & _penGestureButton) == 0 || (state & DeviceStates.InRange) == 0)
+                                if (!isDrawingState)
                                 {
                                     state = DeviceStates.None;
                                 }

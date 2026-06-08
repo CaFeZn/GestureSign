@@ -403,10 +403,9 @@ namespace GestureSign.Common.Configuration
             if (value == DeviceStates.None)
                 return DeviceStates.None;
 
-            bool hasActivationButton = (value & PenActivationButtons) != 0;
             bool hasDrawingMode = (value & PenDrawingModes) != 0;
 
-            return hasActivationButton && hasDrawingMode ? value : DeviceStates.None;
+            return hasDrawingMode ? value : DeviceStates.None;
         }
 
         public static bool RunAsAdmin

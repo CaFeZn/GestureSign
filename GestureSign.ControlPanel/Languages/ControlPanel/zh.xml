@@ -265,10 +265,10 @@ QQ交流群：576981420
     <TouchPad>启用精确式触摸板手势</TouchPad>
     <PenGesture>触控笔手势</PenGesture>
     <DeviceNotFound>（未找到可用设备）</DeviceNotFound>
-    <PenGestureButtonDescription>请选择画出手势的方式:</PenGestureButtonDescription>
+    <PenGestureButtonDescription>可选激活条件:</PenGestureButtonDescription>
     <RightClickButton>按住触控笔侧键/右键按钮</RightClickButton>
     <Eraser>将笔翻转</Eraser>
-    <And>同时</And>
+    <And>手势绘制方式:</And>
     <Tip>在屏幕上画手势</Tip>
     <Hover>保持悬空画出手势</Hover>
     <InitialTimeoutTitle>手势起始超时</InitialTimeoutTitle>
