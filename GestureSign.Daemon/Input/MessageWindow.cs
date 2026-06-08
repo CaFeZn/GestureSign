@@ -272,11 +272,12 @@ namespace GestureSign.Daemon.Input
             if (string.IsNullOrEmpty(deviceName))
                 return true;
 
-            // Some third-party precision touchpad drivers expose a standard HID touchpad
-            // through a ROOT/VIRTUAL_DIGITIZER device path. Keep filtering those names for
-            // touchscreen/pen paths, but allow standard touchpad usage so these drivers can
-            // still participate in GestureSign's raw-input touchpad pipeline.
-            if (usage == NativeMethods.TouchPadUsage)
+            // Some Win11 tablet and third-party drivers expose standard HID touchscreen or
+            // touchpad collections through a ROOT/VIRTUAL_DIGITIZER device path. Allow those
+            // standard usages to continue into the normal raw-input pipeline instead of
+            // rejecting them purely by path. Keep pen filtering as-is because pen packets
+            // also participate in touch-suppression logic and need a narrower trust boundary.
+            if (usage == NativeMethods.TouchPadUsage || usage == NativeMethods.TouchScreenUsage)
                 return false;
 
             return deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 ||
