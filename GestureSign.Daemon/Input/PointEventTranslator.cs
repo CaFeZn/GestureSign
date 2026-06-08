@@ -194,6 +194,15 @@ namespace GestureSign.Daemon.Input
 
             if (activeRawData.Count != 0 && hadActiveTouchContacts && releasedTrackedContacts && _activeTouchContacts.Count == 0)
             {
+                if (e.SourceDevice == Devices.TouchPad &&
+                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData))
+                {
+                    if (IsCurrentSource(e))
+                        SetActiveTouchContacts(remappedActiveRawData.Select(rd => rd.ContactIdentifier), remappedActiveRawData.Count);
+                    OnPointMove(new InputPointsEventArgs(remappedActiveRawData, e.SourceDevice, e.DeviceHandle));
+                    return;
+                }
+
                 // Rapid taps can report the previous release and the next press in one raw frame.
                 OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
@@ -226,6 +235,15 @@ namespace GestureSign.Daemon.Input
 
             if (trackedActiveRawData.Count == 0)
             {
+                if (e.SourceDevice == Devices.TouchPad &&
+                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData))
+                {
+                    if (IsCurrentSource(e))
+                        SetActiveTouchContacts(remappedActiveRawData.Select(rd => rd.ContactIdentifier), remappedActiveRawData.Count);
+                    OnPointMove(new InputPointsEventArgs(remappedActiveRawData, e.SourceDevice, e.DeviceHandle));
+                    return;
+                }
+
                 OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
@@ -249,6 +267,66 @@ namespace GestureSign.Daemon.Input
             _activeTouchContacts.IntersectWith(activeContactIdentifiers);
             _lastPointsCount = trackedActiveRawData.Count;
             OnPointMove(new InputPointsEventArgs(trackedActiveRawData, e.SourceDevice, e.DeviceHandle));
+        }
+
+        private static bool TryContinueTouchPadGestureAfterContactIdRollover(List<RawData> activeRawData, out List<RawData> remappedActiveRawData)
+        {
+            remappedActiveRawData = null;
+            if (activeRawData == null ||
+                activeRawData.Count <= 1 ||
+                PointCapture.Instance.State != CaptureState.Capturing)
+            {
+                return false;
+            }
+
+            var existingPoints = PointCapture.Instance.InputPoints;
+            var existingIdentifiers = PointCapture.Instance.InputContactIdentifiers;
+            if (existingPoints == null ||
+                existingIdentifiers == null ||
+                existingPoints.Length != activeRawData.Count ||
+                existingIdentifiers.Count != activeRawData.Count ||
+                !existingPoints.Any(points => points != null && points.Count > 1))
+            {
+                return false;
+            }
+
+            int maxDelta = Math.Max(160, AppConfig.MinimumPointDistance * 40);
+            long maxDistanceSquared = (long)maxDelta * maxDelta;
+            var unmatchedContacts = new List<RawData>(activeRawData);
+            var remappedContacts = new List<RawData>(existingIdentifiers.Count);
+
+            for (int i = 0; i < existingIdentifiers.Count; i++)
+            {
+                var stroke = existingPoints[i];
+                if (stroke == null || stroke.Count == 0)
+                    return false;
+
+                var previousPoint = stroke.Last();
+                int bestIndex = -1;
+                long bestDistanceSquared = long.MaxValue;
+
+                for (int j = 0; j < unmatchedContacts.Count; j++)
+                {
+                    long deltaX = unmatchedContacts[j].RawPoints.X - previousPoint.X;
+                    long deltaY = unmatchedContacts[j].RawPoints.Y - previousPoint.Y;
+                    long distanceSquared = deltaX * deltaX + deltaY * deltaY;
+                    if (distanceSquared < bestDistanceSquared)
+                    {
+                        bestDistanceSquared = distanceSquared;
+                        bestIndex = j;
+                    }
+                }
+
+                if (bestIndex < 0 || bestDistanceSquared > maxDistanceSquared)
+                    return false;
+
+                var matchedContact = unmatchedContacts[bestIndex];
+                remappedContacts.Add(new RawData(matchedContact.State, existingIdentifiers[i], matchedContact.RawPoints));
+                unmatchedContacts.RemoveAt(bestIndex);
+            }
+
+            remappedActiveRawData = remappedContacts;
+            return true;
         }
 
         private static bool IsActiveTouchContact(RawData rawData)
