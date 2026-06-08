@@ -11,6 +11,7 @@ namespace GestureSign.Daemon.Input
     {
         private int _lastPointsCount;
         private readonly HashSet<int> _activeTouchContacts = new HashSet<int>();
+        private readonly Dictionary<int, int> _touchContactIdMap = new Dictionary<int, int>();
         private HashSet<MouseActions> _pressedMouseButton;
         private IntPtr _sourceDeviceHandle;
 
@@ -190,15 +191,22 @@ namespace GestureSign.Daemon.Input
             bool releasedTrackedContacts = releasedContactIdentifiers.Any(id => _activeTouchContacts.Contains(id));
 
             if (_activeTouchContacts.Count != 0 && releasedContactIdentifiers.Count != 0)
+            {
                 _activeTouchContacts.ExceptWith(releasedContactIdentifiers);
+                foreach (var releasedContactIdentifier in releasedContactIdentifiers)
+                    _touchContactIdMap.Remove(releasedContactIdentifier);
+            }
 
             if (activeRawData.Count != 0 && hadActiveTouchContacts && releasedTrackedContacts && _activeTouchContacts.Count == 0)
             {
                 if (e.SourceDevice == Devices.TouchPad &&
-                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData))
+                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData, out var rawToStableContactMap))
                 {
                     if (IsCurrentSource(e))
-                        SetActiveTouchContacts(remappedActiveRawData.Select(rd => rd.ContactIdentifier), remappedActiveRawData.Count);
+                    {
+                        SetActiveTouchContacts(activeContactIdentifiers, remappedActiveRawData.Count);
+                        SetTouchContactIdMap(rawToStableContactMap);
+                    }
                     OnPointMove(new InputPointsEventArgs(remappedActiveRawData, e.SourceDevice, e.DeviceHandle));
                     return;
                 }
@@ -209,7 +217,10 @@ namespace GestureSign.Daemon.Input
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
                 if (IsCurrentSource(e))
+                {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                    SetTouchContactIdMapIdentity(activeContactIdentifiers);
+                }
                 return;
             }
 
@@ -225,7 +236,10 @@ namespace GestureSign.Daemon.Input
             {
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
                 if (IsCurrentSource(e))
+                {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                    SetTouchContactIdMapIdentity(activeContactIdentifiers);
+                }
                 return;
             }
 
@@ -236,10 +250,13 @@ namespace GestureSign.Daemon.Input
             if (trackedActiveRawData.Count == 0)
             {
                 if (e.SourceDevice == Devices.TouchPad &&
-                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData))
+                    TryContinueTouchPadGestureAfterContactIdRollover(activeRawData, out var remappedActiveRawData, out var rawToStableContactMap))
                 {
                     if (IsCurrentSource(e))
-                        SetActiveTouchContacts(remappedActiveRawData.Select(rd => rd.ContactIdentifier), remappedActiveRawData.Count);
+                    {
+                        SetActiveTouchContacts(activeContactIdentifiers, remappedActiveRawData.Count);
+                        SetTouchContactIdMap(rawToStableContactMap);
+                    }
                     OnPointMove(new InputPointsEventArgs(remappedActiveRawData, e.SourceDevice, e.DeviceHandle));
                     return;
                 }
@@ -249,7 +266,10 @@ namespace GestureSign.Daemon.Input
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
                 if (IsCurrentSource(e))
+                {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                    SetTouchContactIdMapIdentity(activeContactIdentifiers);
+                }
                 return;
             }
 
@@ -260,18 +280,22 @@ namespace GestureSign.Daemon.Input
             {
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
                 if (IsCurrentSource(e))
+                {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
+                    SetTouchContactIdMapIdentity(activeContactIdentifiers);
+                }
                 return;
             }
 
             _activeTouchContacts.IntersectWith(activeContactIdentifiers);
             _lastPointsCount = trackedActiveRawData.Count;
-            OnPointMove(new InputPointsEventArgs(trackedActiveRawData, e.SourceDevice, e.DeviceHandle));
+            OnPointMove(new InputPointsEventArgs(MapRawDataContactIdentifiers(trackedActiveRawData), e.SourceDevice, e.DeviceHandle));
         }
 
-        private static bool TryContinueTouchPadGestureAfterContactIdRollover(List<RawData> activeRawData, out List<RawData> remappedActiveRawData)
+        private static bool TryContinueTouchPadGestureAfterContactIdRollover(List<RawData> activeRawData, out List<RawData> remappedActiveRawData, out Dictionary<int, int> rawToStableContactMap)
         {
             remappedActiveRawData = null;
+            rawToStableContactMap = null;
             if (activeRawData == null ||
                 activeRawData.Count <= 1 ||
                 PointCapture.Instance.State != CaptureState.Capturing)
@@ -294,6 +318,7 @@ namespace GestureSign.Daemon.Input
             long maxDistanceSquared = (long)maxDelta * maxDelta;
             var unmatchedContacts = new List<RawData>(activeRawData);
             var remappedContacts = new List<RawData>(existingIdentifiers.Count);
+            var rawToStableMap = new Dictionary<int, int>(existingIdentifiers.Count);
 
             for (int i = 0; i < existingIdentifiers.Count; i++)
             {
@@ -322,11 +347,25 @@ namespace GestureSign.Daemon.Input
 
                 var matchedContact = unmatchedContacts[bestIndex];
                 remappedContacts.Add(new RawData(matchedContact.State, existingIdentifiers[i], matchedContact.RawPoints));
+                rawToStableMap[matchedContact.ContactIdentifier] = existingIdentifiers[i];
                 unmatchedContacts.RemoveAt(bestIndex);
             }
 
             remappedActiveRawData = remappedContacts;
+            rawToStableContactMap = rawToStableMap;
             return true;
+        }
+
+        private List<RawData> MapRawDataContactIdentifiers(List<RawData> rawData)
+        {
+            if (rawData == null || rawData.Count == 0 || _touchContactIdMap.Count == 0)
+                return rawData;
+
+            return rawData
+                .Select(rd => _touchContactIdMap.TryGetValue(rd.ContactIdentifier, out var mappedContactIdentifier)
+                    ? new RawData(rd.State, mappedContactIdentifier, rd.RawPoints)
+                    : rd)
+                .ToList();
         }
 
         private static bool IsActiveTouchContact(RawData rawData)
@@ -341,9 +380,27 @@ namespace GestureSign.Daemon.Input
             _lastPointsCount = pointCount;
         }
 
+        private void SetTouchContactIdMapIdentity(IEnumerable<int> contactIdentifiers)
+        {
+            _touchContactIdMap.Clear();
+            foreach (var contactIdentifier in contactIdentifiers)
+                _touchContactIdMap[contactIdentifier] = contactIdentifier;
+        }
+
+        private void SetTouchContactIdMap(Dictionary<int, int> rawToStableContactMap)
+        {
+            _touchContactIdMap.Clear();
+            if (rawToStableContactMap == null)
+                return;
+
+            foreach (var pair in rawToStableContactMap)
+                _touchContactIdMap[pair.Key] = pair.Value;
+        }
+
         private void ClearActiveTouchContacts()
         {
             _activeTouchContacts.Clear();
+            _touchContactIdMap.Clear();
             _lastPointsCount = 0;
         }
 
