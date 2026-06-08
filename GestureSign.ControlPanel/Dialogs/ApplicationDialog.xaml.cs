@@ -373,7 +373,7 @@ namespace GestureSign.ControlPanel.Dialogs
                         if (_newApplication)
                         {
                             //Add new UserApplication
-                            var sameMatchApplications = ApplicationManager.Instance.FindMatchApplications<UserApp>(matchUsingRadio.MatchUsing, matchString);
+                            var sameMatchApplications = ApplicationManager.Instance.FindMatchApplications<UserApp>(matchUsingRadio.MatchUsing, matchString, null, RegexCheckBox.IsChecked.Value);
                             if (sameMatchApplications.Length != 0)
                             {
                                 string sameApp = sameMatchApplications.Aggregate<IApplication, string>(null, (current, app) => current + (app.Name + " "));
@@ -390,7 +390,7 @@ namespace GestureSign.ControlPanel.Dialogs
                         }
                         else
                         {
-                            var sameMatchApplications = ApplicationManager.Instance.FindMatchApplications<UserApp>(matchUsingRadio.MatchUsing, matchString, _currentApplication.Name);
+                            var sameMatchApplications = ApplicationManager.Instance.FindMatchApplications<UserApp>(matchUsingRadio.MatchUsing, matchString, _currentApplication.Name, RegexCheckBox.IsChecked.Value);
                             if (sameMatchApplications.Length != 0)
                             {
                                 string sameApp = sameMatchApplications.Aggregate<IApplication, string>(null, (current, app) => current + (app.Name + " "));
@@ -418,7 +418,7 @@ namespace GestureSign.ControlPanel.Dialogs
 
                         if (!_newApplication)
                         {
-                            var existingApp = ApplicationManager.Instance.FindMatchApplications<IgnoredApp>(matchUsingRadio.MatchUsing, matchString, _currentApplication.Name);
+                            var existingApp = ApplicationManager.Instance.FindMatchApplications<IgnoredApp>(matchUsingRadio.MatchUsing, matchString, _currentApplication.Name, RegexCheckBox.IsChecked.Value);
                             if (existingApp.Length != 0)
                             {
                                 return ShowErrorMessage(
@@ -427,7 +427,7 @@ namespace GestureSign.ControlPanel.Dialogs
                             }
                             ApplicationManager.Instance.RemoveApplication(_currentApplication);
                         }
-                        else if (ApplicationManager.Instance.GetIgnoredApplications().Any(app => app.MatchUsing == matchUsingRadio.MatchUsing && app.MatchString == matchString))
+                        else if (ApplicationManager.Instance.FindMatchApplications<IgnoredApp>(matchUsingRadio.MatchUsing, matchString, null, RegexCheckBox.IsChecked.Value).Length != 0)
                         {
                             return ShowErrorMessage(
                                 LocalizationProvider.Instance.GetTextValue("ApplicationDialog.Messages.IgnoredAppExistsTitle"),

@@ -112,6 +112,7 @@ Multiple gestures for the same behavior:
 - To disable one global gesture only in a specific app, create or copy an action with the same gesture under that app and turn all commands in that app-specific action off. The app-specific action blocks fallback to the global action, while other global gestures still work in that app.
 - If an application uses `Match Activated Window`, capture-start rules now follow that activated window from the beginning of capture as well, not only at final gesture recognition. This keeps whitelist checks, finger-count limits, block-touch thresholds, and guarded one-finger touchpad capture aligned with the app that will actually receive the gesture.
 - The same activated-window alignment now carries through command execution as well, so window-targeting plugins and `%GS_WindowHandle%` use the same non-shell foreground target instead of drifting back to a point-based window lookup mid-action.
+- For non-regex application rules, Match String comparisons now treat leading/trailing whitespace as insignificant in save/import conflict checks, matching the same trimmed comparison already used at runtime. Regex-based rules still require the exact pattern text and are validated when saved.
 
 Continuous gestures:
 

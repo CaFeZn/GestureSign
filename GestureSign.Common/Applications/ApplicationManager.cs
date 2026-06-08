@@ -403,11 +403,11 @@ namespace GestureSign.Common.Applications
             else return globalApp;
         }
 
-        public IApplication[] FindMatchApplications<TApplication>(MatchUsing matchUsing, string matchString, string excludedApplication = null) where TApplication : IApplication
+        public IApplication[] FindMatchApplications<TApplication>(MatchUsing matchUsing, string matchString, string excludedApplication = null, bool isRegEx = false) where TApplication : IApplication
         {
             return Applications.FindAll(
                     a => a is TApplication &&
-                        matchString.Equals(a.MatchString, StringComparison.CurrentCultureIgnoreCase) &&
+                        MatchDefinitionsEqual(matchString, isRegEx, a.MatchString, a.IsRegEx) &&
                         matchUsing == a.MatchUsing &&
                         excludedApplication != a.Name).ToArray();
         }
@@ -624,6 +624,19 @@ namespace GestureSign.Common.Applications
             return useRegEx
                 ? Regex.IsMatch(windowMatchString, compareMatchString, RegexOptions.Singleline | RegexOptions.IgnoreCase)
                 : string.Equals(windowMatchString.Trim(), compareMatchString.Trim(), StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        private static bool MatchDefinitionsEqual(string left, bool leftIsRegEx, string right, bool rightIsRegEx)
+        {
+            if (leftIsRegEx != rightIsRegEx)
+                return false;
+
+            if (left == null || right == null)
+                return left == right;
+
+            return leftIsRegEx
+                ? string.Equals(left, right, StringComparison.CurrentCultureIgnoreCase)
+                : string.Equals(left.Trim(), right.Trim(), StringComparison.CurrentCultureIgnoreCase);
         }
 
         private static bool ShouldCancelForWhitelistMode(CaptureMode mode, IEnumerable<IApplication> applications)

@@ -78,7 +78,7 @@ namespace GestureSign.ControlPanel.Dialogs
                 {
                     if (newApp is IgnoredApp)
                     {
-                        var matchApp = ApplicationManager.Instance.FindMatchApplications<IgnoredApp>(newApp.MatchUsing, newApp.MatchString);
+                        var matchApp = ApplicationManager.Instance.FindMatchApplications<IgnoredApp>(newApp.MatchUsing, newApp.MatchString, null, newApp.IsRegEx);
                         if (matchApp.Length == 0)
                         {
                             newApplications.Add(newApp);
@@ -86,7 +86,7 @@ namespace GestureSign.ControlPanel.Dialogs
                     }
                     else
                     {
-                        var existingApp = ApplicationManager.Instance.Applications.Find(app => !(app is IgnoredApp) && app.MatchUsing == newApp.MatchUsing && app.MatchString == newApp.MatchString);
+                        var existingApp = ApplicationManager.Instance.FindMatchApplications<UserApp>(newApp.MatchUsing, newApp.MatchString, null, newApp.IsRegEx).FirstOrDefault();
                         if (existingApp != null)
                         {
                             foreach (IAction newAction in newApp.Actions)
