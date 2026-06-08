@@ -297,8 +297,8 @@ namespace GestureSign.Common.Applications
 
         public IEnumerable<IApplication> GetApplicationFromPoint(Point testPoint)
         {
-            CaptureWindow = GetWindowFromPoint(testPoint);
-            _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            _recognizedApplication = GetApplicationFromCapturePoint(testPoint, out var captureWindow);
+            CaptureWindow = captureWindow;
             return _recognizedApplication;
         }
 

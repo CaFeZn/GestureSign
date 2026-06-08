@@ -132,6 +132,7 @@ Standalone wheel triggers:
 
 - `Wheel Forward` and `Wheel Backward` can be selected in an action's `Mouse HotKey` field.
 - Standalone wheel triggers must have a non-empty trigger condition and at least one enabled command. This keeps ordinary scrolling from being captured globally.
+- Standalone wheel triggers also respect `Match Activated Window`, so app-specific conditioned wheel actions follow the same activated-window matching path as gesture capture.
 - Use them for deliberate edge or corner workflows, for example only when the cursor or gesture condition is in a configured zone. Do not configure unconditioned global wheel actions.
 
 Default browser matching:
@@ -206,7 +207,7 @@ Implemented or covered:
 | [#117](https://github.com/TransposonY/GestureSign/issues/117) | Installer installation and update commands are documented for the current winget package. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | The setup `.exe` now exposes the destination-folder page, and silent installs can use Inno Setup's `/DIR=` override. |
 | [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | Virtual desktop switching actions are available and can be assigned to normal or continuous gestures. |
-| [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. `Match Activated Window` app rules are also applied consistently from capture start, keeping per-app limits and guarded touchpad capture aligned with the final matched app. |
+| [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. `Match Activated Window` app rules are also applied consistently from capture start and for standalone conditioned wheel triggers, keeping per-app limits and guarded touchpad capture aligned with the final matched app. |
 | [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | Shell/taskbar activation and modifier-key cleanup around switch-window and switch-desktop actions have been hardened. |
 | [#97](https://github.com/TransposonY/GestureSign/issues/97), [#31](https://github.com/TransposonY/GestureSign/issues/31) | Control Panel startup tolerates unavailable Windows Application Event Log access, and configuration writes are flushed, serialized, and stored under package local state for Desktop Bridge builds. |
 | [#104](https://github.com/TransposonY/GestureSign/issues/104) | `Add Current Application to Ignored List` is available and documented. |
