@@ -1,7 +1,8 @@
-﻿using GestureSign.Common.Input;
+using GestureSign.Common.Input;
 using GestureSign.Common.Log;
 using GestureSign.Daemon.Native;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -21,7 +22,8 @@ namespace GestureSign.Daemon.Input
         protected static bool _isAxisCorresponds;
         protected static bool _xAxisDirection;
         protected static bool _yAxisDirection;
-
+        private static readonly object EnumeratedDeviceLogLock = new object();
+        private static readonly HashSet<long> EnumeratedDeviceLogKeys = new HashSet<long>();
 
         public abstract Devices DeviceType { get; }
 
@@ -218,6 +220,7 @@ namespace GestureSign.Daemon.Input
                                 continue;
 
                             var info = (RID_DEVICE_INFO)Marshal.PtrToStructure(pInfo, typeof(RID_DEVICE_INFO));
+                            LogEnumeratedRawInputDevice(rid.hDevice, info);
                             if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
                                 continue;
 
@@ -265,6 +268,87 @@ namespace GestureSign.Daemon.Input
                 cbSize = (uint)Marshal.SizeOf(typeof(RID_DEVICE_INFO))
             };
             Marshal.StructureToPtr(deviceInfo, pInfo, false);
+        }
+
+        private static void LogEnumeratedRawInputDevice(IntPtr hDevice, RID_DEVICE_INFO info)
+        {
+            long deviceKey = hDevice.ToInt64();
+            lock (EnumeratedDeviceLogLock)
+            {
+                if (!EnumeratedDeviceLogKeys.Add(deviceKey))
+                    return;
+            }
+
+            TryGetRawInputDeviceName(hDevice, out string deviceName);
+            string typeName = GetRawInputTypeName(info.dwType);
+            if (info.dwType == NativeMethods.RIM_TYPEHID)
+            {
+                Logging.LogMessage(
+                    $"Enumerated raw input device: hDevice=0x{deviceKey:X}, type={typeName}, usagePage=0x{info.hid.usUsagePage:X2}, usage={GetUsageName(info.hid.usUsagePage, info.hid.usUsage)} (0x{info.hid.usUsage:X2}), deviceName={FormatDeviceName(deviceName)}");
+                return;
+            }
+
+            Logging.LogMessage(
+                $"Enumerated raw input device: hDevice=0x{deviceKey:X}, type={typeName}, deviceName={FormatDeviceName(deviceName)}");
+        }
+
+        private static bool TryGetRawInputDeviceName(IntPtr hDevice, out string deviceName)
+        {
+            deviceName = null;
+            uint nameSize = 0;
+            if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref nameSize, "query enumerated device name size"))
+                return false;
+
+            if (nameSize <= 0)
+                return false;
+
+            IntPtr pData = Marshal.AllocHGlobal((int)nameSize);
+            using (new SafeUnmanagedMemoryHandle(pData))
+            {
+                if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, pData, ref nameSize, "read enumerated device name"))
+                    return false;
+
+                deviceName = Marshal.PtrToStringAnsi(pData);
+                return true;
+            }
+        }
+
+        private static string GetRawInputTypeName(int rawInputType)
+        {
+            switch (rawInputType)
+            {
+                case 0:
+                    return "Mouse";
+                case 1:
+                    return "Keyboard";
+                case NativeMethods.RIM_TYPEHID:
+                    return "HID";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        private static string GetUsageName(ushort usagePage, ushort usage)
+        {
+            if (usagePage == NativeMethods.DigitizerUsagePage)
+            {
+                switch (usage)
+                {
+                    case NativeMethods.TouchPadUsage:
+                        return "TouchPad";
+                    case NativeMethods.TouchScreenUsage:
+                        return "TouchScreen";
+                    case NativeMethods.PenUsage:
+                        return "Pen";
+                }
+            }
+
+            return "Unknown";
+        }
+
+        private static string FormatDeviceName(string deviceName)
+        {
+            return string.IsNullOrWhiteSpace(deviceName) ? "<empty>" : deviceName;
         }
 
         public bool TryGetPhysicalMax(int collectionCount)
