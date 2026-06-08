@@ -85,6 +85,7 @@ Gesture creation notes:
 - A one-finger touchscreen tap can be recorded as a gesture sample. Mouse and touchpad training still require movement to avoid capturing ordinary clicks as gestures.
 - Double-clicking a gesture in the `Gestures` tab opens it for editing; use the edit window to redraw or rename the gesture.
 - Gesture trail color is configured in `Options` > `Gesture Trail`. Use `Pick Color` for a fixed trail color, or `Follow System Color` to use the current Windows DWM theme color.
+- `Options` > `Gesture Trail` width uses an effective range of `0..30 px`. Stored values outside that range are normalized back into the same bounds the control panel slider enforces.
 - `Options` > `Opacity` uses an effective range of `0..1`. Stored values outside that range are normalized back into the same bounds the control panel slider already enforces.
 
 Common command examples:

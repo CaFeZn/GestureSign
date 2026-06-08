@@ -121,10 +121,15 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue("VisualFeedbackWidth", 9);
+                int value = (int)GetValue("VisualFeedbackWidth", 9);
+                if (value < 0) return 0;
+                if (value > 30) return 30;
+                return value;
             }
             set
             {
+                if (value < 0) value = 0;
+                if (value > 30) value = 30;
                 SetValue("VisualFeedbackWidth", value);
             }
         }
