@@ -228,6 +228,7 @@ namespace GestureSign.Daemon.Input
                     case NativeMethods.PenUsage:
                         break;
                     default:
+                        LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, null, "ignored unsupported digitizer usage");
                         return true;
                 }
 
@@ -246,11 +247,22 @@ namespace GestureSign.Daemon.Input
                     string deviceName = Marshal.PtrToStringAnsi(pData);
 
                     if (ShouldIgnoreValidatedDevice(info.hid.usUsage, deviceName))
+                    {
+                        LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, deviceName, "ignored device path/name filter");
                         return true;
+                    }
+
+                    LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, deviceName, "accepted");
                     usage = info.hid.usUsage;
                     return true;
                 }
             }
+        }
+
+        private static void LogValidatedDevice(IntPtr hDevice, ushort usagePage, ushort usage, string deviceName, string result)
+        {
+            Logging.LogMessage(
+                $"Raw digitizer device validation: result={result}, hDevice=0x{hDevice.ToInt64():X}, usagePage=0x{usagePage:X2}, usage={GetUsageName(usage)} (0x{usage:X2}), deviceName={FormatDeviceName(deviceName)}");
         }
 
         private static bool ShouldIgnoreValidatedDevice(ushort usage, string deviceName)
@@ -267,6 +279,26 @@ namespace GestureSign.Daemon.Input
 
             return deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 ||
                    deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static string GetUsageName(ushort usage)
+        {
+            switch (usage)
+            {
+                case NativeMethods.TouchPadUsage:
+                    return "TouchPad";
+                case NativeMethods.TouchScreenUsage:
+                    return "TouchScreen";
+                case NativeMethods.PenUsage:
+                    return "Pen";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        private static string FormatDeviceName(string deviceName)
+        {
+            return string.IsNullOrWhiteSpace(deviceName) ? "<empty>" : deviceName;
         }
 
         protected override void WndProc(ref Message message)
