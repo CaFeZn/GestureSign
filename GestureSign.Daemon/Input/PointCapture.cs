@@ -353,7 +353,7 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointDown(object sender, InputPointsEventArgs e)
         {
-            if (ShouldIgnoreTouchPadInput(e) || ShouldBlockSingleFingerTouchPadStart(e))
+            if (ShouldIgnoreTouchPadInput(e) || ShouldBlockSingleFingerTouchStart(e))
                 return;
 
             if (State == CaptureState.Ready || State == CaptureState.Capturing || State == CaptureState.CapturingInvalid)
@@ -558,27 +558,48 @@ namespace GestureSign.Daemon.Input
                 _ignoredTouchPadDeviceHandle == e.DeviceHandle;
         }
 
-        private bool ShouldBlockSingleFingerTouchPadStart(InputPointsEventArgs e)
+        private bool ShouldBlockSingleFingerTouchStart(InputPointsEventArgs e)
         {
-            if (e.PointSource != Devices.TouchPad ||
+            if ((e.PointSource & Devices.TouchDevice) == 0 ||
                 Mode == CaptureMode.Training ||
                 State != CaptureState.Ready ||
                 e.InputPointList == null ||
                 e.InputPointList.Count != 1)
                 return false;
 
-            return !HasConditionedSingleFingerTouchPadAction(e.InputPointList[0]);
+            var inputPoint = e.InputPointList[0];
+            switch (e.PointSource)
+            {
+                case Devices.TouchPad:
+                    return !HasMatchingConditionedSingleFingerTouchAction(Devices.TouchPad, System.Windows.Forms.Cursor.Position, inputPoint);
+                case Devices.TouchScreen:
+                    return HasConditionedSingleFingerTouchAction(Devices.TouchScreen, inputPoint.Point) &&
+                        !HasMatchingConditionedSingleFingerTouchAction(Devices.TouchScreen, inputPoint.Point, inputPoint);
+                default:
+                    return false;
+            }
         }
 
-        private bool HasConditionedSingleFingerTouchPadAction(InputPoint point)
+        private bool HasConditionedSingleFingerTouchAction(Devices sourceDevice, Point captureStartPoint)
         {
-            var touchPadStartPoint = System.Windows.Forms.Cursor.Position;
-            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(touchPadStartPoint, out var targetWindow)?.ToList() ?? new List<IApplication>();
+            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(captureStartPoint, out _)?.ToList() ?? new List<IApplication>();
+            var actions = GetConditionedSingleFingerTouchActionsInApplications(applications, sourceDevice);
+            if (actions.Count != 0)
+                return true;
+
+            return !applications.Any(app => app is GlobalApp) &&
+                ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
+                GetConditionedSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, sourceDevice).Count != 0;
+        }
+
+        private bool HasMatchingConditionedSingleFingerTouchAction(Devices sourceDevice, Point captureStartPoint, InputPoint point)
+        {
+            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(captureStartPoint, out var targetWindow)?.ToList() ?? new List<IApplication>();
             var conditionPoints = new List<List<Point>>(new[] { new List<Point>(new[] { point.Point }) });
             var contactIdentifiers = new List<int>(new[] { point.ContactIdentifier });
 
-            if (HasMatchingConditionedSingleFingerTouchPadAction(
-                GetConditionedSingleFingerTouchPadActionsInApplications(applications),
+            if (HasMatchingConditionedSingleFingerTouchAction(
+                GetConditionedSingleFingerTouchActionsInApplications(applications, sourceDevice),
                 conditionPoints,
                 contactIdentifiers,
                 targetWindow))
@@ -586,34 +607,34 @@ namespace GestureSign.Daemon.Input
 
             return !applications.Any(app => app is GlobalApp) &&
                 ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
-                HasMatchingConditionedSingleFingerTouchPadAction(
-                    GetConditionedSingleFingerTouchPadActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }),
+                HasMatchingConditionedSingleFingerTouchAction(
+                    GetConditionedSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, sourceDevice),
                     conditionPoints,
                     contactIdentifiers,
                     targetWindow);
         }
 
-        private bool HasMatchingConditionedSingleFingerTouchPadAction(IEnumerable<IAction> actions, List<List<Point>> conditionPoints, List<int> contactIdentifiers, SystemWindow targetWindow)
+        private bool HasMatchingConditionedSingleFingerTouchAction(IEnumerable<IAction> actions, List<List<Point>> conditionPoints, List<int> contactIdentifiers, SystemWindow targetWindow)
         {
             return actions.Any(action =>
                 HasEnabledCommands(action) &&
                 PluginManager.Instance.EvaluateCondition(action.Condition, conditionPoints, contactIdentifiers, targetWindow));
         }
 
-        private static List<IAction> GetConditionedSingleFingerTouchPadActionsInApplications(IEnumerable<IApplication> applications)
+        private static List<IAction> GetConditionedSingleFingerTouchActionsInApplications(IEnumerable<IApplication> applications, Devices sourceDevice)
         {
             return applications == null
                 ? new List<IAction>()
                 : applications.Where(app => !(app is IgnoredApp) && app.Actions != null)
                     .SelectMany(app => app.Actions)
-                    .Where(IsConditionedSingleFingerTouchPadAction)
+                    .Where(action => IsConditionedSingleFingerTouchAction(action, sourceDevice))
                     .ToList();
         }
 
-        private static bool IsConditionedSingleFingerTouchPadAction(IAction action)
+        private static bool IsConditionedSingleFingerTouchAction(IAction action, Devices sourceDevice)
         {
             if (action == null ||
-                (action.IgnoredDevices & Devices.TouchPad) != 0 ||
+                (action.IgnoredDevices & sourceDevice) != 0 ||
                 string.IsNullOrWhiteSpace(action.Condition))
                 return false;
 

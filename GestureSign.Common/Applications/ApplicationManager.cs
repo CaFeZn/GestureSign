@@ -89,9 +89,9 @@ namespace GestureSign.Common.Applications
                 return;
             }
 
-            bool allowSingleFingerTouchPad = pointCapture.SourceDevice == Devices.TouchPad &&
+            bool allowSingleFingerTouch = (pointCapture.SourceDevice & Devices.TouchDevice) != 0 &&
                 e.Points.Count == 1 &&
-                HasConditionedSingleFingerTouchPadAction(_recognizedApplication);
+                HasConditionedSingleFingerTouchAction(_recognizedApplication, pointCapture.SourceDevice);
 
             int maxThreshold = 0, maxLimitNumber = 1;
 
@@ -122,7 +122,7 @@ namespace GestureSign.Common.Applications
                         return;
                 }
             }
-            if (allowSingleFingerTouchPad)
+            if (allowSingleFingerTouch)
                 maxLimitNumber = 1;
 
             e.Cancel = (pointCapture.SourceDevice & Devices.TouchDevice) != 0 && (e.Points.Count < maxLimitNumber);
@@ -663,28 +663,28 @@ namespace GestureSign.Common.Applications
             return action != null && action.Commands != null && action.Commands.Any(command => command != null);
         }
 
-        private bool HasConditionedSingleFingerTouchPadAction(IEnumerable<IApplication> applications)
+        private bool HasConditionedSingleFingerTouchAction(IEnumerable<IApplication> applications, Devices sourceDevice)
         {
-            if (HasConditionedSingleFingerTouchPadActionInApplications(applications))
+            if (HasConditionedSingleFingerTouchActionInApplications(applications, sourceDevice))
                 return true;
 
-            return HasConditionedSingleFingerTouchPadActionInApplications(new[] { GetGlobalApplication() });
+            return HasConditionedSingleFingerTouchActionInApplications(new[] { GetGlobalApplication() }, sourceDevice);
         }
 
-        private static bool HasConditionedSingleFingerTouchPadActionInApplications(IEnumerable<IApplication> applications)
+        private static bool HasConditionedSingleFingerTouchActionInApplications(IEnumerable<IApplication> applications, Devices sourceDevice)
         {
             return applications != null &&
                 applications.Where(app => !(app is IgnoredApp) && app.Actions != null)
                     .SelectMany(app => app.Actions)
-                    .Any(action => IsSingleFingerTouchPadAction(action) &&
+                    .Any(action => IsSingleFingerTouchAction(action, sourceDevice) &&
                         !string.IsNullOrWhiteSpace(action.Condition) &&
                         action.Commands != null &&
                         action.Commands.Any(command => command != null && command.IsEnabled));
         }
 
-        private static bool IsSingleFingerTouchPadAction(IAction action)
+        private static bool IsSingleFingerTouchAction(IAction action, Devices sourceDevice)
         {
-            if (action == null || (action.IgnoredDevices & Devices.TouchPad) != 0)
+            if (action == null || (action.IgnoredDevices & sourceDevice) != 0)
                 return false;
 
             return action.ContinuousGesture != null
