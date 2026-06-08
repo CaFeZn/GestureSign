@@ -753,13 +753,27 @@ namespace GestureSign.Daemon.Input
 
         private Screen ResolveTouchScreen(IntPtr hDevice, TouchScreenDevice touchScreen, short numberOfChildren)
         {
-            Screen screen;
-            if (TryGetCachedTouchScreen(hDevice, out screen))
-                return screen;
-
             Screen[] screens;
             if (!TryGetScreens(out screens))
                 return null;
+
+            Screen screen;
+            if (TryGetCachedTouchScreen(hDevice, out screen))
+            {
+                if (screens.Length == 1)
+                    return screen;
+
+                var foregroundMatchedScreen = GetTouchScreenFromForegroundTouchPoint(touchScreen, numberOfChildren, screens);
+                if (foregroundMatchedScreen != null &&
+                    (!string.Equals(foregroundMatchedScreen.DeviceName, screen.DeviceName, StringComparison.OrdinalIgnoreCase) ||
+                     !foregroundMatchedScreen.Bounds.Equals(screen.Bounds)))
+                {
+                    _touchScreenDeviceScreens[hDevice] = foregroundMatchedScreen;
+                    return foregroundMatchedScreen;
+                }
+
+                return screen;
+            }
 
             if (screens.Length == 1)
             {
