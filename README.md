@@ -323,6 +323,7 @@ Improved but not fully closed without hardware validation or larger feature desi
 
 - Push a semver-like tag such as `v8.1.0` or `v8.1.0-beta.1` to run the release workflow automatically.
 - Every push to `master` also updates the `continuous` prerelease with the latest portable build for manual testing.
+- The release workflow now uses GitHub Actions concurrency control for the same ref/event, so an older in-progress `master` run is canceled instead of overwriting a newer `continuous` prerelease after a burst of rapid pushes.
 - The GitHub release named `continuous` is a rolling prerelease build tag. It is separate from the app feature named `Continuous Gesture`.
 - The workflow builds `Release|Any CPU` for the installer and `Portable|Any CPU` for the zip, creates or updates the GitHub Release, and uploads both `GestureSign-<tag>-setup-win-anycpu.exe` and `GestureSign-<tag>-portable-win-anycpu.zip`.
 - The release workflow uses Node 24-compatible checkout, artifact upload, and release actions to avoid GitHub Actions Node 20 deprecation warnings.

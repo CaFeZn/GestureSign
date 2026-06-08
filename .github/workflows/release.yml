@@ -20,6 +20,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref_name }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: windows-2022

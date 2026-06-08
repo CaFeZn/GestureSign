@@ -323,6 +323,7 @@ Windows 11 触摸/手势冲突：
 
 - 推送 `v8.1.0` 或 `v8.1.0-beta.1` 这类 semver 风格 tag 会自动运行 release workflow。
 - 每次推送到 `master` 也会更新 `continuous` 预发布版，提供最新便携构建用于手动测试。
+- release workflow 现在也为同一个 ref/event 启用了 GitHub Actions 并发控制，所以在短时间连续推送时，较早但仍在运行的 `master` 任务会被取消，不会再把较新的 `continuous` 预发布覆盖回旧提交。
 - GitHub release 里的 `continuous` 是滚动预发布构建标签，和应用功能 `Continuous Gesture` 不是同一个概念。
 - workflow 会为安装器构建 `Release|Any CPU`，为 zip 构建 `Portable|Any CPU`，创建或更新 GitHub Release，并同时上传 `GestureSign-<tag>-setup-win-anycpu.exe` 和 `GestureSign-<tag>-portable-win-anycpu.zip`。
 - release workflow 使用兼容 Node 24 的 checkout、artifact upload 和 release action，以避免 GitHub Actions 的 Node 20 弃用警告。
