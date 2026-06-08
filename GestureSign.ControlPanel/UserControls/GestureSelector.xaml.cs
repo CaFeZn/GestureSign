@@ -115,6 +115,7 @@ namespace GestureSign.ControlPanel.UserControls
         private void EnableMouseGestureButton_Click(object sender, RoutedEventArgs e)
         {
             AppConfig.DrawingButton = MouseActions.Right;
+            NamedPipe.SendMessageAsync(IpcCommands.LoadConfiguration, Constants.Daemon, wait: false);
             UpdateTrainingPrompt();
         }
 
