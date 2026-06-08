@@ -225,6 +225,7 @@ Windows 11 触摸/手势冲突：
 - 如果 GestureSign 干扰某个应用，把 `Add Current Application to Ignored List` 绑定到一个手势，在该应用激活时运行它。
 - 如果希望默认不干扰任何未配置应用，请启用 `Options` > `白名单模式`。该模式下 GestureSign 只在目标前台/捕获窗口匹配已配置应用时捕获手势和热键；未匹配应用会被忽略，已匹配应用仍可按规则回退到全局动作。
 - 如果触摸板手势延迟或丢失，提高 `Options` 中的 drawing-start timeout。
+- 如果 Win11 下的第三方触摸板驱动仍然检测不到，先重启托盘 daemon，复现一次问题，再打开 `%LOCALAPPDATA%\GestureSign\GestureSign.log`，搜索 `Enumerated raw input device:` 和 `Raw digitizer device validation:`。这两类日志能直接看出 Windows 究竟把设备暴露成了 `TouchPad`、其他 HID usage，还是仅仅鼠标/键盘输入。
 - 如果触摸屏输入结束后，触摸板手势还会暂时被上一种输入源卡住，请使用包含 raw-input source-staleness 修复的版本。现在触摸屏/触摸板输入源的超时刷新会基于“完整输出帧完成”而不是每个半截 raw 包，因此有噪声或不完整的触摸屏 raw 包流不容易在触摸停止后继续把触摸板挡住。
 - 活跃中的 touch 捕获现在也不会再因为 stale timeout 被别的 touch 设备中途抢走，因此当前触点只是短暂停住、但手势还没真正结束时，不容易再被另一台 touch 设备打断。
 - 鼠标滚轮旋转可以作为独立鼠标触发器使用：在动作的 mouse hotkey 字段选择 `向前滚动` 或 `向后滚动`。独立滚轮触发必须设置触发条件，例如角落或边缘条件，避免普通滚动被全局截获。
