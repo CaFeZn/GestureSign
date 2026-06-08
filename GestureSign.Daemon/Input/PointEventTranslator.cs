@@ -341,7 +341,6 @@ namespace GestureSign.Daemon.Input
             remappedActiveRawData = null;
             rawToStableContactMap = null;
             if (activeRawData == null ||
-                activeRawData.Count <= 1 ||
                 PointCapture.Instance.State != CaptureState.Capturing)
             {
                 return false;
