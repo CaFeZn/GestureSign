@@ -132,11 +132,12 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue("MinimumPointDistance", 20);
+                int value = (int)GetValue("MinimumPointDistance", 20);
+                return value >= 3 ? value : 3;
             }
             set
             {
-                SetValue("MinimumPointDistance", value);
+                SetValue("MinimumPointDistance", value >= 3 ? value : 3);
             }
         }
 
@@ -253,11 +254,12 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue(nameof(ContinuousGestureDistance), 20);
+                int value = (int)GetValue(nameof(ContinuousGestureDistance), 20);
+                return value >= 5 ? value : 5;
             }
             set
             {
-                SetValue(nameof(ContinuousGestureDistance), value);
+                SetValue(nameof(ContinuousGestureDistance), value >= 5 ? value : 5);
             }
         }
 
