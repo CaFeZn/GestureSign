@@ -319,6 +319,9 @@ namespace GestureSign.Daemon.Input
 
             if (hasNewContacts && !PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
             {
+                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                ClearActiveTouchContacts();
+
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
                 if (IsCurrentSource(e))
                 {
