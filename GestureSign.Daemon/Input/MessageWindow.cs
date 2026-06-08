@@ -877,13 +877,9 @@ namespace GestureSign.Daemon.Input
         {
             try
             {
-                IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
-                if (foregroundWindow != IntPtr.Zero)
-                {
-                    Screen foregroundScreen = Screen.FromHandle(foregroundWindow);
-                    if (IsUsableScreen(foregroundScreen))
-                        return foregroundScreen;
-                }
+                Screen cursorScreen = Screen.FromPoint(Cursor.Position);
+                if (IsUsableScreen(cursorScreen))
+                    return cursorScreen;
             }
             catch (Exception ex)
             {
@@ -892,9 +888,13 @@ namespace GestureSign.Daemon.Input
 
             try
             {
-                Screen cursorScreen = Screen.FromPoint(Cursor.Position);
-                if (IsUsableScreen(cursorScreen))
-                    return cursorScreen;
+                IntPtr foregroundWindow = NativeMethods.GetForegroundWindow();
+                if (foregroundWindow != IntPtr.Zero)
+                {
+                    Screen foregroundScreen = Screen.FromHandle(foregroundWindow);
+                    if (IsUsableScreen(foregroundScreen))
+                        return foregroundScreen;
+                }
             }
             catch (Exception ex)
             {
