@@ -625,8 +625,18 @@ namespace GestureSign.Daemon.Input
                             }
 
                             int contactCount;
-                            if (!touchScreen.TryGetContactCount(out contactCount))
-                                contactCount = touchScreen.InferContactCount(linkCollection[0].NumberOfChildren);
+                            int inferredContactCount = touchScreen.InferContactCount(linkCollection[0].NumberOfChildren);
+                            if (!touchScreen.TryGetContactCount(out contactCount) ||
+                                contactCount <= 0 ||
+                                contactCount > inferredContactCount ||
+                                contactCount < inferredContactCount)
+                            {
+                                // Some Win11 touchscreen drivers report ContactCount as the number of
+                                // active touches while still placing active contacts in later logical
+                                // slots. Parse the whole logical report width so those later contacts
+                                // are not skipped just because earlier slots are inactive.
+                                contactCount = inferredContactCount;
+                            }
 
                             if (contactCount != 0)
                             {
