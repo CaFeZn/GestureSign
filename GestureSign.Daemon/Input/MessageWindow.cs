@@ -590,14 +590,6 @@ namespace GestureSign.Daemon.Input
                 {
                     if (usage == NativeMethods.PenUsage)
                     {
-                        if (_ignoreTouchInputWhenUsingPen)
-                            _penLastActivity = Environment.TickCount;
-                        else
-                            _penLastActivity = null;
-
-                        if (_penGestureButton == 0)
-                            return;
-
                         switch (_sourceDevice)
                         {
                             case Devices.TouchScreen:
@@ -611,6 +603,13 @@ namespace GestureSign.Daemon.Input
                         using (PenDevice penDevice = new PenDevice(buffer, ref raw))
                         {
                             DeviceStates state = penDevice.GetPenState();
+                            if (_ignoreTouchInputWhenUsingPen)
+                                _penLastActivity = state != DeviceStates.None ? Environment.TickCount : (int?)null;
+                            else
+                                _penLastActivity = null;
+
+                            if (_penGestureButton == 0)
+                                return;
 
                             if (_sourceDevice == Devices.None || _sourceDevice == Devices.TouchScreen)
                             {
