@@ -1,7 +1,8 @@
-﻿using GestureSign.Common.Configuration;
+using GestureSign.Common.Applications;
+using GestureSign.Common.Configuration;
 using GestureSign.Common.Input;
 using GestureSign.Common.InterProcessCommunication;
-using GestureSign.Common.Applications;
+using GestureSign.Common.Log;
 using ManagedWinapi.Hooks;
 using Microsoft.Win32;
 using System;
@@ -33,15 +34,15 @@ namespace GestureSign.Daemon.Input
             LowLevelMouseHook = new LowLevelMouseHook();
             ScheduleMouseHookUpdate(1000);
 
-
             SystemEvents.SessionSwitch += new SessionSwitchEventHandler(OnSessionSwitch);
             SystemEvents.PowerModeChanged += new PowerModeChangedEventHandler(OnPowerModeChanged);
 
             _deviceStateServer = new CustomNamedPipeServer(Common.Constants.Daemon + "DeviceState", IpcCommands.SynDeviceState,
                 () => HidDevice.EnumerateDevices());
+            TryLogRawInputDevices();
         }
 
-        private void AppConfig_ConfigChanged(object sender, System.EventArgs e)
+        private void AppConfig_ConfigChanged(object sender, EventArgs e)
         {
             ScheduleMouseHookUpdate();
             UpdateDeviceState();
@@ -84,13 +85,26 @@ namespace GestureSign.Daemon.Input
 
         private void UpdateDeviceState()
         {
-            if (0 == System.Threading.Interlocked.Exchange(ref _stateUpdating, 1))
+            if (0 == Interlocked.Exchange(ref _stateUpdating, 1))
             {
                 Task.Delay(600).ContinueWith((t) =>
                 {
-                    System.Threading.Interlocked.Exchange(ref _stateUpdating, 0);
+                    Interlocked.Exchange(ref _stateUpdating, 0);
+                    TryLogRawInputDevices();
                     _messageWindow.UpdateRegistration();
                 }, TaskScheduler.FromCurrentSynchronizationContext());
+            }
+        }
+
+        private static void TryLogRawInputDevices()
+        {
+            try
+            {
+                HidDevice.EnumerateDevices();
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
             }
         }
 
