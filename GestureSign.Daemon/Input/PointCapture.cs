@@ -561,8 +561,7 @@ namespace GestureSign.Daemon.Input
         private bool HasConditionedSingleFingerTouchPadAction(InputPoint point)
         {
             var touchPadStartPoint = System.Windows.Forms.Cursor.Position;
-            var targetWindow = ApplicationManager.Instance.GetWindowFromPoint(touchPadStartPoint);
-            var applications = ApplicationManager.Instance.GetApplicationFromWindow(targetWindow)?.ToList() ?? new List<IApplication>();
+            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(touchPadStartPoint, out var targetWindow)?.ToList() ?? new List<IApplication>();
             var conditionPoints = new List<List<Point>>(new[] { new List<Point>(new[] { point.Point }) });
             var contactIdentifiers = new List<int>(new[] { point.ContactIdentifier });
 

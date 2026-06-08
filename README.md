@@ -108,6 +108,7 @@ Multiple gestures for the same behavior:
 - In the `Actions` tab, copy the existing action, use `Paste To New Action`, then edit the pasted action and choose a different gesture.
 - Commands inside each action run from top to bottom, so keep the duplicated command order identical when both gestures should do exactly the same thing.
 - To disable one global gesture only in a specific app, create or copy an action with the same gesture under that app and turn all commands in that app-specific action off. The app-specific action blocks fallback to the global action, while other global gestures still work in that app.
+- If an application uses `Match Activated Window`, capture-start rules now follow that activated window from the beginning of capture as well, not only at final gesture recognition. This keeps whitelist checks, finger-count limits, block-touch thresholds, and guarded one-finger touchpad capture aligned with the app that will actually receive the gesture.
 
 Continuous gestures:
 
@@ -205,7 +206,7 @@ Implemented or covered:
 | [#117](https://github.com/TransposonY/GestureSign/issues/117) | Installer installation and update commands are documented for the current winget package. |
 | [#121](https://github.com/TransposonY/GestureSign/issues/121) | The setup `.exe` now exposes the destination-folder page, and silent installs can use Inno Setup's `/DIR=` override. |
 | [#115](https://github.com/TransposonY/GestureSign/issues/115), [#40](https://github.com/TransposonY/GestureSign/issues/40) | Virtual desktop switching actions are available and can be assigned to normal or continuous gestures. |
-| [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. |
+| [#113](https://github.com/TransposonY/GestureSign/issues/113) | App-specific actions with the same gesture now block fallback to global actions even when their commands are disabled, so one global gesture can be excluded in one app without disabling other global gestures there. `Match Activated Window` app rules are also applied consistently from capture start, keeping per-app limits and guarded touchpad capture aligned with the final matched app. |
 | [#109](https://github.com/TransposonY/GestureSign/issues/109), [#131](https://github.com/TransposonY/GestureSign/issues/131) | Shell/taskbar activation and modifier-key cleanup around switch-window and switch-desktop actions have been hardened. |
 | [#97](https://github.com/TransposonY/GestureSign/issues/97), [#31](https://github.com/TransposonY/GestureSign/issues/31) | Control Panel startup tolerates unavailable Windows Application Event Log access, and configuration writes are flushed, serialized, and stored under package local state for Desktop Bridge builds. |
 | [#104](https://github.com/TransposonY/GestureSign/issues/104) | `Add Current Application to Ignored List` is available and documented. |

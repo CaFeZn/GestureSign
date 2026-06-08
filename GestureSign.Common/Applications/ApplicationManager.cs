@@ -81,8 +81,8 @@ namespace GestureSign.Common.Applications
                 }
             }
 
-            CaptureWindow = GetWindowFromPoint(e.FirstCapturedPoints.FirstOrDefault());
-            _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            _recognizedApplication = GetApplicationFromCapturePoint(e.FirstCapturedPoints.FirstOrDefault(), out var captureWindow);
+            CaptureWindow = captureWindow;
             if (ShouldCancelForWhitelistMode(pointCapture.Mode, _recognizedApplication))
             {
                 e.Cancel = true;
@@ -131,24 +131,8 @@ namespace GestureSign.Common.Applications
 
         protected void PointCapture_BeforePointsCaptured(object sender, PointsCapturedEventArgs e)
         {
-            var appsToMatch = Applications.Where(a => a is UserApp && a.MatchActivated);
-            if (appsToMatch.Any())
-            {
-                CaptureWindow = SystemWindow.ForegroundWindow;
-                string className, title, fileName;
-                GetWindowInfo(CaptureWindow, out className, out title, out fileName);
-                var matchedForegroundApps = FindMatchApplications(appsToMatch, className, title, fileName);
-
-                if (matchedForegroundApps.Length != 0)
-                {
-                    _recognizedApplication = matchedForegroundApps;
-                    return;
-                }
-            }
-
-            // Derive capture window from capture point
-            CaptureWindow = GetWindowFromPoint(e.FirstCapturedPoints.FirstOrDefault());
-            _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
+            _recognizedApplication = GetApplicationFromCapturePoint(e.FirstCapturedPoints.FirstOrDefault(), out var captureWindow);
+            CaptureWindow = captureWindow;
         }
 
         #endregion
@@ -316,6 +300,15 @@ namespace GestureSign.Common.Applications
             CaptureWindow = GetWindowFromPoint(testPoint);
             _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
             return _recognizedApplication;
+        }
+
+        public IApplication[] GetApplicationFromCapturePoint(Point capturePoint, out SystemWindow captureWindow)
+        {
+            if (TryGetMatchedForegroundApplications(out captureWindow, out var matchedForegroundApps))
+                return matchedForegroundApps;
+
+            captureWindow = GetWindowFromPoint(capturePoint);
+            return GetApplicationFromWindow(captureWindow);
         }
 
         public IEnumerable<IAction> GetRecognizedDefinedAction(string GestureName)
@@ -604,6 +597,25 @@ namespace GestureSign.Common.Applications
                 }
             }
             return result.ToArray();
+        }
+
+        private bool TryGetMatchedForegroundApplications(out SystemWindow captureWindow, out IApplication[] matchedForegroundApps)
+        {
+            matchedForegroundApps = Array.Empty<IApplication>();
+            captureWindow = null;
+
+            var appsToMatch = Applications?.Where(a => a is UserApp && a.MatchActivated).ToArray();
+            if (appsToMatch == null || appsToMatch.Length == 0)
+                return false;
+
+            captureWindow = SystemWindow.ForegroundWindow;
+            if (captureWindow == null || captureWindow.HWnd == IntPtr.Zero)
+                return false;
+
+            string className, title, fileName;
+            GetWindowInfo(captureWindow, out className, out title, out fileName);
+            matchedForegroundApps = FindMatchApplications(appsToMatch, className, title, fileName);
+            return matchedForegroundApps.Length != 0;
         }
 
         private static bool CompareString(string compareMatchString, string windowMatchString, bool useRegEx)
