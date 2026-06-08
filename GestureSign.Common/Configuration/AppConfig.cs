@@ -223,10 +223,15 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue(nameof(InitialTimeout), 0);
+                int value = (int)GetValue(nameof(InitialTimeout), 0);
+                if (value < 0) return 0;
+                if (value > 2000) return 2000;
+                return value;
             }
             set
             {
+                if (value < 0) value = 0;
+                if (value > 2000) value = 2000;
                 SetValue(nameof(InitialTimeout), value);
             }
         }
@@ -235,10 +240,15 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue(nameof(GestureTimeout), 0);
+                int value = (int)GetValue(nameof(GestureTimeout), 0);
+                if (value < 0) return 0;
+                if (value > 10000) return 10000;
+                return value;
             }
             set
             {
+                if (value < 0) value = 0;
+                if (value > 10000) value = 10000;
                 SetValue(nameof(GestureTimeout), value);
             }
         }
@@ -247,10 +257,15 @@ namespace GestureSign.Common.Configuration
         {
             get
             {
-                return (int)GetValue(nameof(CompositeGestureTimeout), 800);
+                int value = (int)GetValue(nameof(CompositeGestureTimeout), 800);
+                if (value < 0) return 0;
+                if (value > 2000) return 2000;
+                return value;
             }
             set
             {
+                if (value < 0) value = 0;
+                if (value > 2000) value = 2000;
                 SetValue(nameof(CompositeGestureTimeout), value);
             }
         }
