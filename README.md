@@ -120,6 +120,12 @@ Continuous Gesture capture:
 - In practical terms, `Continuous Gesture` does not wait for finger-up recognition. Once GestureSign has accepted the current stroke/capture, matching commands can start firing while the finger, pen, touchpad, or mouse is still moving.
 - Runtime path: `PointCapture` starts the capture and emits `PointCaptured` updates on accepted movement. `ContinuousGestureTrigger` listens during that active capture, compares the newest points with the previous accepted points, determines the dominant direction (`Up`, `Down`, `Left`, `Right`), and calculates how many times to fire from movement distance, elapsed time, and the DPI-scaled `Options` > `Continuous Gesture Distance`.
 - Each full threshold crossing fires the matching continuous action immediately. Faster movement can produce multiple firings from one update. If any continuous action fired during that capture, the normal finger-up gesture match for the same capture is canceled so the same stroke does not run commands twice.
+- Timing summary:
+  1. Input starts and `PointCapture` decides whether this stroke may be captured.
+  2. Capture-start conditions such as one-finger touchpad edge guards are checked from the start of the stroke, not later in the middle.
+  3. Each accepted movement update raises `PointCaptured`; `ContinuousGestureTrigger` compares the latest accepted points with the previous accepted points.
+  4. After movement crosses the current threshold, GestureSign fires the matching continuous action immediately, while the input is still active.
+  5. If no executable continuous action actually fired, the ordinary finger-up gesture path can still run later; if one did fire, the ordinary finger-up result for that same capture is suppressed.
 - Configuration steps:
   1. Create or edit an action.
   2. Turn on `Continuous Gesture`.
@@ -142,8 +148,16 @@ One-finger touchpad edge workflows:
 - Use a start-zone condition so normal touchpad movement is not captured. Example middle strip on the right edge: `finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
 - If you want a modifier guard, add it to the same condition, for example `key_is_alt_down AND finger_1_start_X%>=95 AND finger_1_start_Y%>=10 AND finger_1_start_Y%<=90`.
 - The scroll is dynamic: movement events trigger while the finger slides. You do not need to lift the finger before scrolling begins.
+- Modifier timing matters here: for guarded one-finger touchpad capture, `key_is_alt_down` is checked at touch start. Holding `Alt` after the finger is already down does not retroactively start capture, and releasing `Alt` after capture has already started does not cancel the already-running continuous action by itself.
 - `start_*` variables decide whether one-finger touchpad capture may begin. `end_*` variables update during execution, but they cannot be the only gate for starting a protected one-finger touchpad capture.
 - Percent coordinates use Windows virtual-screen bounds, not the touchpad's physical hardware percentage. On multi-monitor or unusual scaling setups, adjust the edge percentage after real-device testing.
+
+Recent fork behavior notes:
+
+- Conditioned actions now really win over same-gesture unconditional fallback actions in the same scope when their conditions match, so guarded edge workflows no longer need to fight a plain global fallback for the same gesture.
+- Normal gesture key conditions such as `key_is_alt_down` and `key_space_down` now use the key snapshot from capture start instead of the later action-execution moment. This makes guarded gestures more predictable.
+- Single-finger touch-device source ownership is now released immediately when a capture is rejected, canceled, or completed, so a rejected touchscreen or touchpad start is less likely to block the next touch source.
+- Pen gestures can now use simple `Tip` or `Hover` drawing without requiring a barrel button as a mandatory gate. In `Hover`-only mode, later tip contact also keeps the active pen stroke alive instead of dropping it mid-gesture.
 
 Standalone wheel triggers:
 
@@ -203,6 +217,7 @@ Gesture and trigger notes:
 - Standalone hotkeys now follow the same executable-action check as other trigger paths. A registered hotkey triggers only when at least one matching action still has an enabled command, an available plugin, and a currently true trigger condition.
 - For normal gestures that are recognized after finger-up, modifier-key conditions such as `key_is_alt_down` and `key_space_down` now use the key state captured when the gesture began, instead of drifting with whatever key state happens to exist by the time the action executes.
 - For one-finger touchpad protection, the capture gate is evaluated at touch start. Use `start_*`, modifier-key, and window-state variables for the edge guard; `end_*` variables still reflect the latest captured point during action execution, but cannot be the only reason to start capturing a one-finger touchpad stroke.
+- For one-finger touchpad continuous workflows, this means the safe pattern is “narrow `start_*` zone plus optional modifier guard, then repeated command while moving”. It is not “begin ordinary one-finger movement first, then let `end_*` enter the zone later”.
 - True BetterTouchTool-style tip-tap is not implemented. A one-shot approximation can use trigger conditions such as `finger_1_ID<finger_2_ID` or `finger_1_ID>finger_2_ID`, but both contacts must be captured together and some touchpad drivers do not expose stable contact IDs. Separate tap-vs-tip-tap recognition and left/right tip-tap require recognizer/model work.
 - Window conditions can use `window_is_maximized`, `window_is_minimized`, and `window_is_fullscreen`.
 - Modifier-key conditions can use `key_is_shift_down`, `key_is_ctrl_down`, `key_is_alt_down`, and `key_is_win_down`. Arbitrary virtual-key conditions can use `key_<key-name>_down`, for example `key_space_down`, `key_a_down`, or `key_page_up_down`; the condition editor can insert these by focusing the key box and pressing the desired key.
