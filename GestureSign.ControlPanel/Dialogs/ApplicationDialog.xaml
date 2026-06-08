@@ -181,7 +181,7 @@
                     Maximum="10"
                     SmallChange="1"
                     ValueChanged="BlockTouchInputSlider_ValueChanged"
-                    Minimum="1"
+                    Minimum="0"
                     IsSnapToTickEnabled="True"
                     IsMoveToPointEnabled="True" />
             <TextBlock x:Name="LimitNumberOfFingersTextBlock"

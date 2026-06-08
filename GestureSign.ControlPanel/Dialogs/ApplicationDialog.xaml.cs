@@ -82,7 +82,7 @@ namespace GestureSign.ControlPanel.Dialogs
                     {
                         GroupComboBox.Text = _currentApplication.Group;
 
-                        BlockTouchInputSlider.Value = userApp.BlockTouchInputThreshold;
+                        BlockTouchInputSlider.Value = userApp.BlockTouchInputThreshold < 2 ? 0 : userApp.BlockTouchInputThreshold;
                         LimitNumberOfFingersSlider.Value = userApp.LimitNumberOfFingers;
                     }
                     isUserApp = true;
@@ -345,7 +345,7 @@ namespace GestureSign.ControlPanel.Dialogs
 
                         var newApplication = new UserApp
                         {
-                            BlockTouchInputThreshold = (int)BlockTouchInputSlider.Value,
+                            BlockTouchInputThreshold = BlockTouchInputSlider.Value < 2 ? 0 : (int)BlockTouchInputSlider.Value,
                             LimitNumberOfFingers = (int)LimitNumberOfFingersSlider.Value,
                             Name = name,
                             Group = groupName,
