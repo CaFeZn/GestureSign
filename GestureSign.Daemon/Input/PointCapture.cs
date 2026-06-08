@@ -485,10 +485,13 @@ namespace GestureSign.Daemon.Input
 
                 try
                 {
-                    if (SourceDevice == Devices.TouchScreen && _pointerInputTargetWindow != null)
+                    if (SourceDevice == Devices.TouchScreen)
                     {
-                        if (_pointerInputTargetWindow.BlockTouchInputThreshold > 1)
+                        if (_pointerInputTargetWindow != null && _pointerInputTargetWindow.BlockTouchInputThreshold > 1)
                             _pointerInputTargetWindow.TemporarilyDisable();
+
+                        _pointEventTranslator.ResetTouchDeviceSource();
+                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     else if (SourceDevice == Devices.Mouse)
                     {
@@ -520,10 +523,13 @@ namespace GestureSign.Daemon.Input
 
                 try
                 {
-                    if (SourceDevice == Devices.TouchScreen && _pointerInputTargetWindow != null)
+                    if (SourceDevice == Devices.TouchScreen)
                     {
-                        if (_pointerInputTargetWindow.BlockTouchInputThreshold > 1)
+                        if (_pointerInputTargetWindow != null && _pointerInputTargetWindow.BlockTouchInputThreshold > 1)
                             _pointerInputTargetWindow.TemporarilyDisable();
+
+                        _pointEventTranslator.ResetTouchDeviceSource();
+                        _inputProvider.ReleaseCurrentTouchSource();
                     }
                     else if (SourceDevice == Devices.Mouse)
                     {
