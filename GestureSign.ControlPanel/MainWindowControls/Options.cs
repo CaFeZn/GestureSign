@@ -533,9 +533,11 @@ namespace GestureSign.ControlPanel.MainWindowControls
         {
             if (PenGestureSwitch.IsChecked.GetValueOrDefault())
             {
-                AppConfig.PenGestureButton = DeviceStates.RightClickButton | DeviceStates.Tip;
-                RightClickButtonCheckBox.IsChecked = TipCheckBox.IsChecked = true;
-                EraserCheckBox.IsChecked = HoverCheckBox.IsChecked = false;
+                AppConfig.PenGestureButton = DeviceStates.Tip;
+                TipCheckBox.IsChecked = true;
+                HoverCheckBox.IsChecked = false;
+                RightClickButtonCheckBox.IsChecked = false;
+                EraserCheckBox.IsChecked = false;
             }
             else
             {
