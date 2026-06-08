@@ -688,8 +688,17 @@ namespace GestureSign.Daemon.Input
                             }
 
                             int contactCount;
-                            if (!touchPad.TryGetContactCount(out contactCount))
-                                contactCount = touchPad.InferContactCount(linkCollection[0].NumberOfChildren);
+                            int inferredContactCount = touchPad.InferContactCount(linkCollection[0].NumberOfChildren);
+                            if (!touchPad.TryGetContactCount(out contactCount) ||
+                                contactCount <= 0 ||
+                                contactCount > inferredContactCount ||
+                                contactCount < inferredContactCount)
+                            {
+                                // Some precision-touchpad drivers expose the logical touch slots in the
+                                // HID report but report only the currently active count. Parse the full
+                                // logical report width so active contacts in later slots are not skipped.
+                                contactCount = inferredContactCount;
+                            }
 
                             if (contactCount != 0)
                             {
