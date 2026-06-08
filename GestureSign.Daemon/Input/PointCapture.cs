@@ -63,7 +63,7 @@ namespace GestureSign.Daemon.Input
 
         private int? _blockTouchInputThreshold;
         private Point _touchPadStartPoint;
-        private bool _ignoreTouchPadUntilPointUp;
+        private IntPtr _ignoredTouchPadDeviceHandle;
         private string _unrecognizedGestureSoundPath;
         private SoundPlayer _unrecognizedGestureSoundPlayer;
 
@@ -395,8 +395,8 @@ namespace GestureSign.Daemon.Input
 
         protected void PointEventTranslator_PointUp(object sender, InputPointsEventArgs e)
         {
-            if (e.PointSource == Devices.TouchPad)
-                _ignoreTouchPadUntilPointUp = false;
+            if (e.PointSource == Devices.TouchPad && (_ignoredTouchPadDeviceHandle == IntPtr.Zero || _ignoredTouchPadDeviceHandle == e.DeviceHandle))
+                _ignoredTouchPadDeviceHandle = IntPtr.Zero;
 
             if (State == CaptureState.Capturing || State == CaptureState.CapturingInvalid && (SourceDevice & Devices.TouchDevice) != 0)
             {
@@ -496,7 +496,7 @@ namespace GestureSign.Daemon.Input
                     }
                     else if (SourceDevice == Devices.TouchPad)
                     {
-                        _ignoreTouchPadUntilPointUp = true;
+                        _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
                     }
                     CancelCaptureByInitialTimeout();
                 }
@@ -529,7 +529,7 @@ namespace GestureSign.Daemon.Input
                     }
                     else if (SourceDevice == Devices.TouchPad)
                     {
-                        _ignoreTouchPadUntilPointUp = true;
+                        _ignoredTouchPadDeviceHandle = _pointEventTranslator.SourceDeviceHandle;
                     }
                     CancelCaptureByGestureTimeout();
                 }
@@ -543,7 +543,9 @@ namespace GestureSign.Daemon.Input
 
         private bool ShouldIgnoreTouchPadInput(InputPointsEventArgs e)
         {
-            return _ignoreTouchPadUntilPointUp && e.PointSource == Devices.TouchPad;
+            return e.PointSource == Devices.TouchPad &&
+                _ignoredTouchPadDeviceHandle != IntPtr.Zero &&
+                _ignoredTouchPadDeviceHandle == e.DeviceHandle;
         }
 
         private bool ShouldBlockSingleFingerTouchPadStart(InputPointsEventArgs e)

@@ -15,6 +15,7 @@ namespace GestureSign.Daemon.Input
         private IntPtr _sourceDeviceHandle;
 
         internal Devices SourceDevice { get; private set; }
+        internal IntPtr SourceDeviceHandle { get; private set; }
         internal MouseActions CurrentDrawingButton { get; private set; }
 
         internal PointEventTranslator(InputProvider inputProvider)
@@ -35,6 +36,7 @@ namespace GestureSign.Daemon.Input
             if (!IsMatchingSource(args, allowPenTransition: true)) return;
             SourceDevice = args.PointSource;
             _sourceDeviceHandle = args.DeviceHandle;
+            SourceDeviceHandle = args.DeviceHandle;
             PointDown?.Invoke(this, args);
         }
 
@@ -48,6 +50,7 @@ namespace GestureSign.Daemon.Input
 
             SourceDevice = Devices.None;
             _sourceDeviceHandle = IntPtr.Zero;
+            SourceDeviceHandle = IntPtr.Zero;
         }
 
         public event EventHandler<InputPointsEventArgs> PointMove;
