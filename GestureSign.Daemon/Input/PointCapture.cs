@@ -5,6 +5,7 @@ using GestureSign.Common.Gestures;
 using GestureSign.Common.Input;
 using GestureSign.Common.InterProcessCommunication;
 using GestureSign.Common.Plugins;
+using GestureSign.Common.Log;
 using GestureSign.Daemon.Filtration;
 using GestureSign.Daemon.Surface;
 using GestureSign.PointPatterns;
@@ -809,12 +810,18 @@ namespace GestureSign.Daemon.Input
         {
             if (_currentContext != null)
             {
-                _currentContext.Post((state) => action(), null);
+                try
+                {
+                    _currentContext.Post((state) => action(), null);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                }
             }
-            else
-            {
-                action();
-            }
+
+            action();
         }
 
         private static void ClickMouseButton(MouseActions button)
