@@ -127,6 +127,7 @@
     <Compile Include="Input\RecognitionEventHandler.cs" />
     <Compile Include="ILoadable.cs" />
     <Compile Include="Input\CaptureMode.cs" />
+    <Compile Include="Input\CapturedContact.cs" />
     <Compile Include="Input\RawData.cs" />
     <Compile Include="Input\CaptureState.cs" />
     <Compile Include="Input\RawPointsDataMessageEventHandler.cs" />

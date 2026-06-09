@@ -13,6 +13,7 @@ namespace GestureSign.Common.Input
         event PointsCapturedEventHandler CaptureCanceled;
         event RecognitionEventHandler GestureRecognized;
         event PointsCapturedEventHandler PointCaptured;
+        List<CapturedContact> InputContacts { get; }
         List<Point>[] InputPoints { get; }
         List<int> InputContactIdentifiers { get; }
         List<int> CapturePressedVirtualKeys { get; }

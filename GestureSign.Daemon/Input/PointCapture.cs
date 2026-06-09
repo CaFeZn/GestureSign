@@ -90,13 +90,24 @@ namespace GestureSign.Daemon.Input
 
         public bool TemporarilyDisableCapture { get; set; }
 
-        public List<Point>[] InputPoints
+        public List<CapturedContact> InputContacts
         {
             get
             {
                 if (_pointsCaptured == null)
-                    return new List<Point>[0];
-                return _pointsCaptured.Values.ToArray();
+                    return new List<CapturedContact>();
+
+                return _pointsCaptured
+                    .Select(capturedPoint => new CapturedContact(capturedPoint.Key, capturedPoint.Value))
+                    .ToList();
+            }
+        }
+
+        public List<Point>[] InputPoints
+        {
+            get
+            {
+                return InputContacts.Select(contact => contact.Points).ToArray();
             }
         }
 
@@ -104,9 +115,7 @@ namespace GestureSign.Daemon.Input
         {
             get
             {
-                if (_pointsCaptured == null)
-                    return new List<int>();
-                return _pointsCaptured.Keys.ToList();
+                return InputContacts.Select(contact => contact.ContactIdentifier).ToList();
             }
         }
 

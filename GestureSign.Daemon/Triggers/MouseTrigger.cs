@@ -107,18 +107,17 @@ namespace GestureSign.Daemon.Triggers
 
         private static List<IAction> GetExecutableMouseActions(IEnumerable<IAction> actions, System.Drawing.Point triggerPoint)
         {
-            var inputPoints = PointCapture.Instance.InputPoints;
-            var inputContactIdentifiers = PointCapture.Instance.InputContactIdentifiers;
-            var conditionPoints = new List<List<System.Drawing.Point>>(inputPoints.Length);
-            var conditionContactIdentifiers = new List<int>(inputPoints.Length);
+            var inputContacts = PointCapture.Instance.InputContacts;
+            var conditionPoints = new List<List<System.Drawing.Point>>(inputContacts.Count);
+            var conditionContactIdentifiers = new List<int>(inputContacts.Count);
 
-            for (int i = 0; i < inputPoints.Length && i < inputContactIdentifiers.Count; i++)
+            foreach (var inputContact in inputContacts)
             {
-                if (inputPoints[i].Count == 0)
+                if (inputContact.Points.Count == 0)
                     continue;
 
-                conditionPoints.Add(new List<System.Drawing.Point>(inputPoints[i]));
-                conditionContactIdentifiers.Add(inputContactIdentifiers[i]);
+                conditionPoints.Add(new List<System.Drawing.Point>(inputContact.Points));
+                conditionContactIdentifiers.Add(inputContact.ContactIdentifier);
             }
 
             if (conditionPoints.Count == 0)

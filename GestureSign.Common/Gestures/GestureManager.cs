@@ -151,11 +151,12 @@ namespace GestureSign.Common.Gestures
             if (pointCapture == null || string.IsNullOrEmpty(gestureName))
                 return false;
 
+            var inputContacts = pointCapture.InputContacts ?? new List<CapturedContact>();
             return PluginManager.Instance.HasExecutableAction(
                 gestureName,
                 pointCapture.Mode,
                 pointCapture.SourceDevice,
-                pointCapture.InputContactIdentifiers,
+                inputContacts.Select(contact => contact.ContactIdentifier).ToList(),
                 points,
                 pointCapture.CapturePressedVirtualKeys);
         }

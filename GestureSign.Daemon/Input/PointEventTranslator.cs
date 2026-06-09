@@ -320,7 +320,7 @@ namespace GestureSign.Daemon.Input
                 return;
             }
 
-            if (hasNewContacts && !PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
+            if (hasNewContacts && !PointCapture.Instance.InputContacts.Any(contact => contact.Points.Count > 10))
             {
                 OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
@@ -349,13 +349,10 @@ namespace GestureSign.Daemon.Input
                 return false;
             }
 
-            var existingPoints = PointCapture.Instance.InputPoints;
-            var existingIdentifiers = PointCapture.Instance.InputContactIdentifiers;
-            if (existingPoints == null ||
-                existingIdentifiers == null ||
-                existingPoints.Length != activeRawData.Count ||
-                existingIdentifiers.Count != activeRawData.Count ||
-                !existingPoints.Any(points => points != null && points.Count > 1))
+            var existingContacts = PointCapture.Instance.InputContacts;
+            if (existingContacts == null ||
+                existingContacts.Count != activeRawData.Count ||
+                !existingContacts.Any(contact => contact.Points != null && contact.Points.Count > 1))
             {
                 return false;
             }
@@ -363,12 +360,12 @@ namespace GestureSign.Daemon.Input
             int maxDelta = Math.Max(160, AppConfig.MinimumPointDistance * 40);
             long maxDistanceSquared = (long)maxDelta * maxDelta;
             var unmatchedContacts = new List<RawData>(activeRawData);
-            var remappedContacts = new List<RawData>(existingIdentifiers.Count);
-            var rawToStableMap = new Dictionary<int, int>(existingIdentifiers.Count);
+            var remappedContacts = new List<RawData>(existingContacts.Count);
+            var rawToStableMap = new Dictionary<int, int>(existingContacts.Count);
 
-            for (int i = 0; i < existingIdentifiers.Count; i++)
+            foreach (var existingContact in existingContacts)
             {
-                var stroke = existingPoints[i];
+                var stroke = existingContact.Points;
                 if (stroke == null || stroke.Count == 0)
                     return false;
 
@@ -392,8 +389,8 @@ namespace GestureSign.Daemon.Input
                     return false;
 
                 var matchedContact = unmatchedContacts[bestIndex];
-                remappedContacts.Add(new RawData(matchedContact.State, existingIdentifiers[i], matchedContact.RawPoints));
-                rawToStableMap[matchedContact.ContactIdentifier] = existingIdentifiers[i];
+                remappedContacts.Add(new RawData(matchedContact.State, existingContact.ContactIdentifier, matchedContact.RawPoints));
+                rawToStableMap[matchedContact.ContactIdentifier] = existingContact.ContactIdentifier;
                 unmatchedContacts.RemoveAt(bestIndex);
             }
 

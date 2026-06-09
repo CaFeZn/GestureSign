@@ -125,12 +125,13 @@ namespace GestureSign.Daemon.Triggers
                 a.ContinuousGesture.ContactCount == contactCount &&
                 a.ContinuousGesture.Gesture == gesture &&
                 IsSafeSingleFingerTouchPadAction(a, contactCount));
+            var inputContacts = PointCapture.Instance.InputContacts;
             var executableActions = PluginManager.Instance.GetExecutableActions(
                 actions,
                 PointCapture.Instance.Mode,
                 PointCapture.Instance.SourceDevice,
-                PointCapture.Instance.InputContactIdentifiers,
-                PointCapture.Instance.InputPoints.Select(points => new List<Point>(points)).ToList());
+                inputContacts.Select(contact => contact.ContactIdentifier).ToList(),
+                inputContacts.Select(contact => new List<Point>(contact.Points)).ToList());
             if (executableActions.Count > 0)
             {
                 _continuousGestureFired = true;
