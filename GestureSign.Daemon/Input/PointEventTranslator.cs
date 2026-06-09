@@ -14,6 +14,7 @@ namespace GestureSign.Daemon.Input
         private readonly Dictionary<int, int> _touchContactIdMap = new Dictionary<int, int>();
         private HashSet<MouseActions> _pressedMouseButton;
         private IntPtr _sourceDeviceHandle;
+        private int _lastTouchRestartTick;
 
         internal Devices SourceDevice { get; private set; }
         internal IntPtr SourceDeviceHandle { get; private set; }
@@ -230,6 +231,7 @@ namespace GestureSign.Daemon.Input
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                _lastTouchRestartTick = Environment.TickCount;
                 if (IsCurrentSource(e))
                 {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
@@ -279,6 +281,7 @@ namespace GestureSign.Daemon.Input
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                _lastTouchRestartTick = Environment.TickCount;
                 if (IsCurrentSource(e))
                 {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
@@ -298,6 +301,7 @@ namespace GestureSign.Daemon.Input
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                _lastTouchRestartTick = Environment.TickCount;
                 if (IsCurrentSource(e))
                 {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
@@ -320,12 +324,15 @@ namespace GestureSign.Daemon.Input
                 return;
             }
 
-            if (hasNewContacts && !PointCapture.Instance.InputContacts.Any(contact => contact.Points.Count > 10))
+            if (hasNewContacts &&
+                !PointCapture.Instance.InputContacts.Any(contact => contact.Points.Count > 10) &&
+                unchecked(Environment.TickCount - _lastTouchRestartTick) > 30)
             {
                 OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
+                _lastTouchRestartTick = Environment.TickCount;
                 if (IsCurrentSource(e))
                 {
                     SetActiveTouchContacts(activeContactIdentifiers, activeRawData.Count);
