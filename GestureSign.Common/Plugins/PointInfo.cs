@@ -68,7 +68,7 @@ namespace GestureSign.Common.Plugins
                 ApplicationManager.IsShellUiWindow(targetWindow))
                 return;
 
-            _targetWindow = targetWindow;
+            _targetWindow = ApplicationManager.GetRealWindow(targetWindow);
         }
 
         private SystemWindow ResolveTargetWindow()
