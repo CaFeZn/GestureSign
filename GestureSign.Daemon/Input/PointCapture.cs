@@ -593,8 +593,8 @@ namespace GestureSign.Daemon.Input
                 case Devices.TouchPad:
                     return !HasMatchingConditionedSingleFingerTouchAction(Devices.TouchPad, System.Windows.Forms.Cursor.Position, inputPoint);
                 case Devices.TouchScreen:
-                    return HasSingleFingerTouchAction(Devices.TouchScreen, inputPoint.Point) &&
-                        !HasExecutableSingleFingerTouchAction(Devices.TouchScreen, inputPoint.Point, inputPoint);
+                    return HasOptedInSingleFingerTouchScreenAction(inputPoint.Point) &&
+                        !HasExecutableOptedInSingleFingerTouchScreenAction(inputPoint.Point, inputPoint);
                 default:
                     return false;
             }
@@ -610,6 +610,24 @@ namespace GestureSign.Daemon.Input
             return !applications.Any(app => app is GlobalApp) &&
                 ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
                 GetSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, sourceDevice).Count != 0;
+        }
+
+        private bool HasOptedInSingleFingerTouchScreenAction(Point captureStartPoint)
+        {
+            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(captureStartPoint, out _)?.ToList() ?? new List<IApplication>();
+
+            if (GetConditionedSingleFingerTouchActionsInApplications(applications, Devices.TouchScreen).Count != 0)
+                return true;
+
+            if (applications.Any(app => app is UserApp) &&
+                GetSingleFingerTouchActionsInApplications(applications, Devices.TouchScreen).Count != 0)
+            {
+                return true;
+            }
+
+            return !applications.Any(app => app is GlobalApp) &&
+                ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
+                GetConditionedSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, Devices.TouchScreen).Count != 0;
         }
 
         private bool HasConditionedSingleFingerTouchAction(Devices sourceDevice, Point captureStartPoint)
@@ -663,6 +681,40 @@ namespace GestureSign.Daemon.Input
                 ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
                 HasExecutableSingleFingerTouchAction(
                     GetSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, sourceDevice),
+                    conditionPoints,
+                    contactIdentifiers,
+                    targetWindow);
+        }
+
+        private bool HasExecutableOptedInSingleFingerTouchScreenAction(Point captureStartPoint, InputPoint point)
+        {
+            var applications = ApplicationManager.Instance.GetApplicationFromCapturePoint(captureStartPoint, out var targetWindow)?.ToList() ?? new List<IApplication>();
+            var conditionPoints = new List<List<Point>>(new[] { new List<Point>(new[] { point.Point }) });
+            var contactIdentifiers = new List<int>(new[] { point.ContactIdentifier });
+
+            if (HasExecutableSingleFingerTouchAction(
+                GetConditionedSingleFingerTouchActionsInApplications(applications, Devices.TouchScreen),
+                conditionPoints,
+                contactIdentifiers,
+                targetWindow))
+            {
+                return true;
+            }
+
+            if (applications.Any(app => app is UserApp) &&
+                HasExecutableSingleFingerTouchAction(
+                    GetSingleFingerTouchActionsInApplications(applications, Devices.TouchScreen),
+                    conditionPoints,
+                    contactIdentifiers,
+                    targetWindow))
+            {
+                return true;
+            }
+
+            return !applications.Any(app => app is GlobalApp) &&
+                ApplicationManager.Instance.ShouldUseGlobalFallback(applications) &&
+                HasExecutableSingleFingerTouchAction(
+                    GetConditionedSingleFingerTouchActionsInApplications(new[] { ApplicationManager.Instance.GetGlobalApplication() }, Devices.TouchScreen),
                     conditionPoints,
                     contactIdentifiers,
                     targetWindow);
