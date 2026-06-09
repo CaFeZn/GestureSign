@@ -87,6 +87,12 @@ namespace GestureSign.Daemon.Triggers
             deltaY /= _lastPoints.Count;
             int deltaXAbs = Math.Abs(deltaX);
             int deltaYAbs = Math.Abs(deltaY);
+            if (deltaXAbs == 0 && deltaYAbs == 0)
+                return;
+
+            if (deltaXAbs == deltaYAbs)
+                return;
+
             bool isHorizontal = deltaXAbs > deltaYAbs;
             if (isHorizontal)
             {
