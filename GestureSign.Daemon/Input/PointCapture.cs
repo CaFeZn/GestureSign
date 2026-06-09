@@ -1083,14 +1083,17 @@ namespace GestureSign.Daemon.Input
                 var currentPointsByContact = point
                     .GroupBy(p => p.ContactIdentifier)
                     .ToDictionary(group => group.Key, group => group.Last().Point);
-                var latestPoints = _pointsCaptured
-                    .Select(capturedPoint => currentPointsByContact.TryGetValue(capturedPoint.Key, out var currentPoint)
+                var inputContacts = InputContacts;
+                var latestPoints = inputContacts
+                    .Select(capturedPoint => currentPointsByContact.TryGetValue(capturedPoint.ContactIdentifier, out var currentPoint)
                         ? currentPoint
-                        : capturedPoint.Value.Last())
+                        : capturedPoint.Points.Last())
                     .ToList();
 
                 // Notify subscribers that point has been captured
-                OnPointCaptured(new PointsCapturedEventArgs(new List<List<Point>>(_pointsCaptured.Values), latestPoints));
+                OnPointCaptured(new PointsCapturedEventArgs(
+                    inputContacts.Select(contact => new List<Point>(contact.Points)).ToList(),
+                    latestPoints));
             }
         }
 
