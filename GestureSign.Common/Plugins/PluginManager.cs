@@ -280,10 +280,11 @@ namespace GestureSign.Common.Plugins
 
         private bool ExecuteCommand(ICommand command, IPluginInfo pluginInfo, PointInfo pointInfo, SystemWindow target, bool activateWindow, bool recordCommand, bool repeatActivateWindow)
         {
-            target?.WaitForIdle(200);
+            var effectiveTarget = ResolveCommandTarget(pointInfo, target);
+            effectiveTarget?.WaitForIdle(200);
 
             if (activateWindow)
-                ActivateWindow(target);
+                ActivateWindow(effectiveTarget);
 
             // Load action settings into plugin
             pluginInfo.Plugin.Deserialize(command.CommandSettings);
@@ -294,6 +295,23 @@ namespace GestureSign.Common.Plugins
                 StoreLastCommand(command, pluginInfo, repeatActivateWindow);
 
             return success;
+        }
+
+        private static SystemWindow ResolveCommandTarget(PointInfo pointInfo, SystemWindow target)
+        {
+            if (target != null &&
+                target.HWnd != IntPtr.Zero &&
+                !ApplicationManager.IsShellUiWindow(target))
+            {
+                return target;
+            }
+
+            var resolvedWindow = pointInfo?.Window;
+            return resolvedWindow != null &&
+                resolvedWindow.HWnd != IntPtr.Zero &&
+                !ApplicationManager.IsShellUiWindow(resolvedWindow)
+                ? resolvedWindow
+                : target;
         }
 
         private void StoreLastCommand(ICommand command, IPluginInfo pluginInfo, bool activateWindow)

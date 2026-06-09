@@ -104,9 +104,19 @@ namespace GestureSign.Daemon.Input
 
         private void UpdateDeviceStateOnContext()
         {
-            Interlocked.Exchange(ref _stateUpdating, 0);
-            TryLogRawInputDevices();
-            _messageWindow.UpdateRegistration();
+            try
+            {
+                TryLogRawInputDevices();
+                _messageWindow?.UpdateRegistration();
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _stateUpdating, 0);
+            }
         }
 
         private static void TryLogRawInputDevices()
