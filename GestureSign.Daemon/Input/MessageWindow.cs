@@ -39,6 +39,7 @@ namespace GestureSign.Daemon.Input
         private DeviceStates _penGestureSetting;
         private bool _disposed;
         private int _displaySettingsRefreshQueued;
+        private int _displaySettingsRefreshPending;
         private static readonly object SourceArbitrationLogLock = new object();
         private static readonly HashSet<string> SourceArbitrationLogKeys = new HashSet<string>();
 
@@ -363,7 +364,10 @@ namespace GestureSign.Daemon.Input
                 return;
 
             if (Interlocked.Exchange(ref _displaySettingsRefreshQueued, 1) != 0)
+            {
+                Interlocked.Exchange(ref _displaySettingsRefreshPending, 1);
                 return;
+            }
 
             if (_messageContext == null)
             {
@@ -408,6 +412,8 @@ namespace GestureSign.Daemon.Input
             finally
             {
                 Interlocked.Exchange(ref _displaySettingsRefreshQueued, 0);
+                if (Interlocked.Exchange(ref _displaySettingsRefreshPending, 0) != 0)
+                    SystemEvents_DisplaySettingsChanged(this, EventArgs.Empty);
             }
         }
 
