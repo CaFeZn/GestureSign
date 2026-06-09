@@ -61,6 +61,16 @@ namespace GestureSign.Common.Plugins
             _syncContext.Send((o) => action.Invoke(), null);
         }
 
+        public void SetTargetWindow(SystemWindow targetWindow)
+        {
+            if (targetWindow == null ||
+                targetWindow.HWnd == IntPtr.Zero ||
+                ApplicationManager.IsShellUiWindow(targetWindow))
+                return;
+
+            _targetWindow = targetWindow;
+        }
+
         private SystemWindow ResolveTargetWindow()
         {
             if (_targetWindow != null &&

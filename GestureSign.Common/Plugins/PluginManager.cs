@@ -281,6 +281,7 @@ namespace GestureSign.Common.Plugins
         private bool ExecuteCommand(ICommand command, IPluginInfo pluginInfo, PointInfo pointInfo, SystemWindow target, bool activateWindow, bool recordCommand, bool repeatActivateWindow)
         {
             var effectiveTarget = ResolveCommandTarget(pointInfo, target);
+            pointInfo?.SetTargetWindow(effectiveTarget);
             effectiveTarget?.WaitForIdle(200);
 
             if (activateWindow)
