@@ -87,13 +87,26 @@ namespace GestureSign.Daemon.Input
         {
             if (0 == Interlocked.Exchange(ref _stateUpdating, 1))
             {
-                Task.Delay(600).ContinueWith((t) =>
-                {
-                    Interlocked.Exchange(ref _stateUpdating, 0);
-                    TryLogRawInputDevices();
-                    _messageWindow.UpdateRegistration();
-                }, TaskScheduler.FromCurrentSynchronizationContext());
+                Task.Delay(600).ContinueWith(t => PostDeviceStateUpdate());
             }
+        }
+
+        private void PostDeviceStateUpdate()
+        {
+            if (_synchronizationContext != null)
+            {
+                _synchronizationContext.Post(state => UpdateDeviceStateOnContext(), null);
+                return;
+            }
+
+            UpdateDeviceStateOnContext();
+        }
+
+        private void UpdateDeviceStateOnContext()
+        {
+            Interlocked.Exchange(ref _stateUpdating, 0);
+            TryLogRawInputDevices();
+            _messageWindow.UpdateRegistration();
         }
 
         private static void TryLogRawInputDevices()
