@@ -91,7 +91,11 @@ namespace GestureSign.Daemon.Triggers
                 return;
 
             if (deltaXAbs == deltaYAbs)
+            {
+                _stopwatch.Restart();
+                _lastPoints = e.FirstCapturedPoints;
                 return;
+            }
 
             bool isHorizontal = deltaXAbs > deltaYAbs;
             if (isHorizontal)
