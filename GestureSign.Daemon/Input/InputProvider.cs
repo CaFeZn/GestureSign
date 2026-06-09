@@ -18,6 +18,7 @@ namespace GestureSign.Daemon.Input
         private MessageWindow _messageWindow;
         private CustomNamedPipeServer _deviceStateServer;
         private int _stateUpdating;
+        private int _stateUpdatePending;
         private readonly SynchronizationContext _synchronizationContext;
 
         public LowLevelMouseHook LowLevelMouseHook;
@@ -88,7 +89,10 @@ namespace GestureSign.Daemon.Input
             if (0 == Interlocked.Exchange(ref _stateUpdating, 1))
             {
                 Task.Delay(600).ContinueWith(t => PostDeviceStateUpdate());
+                return;
             }
+
+            Interlocked.Exchange(ref _stateUpdatePending, 1);
         }
 
         private void PostDeviceStateUpdate()
@@ -116,6 +120,8 @@ namespace GestureSign.Daemon.Input
             finally
             {
                 Interlocked.Exchange(ref _stateUpdating, 0);
+                if (Interlocked.Exchange(ref _stateUpdatePending, 0) != 0)
+                    UpdateDeviceState();
             }
         }
 
