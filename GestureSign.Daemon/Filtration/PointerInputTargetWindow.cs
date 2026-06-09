@@ -192,9 +192,9 @@ namespace GestureSign.Daemon.Filtration
 
             if (pointerInfos.Length != ptis.Count) return;
 
-            if (pointerInfos.Length < _blockTouchInputThreshold ||
-                Input.PointCapture.Instance.State == Common.Input.CaptureState.CapturingInvalid ||
-                _tempDisable)
+            if (_tempDisable ||
+                pointerInfos.Length < _blockTouchInputThreshold ||
+                Input.PointCapture.Instance.State == Common.Input.CaptureState.Ready)
             {
                 if (ptis.Count != 0)
                 {
