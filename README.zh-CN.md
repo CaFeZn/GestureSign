@@ -283,7 +283,7 @@ Windows 11 触摸/手势冲突：
 | [#84](https://github.com/TransposonY/GestureSign/issues/84), [#65](https://github.com/TransposonY/GestureSign/issues/65), [#118](https://github.com/TransposonY/GestureSign/issues/118) | 本 README 替代不可用的外部指南，覆盖设置、使用、故障排查和构建说明；控制面板帮助按钮会跳转到这里。 |
 | [#76](https://github.com/TransposonY/GestureSign/issues/76) | 组合手势等待时间可配置。 |
 | [#30](https://github.com/TransposonY/GestureSign/issues/30) | 添加可选的整段手势超时，可在设定时长后取消捕获，并与手势起始超时互斥。 |
-| [#75](https://github.com/TransposonY/GestureSign/issues/75), [#32](https://github.com/TransposonY/GestureSign/issues/32) | 触发条件支持触摸坐标变量、多个条件表达式，并让百分比坐标与 Win32 虚拟屏幕像素边界对齐。多触点条件求值现在也会从同一份有序的捕获快照里同时读取点位和 contact id，降低 `finger_2_start_X` 这类变量在后续执行路径里错位到错误触点上的概率。 |
+| [#75](https://github.com/TransposonY/GestureSign/issues/75), [#32](https://github.com/TransposonY/GestureSign/issues/32) | 触发条件支持触摸坐标变量、多个条件表达式，并让百分比坐标与 Win32 虚拟屏幕像素边界对齐。多触点条件求值现在也会从同一份显式有序的捕获快照里同时读取点位和 contact id，降低 `finger_2_start_X` 这类变量在后续执行路径里错位到错误触点上的概率。 |
 | [#66](https://github.com/TransposonY/GestureSign/issues/66), [#24](https://github.com/TransposonY/GestureSign/issues/24), [#52](https://github.com/TransposonY/GestureSign/issues/52) | 触发条件可以检测任意按住的虚拟键，例如 `key_space_down`、`key_a_down` 和 `key_page_up_down`，条件编辑器也可以捕获按键名并插入；对普通手势来说，这些按键条件现在会按手势开始时的按键快照求值，而不是按更晚的动作执行时刻求值。 |
 | [#74](https://github.com/TransposonY/GestureSign/issues/74) | 重新注入触摸 `UP` 帧时为最后一个触点保留 `INRANGE`。 |
 | [#73](https://github.com/TransposonY/GestureSign/issues/73), [#56](https://github.com/TransposonY/GestureSign/issues/56) | 对 Windows 10/11 下触摸键盘命令行为和 TabTip 路径查找做了加固。 |

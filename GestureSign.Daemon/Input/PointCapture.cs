@@ -47,6 +47,7 @@ namespace GestureSign.Daemon.Input
         SynchronizationContext _currentContext;
 
         private Dictionary<int, List<Point>> _pointsCaptured;
+        private List<int> _orderedContactIdentifiers;
         // Create variable to hold the only allowed instance of this class
         static readonly PointCapture _Instance = new PointCapture();
 
@@ -97,8 +98,16 @@ namespace GestureSign.Daemon.Input
                 if (_pointsCaptured == null)
                     return new List<CapturedContact>();
 
-                return _pointsCaptured
-                    .Select(capturedPoint => new CapturedContact(capturedPoint.Key, capturedPoint.Value))
+                if (_orderedContactIdentifiers == null || _orderedContactIdentifiers.Count == 0)
+                {
+                    return _pointsCaptured
+                        .Select(capturedPoint => new CapturedContact(capturedPoint.Key, capturedPoint.Value))
+                        .ToList();
+                }
+
+                return _orderedContactIdentifiers
+                    .Where(contactIdentifier => _pointsCaptured.ContainsKey(contactIdentifier))
+                    .Select(contactIdentifier => new CapturedContact(contactIdentifier, _pointsCaptured[contactIdentifier]))
                     .ToList();
             }
         }
@@ -803,6 +812,7 @@ namespace GestureSign.Daemon.Input
                     : points.Select(p => p.FirstOrDefault()).ToList();
                 OnCaptureCanceled(new PointsCapturedEventArgs(points, firstPoints));
                 _pointsCaptured.Clear();
+                _orderedContactIdentifiers = null;
             }
 
             CapturePressedVirtualKeys = new List<int>();
@@ -821,6 +831,7 @@ namespace GestureSign.Daemon.Input
                     : points.Select(p => p.FirstOrDefault()).ToList();
                 OnCaptureCanceled(new PointsCapturedEventArgs(points, firstPoints));
                 _pointsCaptured.Clear();
+                _orderedContactIdentifiers = null;
             }
             else
             {
@@ -866,12 +877,16 @@ namespace GestureSign.Daemon.Input
 
             // Clear old gesture from point list so we can start adding the new captures points to the list 
             _pointsCaptured = new Dictionary<int, List<Point>>(firstPoint.Count);
+            _orderedContactIdentifiers = new List<int>(firstPoint.Count);
             if (AppConfig.IsOrderByLocation)
             {
                 foreach (var rawData in firstPoint.OrderBy(p => p.Point.X))
                 {
                     if (!_pointsCaptured.ContainsKey(rawData.ContactIdentifier))
+                    {
                         _pointsCaptured.Add(rawData.ContactIdentifier, new List<Point>(30));
+                        _orderedContactIdentifiers.Add(rawData.ContactIdentifier);
+                    }
                 }
             }
             else
@@ -879,7 +894,10 @@ namespace GestureSign.Daemon.Input
                 foreach (var rawData in firstPoint.OrderBy(p => p.ContactIdentifier))
                 {
                     if (!_pointsCaptured.ContainsKey(rawData.ContactIdentifier))
+                    {
                         _pointsCaptured.Add(rawData.ContactIdentifier, new List<Point>(30));
+                        _orderedContactIdentifiers.Add(rawData.ContactIdentifier);
+                    }
                 }
             }
             AddPoint(firstPoint);
@@ -929,6 +947,7 @@ namespace GestureSign.Daemon.Input
                     _inputProvider.ReleaseCurrentTouchSource();
                 }
                 _pointsCaptured.Clear();
+                _orderedContactIdentifiers = null;
                 CapturePressedVirtualKeys = new List<int>();
                 return;
             }
@@ -967,6 +986,7 @@ namespace GestureSign.Daemon.Input
             }
 
             _pointsCaptured.Clear();
+            _orderedContactIdentifiers = null;
             CapturePressedVirtualKeys = new List<int>();
         }
 
