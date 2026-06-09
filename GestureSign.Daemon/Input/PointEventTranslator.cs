@@ -200,6 +200,9 @@ namespace GestureSign.Daemon.Input
                 .ToList();
             bool hadActiveTouchContacts = _activeTouchContacts.Count != 0;
             bool releasedTrackedContacts = releasedContactIdentifiers.Any(id => _activeTouchContacts.Contains(id));
+            var releasedTrackedRawData = e.RawData
+                .Where(rd => !IsActiveTouchContact(rd) && _activeTouchContacts.Contains(rd.ContactIdentifier))
+                .ToList();
 
             if (_activeTouchContacts.Count != 0 && releasedContactIdentifiers.Count != 0)
             {
@@ -223,7 +226,7 @@ namespace GestureSign.Daemon.Input
                 }
 
                 // Rapid taps can report the previous release and the next press in one raw frame.
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
@@ -272,7 +275,7 @@ namespace GestureSign.Daemon.Input
                     return;
                 }
 
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
@@ -291,7 +294,7 @@ namespace GestureSign.Daemon.Input
                 hasNewContacts &&
                 PointCapture.Instance.State == CaptureState.CapturingInvalid)
             {
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
@@ -319,7 +322,7 @@ namespace GestureSign.Daemon.Input
 
             if (hasNewContacts && !PointCapture.Instance.InputPoints.Any(p => p.Count > 10))
             {
-                OnPointUp(new InputPointsEventArgs(e.RawData, e.SourceDevice, e.DeviceHandle));
+                OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
 
                 OnPointDown(new InputPointsEventArgs(activeRawData, e.SourceDevice, e.DeviceHandle));
