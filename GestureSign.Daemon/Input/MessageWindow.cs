@@ -39,6 +39,8 @@ namespace GestureSign.Daemon.Input
         private DeviceStates _penGestureSetting;
         private bool _disposed;
         private int _displaySettingsRefreshQueued;
+        private static readonly object SourceArbitrationLogLock = new object();
+        private static readonly HashSet<string> SourceArbitrationLogKeys = new HashSet<string>();
 
         public event RawPointsDataMessageEventHandler PointsIntercepted;
 
@@ -470,17 +472,37 @@ namespace GestureSign.Daemon.Input
             int staleTimeout = captureState == Common.Input.CaptureState.CapturingInvalid
                 ? InvalidTouchSourceStaleTimeout
                 : SourceDeviceStaleTimeout;
-            bool sourceTimedOut = _lastSourceDeviceInputTick != 0 &&
-                unchecked(Environment.TickCount - _lastSourceDeviceInputTick) > staleTimeout;
+            int elapsedSinceLastFrame = _lastSourceDeviceInputTick == 0
+                ? int.MaxValue
+                : unchecked(Environment.TickCount - _lastSourceDeviceInputTick);
+            bool sourceTimedOut = _lastSourceDeviceInputTick != 0 && elapsedSinceLastFrame > staleTimeout;
             bool touchSourceStillActive = (_sourceDevice & Devices.TouchDevice) != 0 &&
                 (captureState == Common.Input.CaptureState.Capturing ||
                  captureState == Common.Input.CaptureState.CapturingInvalid ||
                  captureState == Common.Input.CaptureState.TriggerFired);
             if (touchSourceStillActive && !sourceTimedOut)
+            {
+                LogSourceArbitration("blocked-active",
+                    _sourceDevice,
+                    _sourceDeviceHandle,
+                    sourceDevice,
+                    sourceDeviceHandle,
+                    captureState,
+                    staleTimeout,
+                    elapsedSinceLastFrame);
                 return false;
+            }
 
             if (sourceTimedOut)
             {
+                LogSourceArbitration("takeover-timeout",
+                    _sourceDevice,
+                    _sourceDeviceHandle,
+                    sourceDevice,
+                    sourceDeviceHandle,
+                    captureState,
+                    staleTimeout,
+                    elapsedSinceLastFrame);
                 ResetSourceDevice(true);
                 _sourceDevice = sourceDevice;
                 _sourceDeviceHandle = sourceDeviceHandle;
@@ -489,6 +511,19 @@ namespace GestureSign.Daemon.Input
             }
 
             return false;
+        }
+
+        private static void LogSourceArbitration(string result, Devices currentSource, IntPtr currentHandle, Devices nextSource, IntPtr nextHandle, CaptureState captureState, int staleTimeout, int elapsedSinceLastFrame)
+        {
+            string key = $"{result}|{currentSource}|0x{currentHandle.ToInt64():X}|{nextSource}|0x{nextHandle.ToInt64():X}|{captureState}|{staleTimeout}";
+            lock (SourceArbitrationLogLock)
+            {
+                if (!SourceArbitrationLogKeys.Add(key))
+                    return;
+            }
+
+            Logging.LogMessage(
+                $"Touch source arbitration: result={result}, currentSource={currentSource}, currentHandle=0x{currentHandle.ToInt64():X}, nextSource={nextSource}, nextHandle=0x{nextHandle.ToInt64():X}, captureState={captureState}, staleTimeoutMs={staleTimeout}, elapsedSinceLastFrameMs={elapsedSinceLastFrame}");
         }
 
         private bool IsCurrentScreenValid()
