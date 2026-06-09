@@ -99,8 +99,15 @@ namespace GestureSign.Daemon.Input
         {
             if (_synchronizationContext != null)
             {
-                _synchronizationContext.Post(state => UpdateDeviceStateOnContext(), null);
-                return;
+                try
+                {
+                    _synchronizationContext.Post(state => UpdateDeviceStateOnContext(), null);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                }
             }
 
             UpdateDeviceStateOnContext();
@@ -152,8 +159,15 @@ namespace GestureSign.Daemon.Input
         {
             if (_synchronizationContext != null)
             {
-                _synchronizationContext.Post(state => UpdateMouseHook(), null);
-                return;
+                try
+                {
+                    _synchronizationContext.Post(state => UpdateMouseHook(), null);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                }
             }
 
             UpdateMouseHook();
