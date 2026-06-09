@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using GestureSign.Common.Applications;
+using GestureSign.Common.Log;
 using ManagedWinapi.Windows;
 
 namespace GestureSign.Common.Plugins
@@ -58,7 +59,20 @@ namespace GestureSign.Common.Plugins
 
         public void Invoke(System.Action action)
         {
-            _syncContext.Send((o) => action.Invoke(), null);
+            if (_syncContext != null)
+            {
+                try
+                {
+                    _syncContext.Send((o) => action.Invoke(), null);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logging.LogException(ex);
+                }
+            }
+
+            action.Invoke();
         }
 
         public void SetTargetWindow(SystemWindow targetWindow)
