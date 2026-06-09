@@ -481,7 +481,17 @@ namespace GestureSign.Daemon.Input
             if (!AppConfig.UiAccess) return;
 
             if (threshold != null)
+            {
                 _blockTouchInputThreshold = threshold;
+                PostToCurrentContext(() =>
+                {
+                    if (_pointerInputTargetWindow != null)
+                        _pointerInputTargetWindow.BlockTouchInputThreshold = _blockTouchInputThreshold.GetValueOrDefault();
+                    _blockTouchInputThreshold = null;
+                });
+                return;
+            }
+
             if (_blockTouchInputThreshold != null)
                 _blockTouchDelayTimer.Change(100, Timeout.Infinite);
         }
