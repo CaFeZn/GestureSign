@@ -465,6 +465,7 @@ namespace GestureSign.Daemon.Input
 
             if (_sourceDevice == sourceDevice && _sourceDeviceHandle == sourceDeviceHandle)
             {
+                _lastSourceDeviceInputTick = Environment.TickCount;
                 return true;
             }
 
