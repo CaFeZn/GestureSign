@@ -77,6 +77,7 @@ namespace GestureSign.Common.Plugins
                 _targetWindow.HWnd != IntPtr.Zero &&
                 !ApplicationManager.IsShellUiWindow(_targetWindow))
             {
+                _targetWindow = ApplicationManager.GetRealWindow(_targetWindow);
                 return _targetWindow;
             }
 
@@ -85,13 +86,13 @@ namespace GestureSign.Common.Plugins
                 foregroundWindow.HWnd != IntPtr.Zero &&
                 !ApplicationManager.IsShellUiWindow(foregroundWindow))
             {
-                _targetWindow = foregroundWindow;
+                _targetWindow = ApplicationManager.GetRealWindow(foregroundWindow);
                 return _targetWindow;
             }
 
             if (_pointLocation != null && _pointLocation.Count != 0)
             {
-                _targetWindow = ApplicationManager.Instance.GetWindowFromPoint(_pointLocation[0]);
+                _targetWindow = ApplicationManager.GetRealWindow(ApplicationManager.Instance.GetWindowFromPoint(_pointLocation[0]));
             }
 
             return _targetWindow;
