@@ -47,7 +47,11 @@ namespace GestureSign.Daemon.Triggers
 
         private void PointCapture_CaptureEnded(object sender, System.EventArgs e)
         {
-            Reset();
+            // CaptureEnded fires before BeforePointsCaptured, so keep the
+            // suppression flag until the final finger-up gesture path has a
+            // chance to cancel itself.
+            _stopwatch.Stop();
+            _lastPoints = null;
         }
 
         private void PointCapture_CaptureCanceled(object sender, PointsCapturedEventArgs e)
