@@ -293,8 +293,7 @@ namespace GestureSign.Daemon.Input
             bool hasNewContacts = activeRawData.Count > _lastPointsCount ||
                 activeContactIdentifiers.Any(id => !_activeTouchContacts.Contains(id));
 
-            if (releasedTrackedContacts &&
-                hasNewContacts &&
+            if (hasNewContacts &&
                 PointCapture.Instance.State == CaptureState.CapturingInvalid)
             {
                 OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
