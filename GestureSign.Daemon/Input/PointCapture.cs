@@ -796,7 +796,8 @@ namespace GestureSign.Daemon.Input
         {
             if (_pointsCaptured != null && _pointsCaptured.Count != 0)
             {
-                var points = new List<List<Point>>(_pointsCaptured.Values);
+                var inputContacts = InputContacts;
+                var points = inputContacts.Select(contact => new List<Point>(contact.Points)).ToList();
                 var firstPoints = SourceDevice == Devices.TouchPad
                     ? new List<Point>() { _touchPadStartPoint }
                     : points.Select(p => p.FirstOrDefault()).ToList();
@@ -813,7 +814,8 @@ namespace GestureSign.Daemon.Input
         {
             if (_pointsCaptured != null && _pointsCaptured.Count != 0)
             {
-                var points = new List<List<Point>>(_pointsCaptured.Values);
+                var inputContacts = InputContacts;
+                var points = inputContacts.Select(contact => new List<Point>(contact.Points)).ToList();
                 var firstPoints = SourceDevice == Devices.TouchPad
                     ? new List<Point>() { _touchPadStartPoint }
                     : points.Select(p => p.FirstOrDefault()).ToList();
@@ -903,10 +905,13 @@ namespace GestureSign.Daemon.Input
             if (_gestureTimeoutTimer != null)
                 _gestureTimeoutTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
+            var inputContacts = InputContacts;
+            var orderedPoints = inputContacts.Select(contact => new List<Point>(contact.Points)).ToList();
+
             // Create points capture event args, to be used to send off to event subscribers or to simulate original Point event
             PointsCapturedEventArgs pointsInformation = SourceDevice == Devices.TouchPad ?
-                new PointsCapturedEventArgs(_pointsCaptured.Values.ToList(), new List<Point>() { _touchPadStartPoint }) :
-                new PointsCapturedEventArgs(new List<List<Point>>(_pointsCaptured.Values), _pointsCaptured.Values.Select(p => p.FirstOrDefault()).ToList());
+                new PointsCapturedEventArgs(orderedPoints, new List<Point>() { _touchPadStartPoint }) :
+                new PointsCapturedEventArgs(orderedPoints, orderedPoints.Select(p => p.FirstOrDefault()).ToList());
 
             // Notify subscribers that capture has ended （draw end）
             OnCaptureEnded();
@@ -931,7 +936,7 @@ namespace GestureSign.Daemon.Input
             if (ShouldRecordTrainingGesture())
             {
                 _pointPatternCache.Clear();
-                _pointPatternCache.Add(new PointPattern(_pointsCaptured.Values));
+                _pointPatternCache.Add(new PointPattern(orderedPoints));
 
                 if (!NamedPipe.SendMessageAsync(IpcCommands.GotGesture, Constants.ControlPanel, _pointPatternCache.Select(p => p.Points).ToArray(), false).Result)
                     Mode = CaptureMode.Normal;
@@ -945,7 +950,7 @@ namespace GestureSign.Daemon.Input
                     GestureManager.Instance.GestureName,
                     pointsInformation.Points,
                     capturedPoints,
-                    _pointsCaptured.Keys.ToList(),
+                    inputContacts.Select(contact => contact.ContactIdentifier).ToList(),
                     new List<int>(CapturePressedVirtualKeys)));
             }
             else if (ShouldPlayUnrecognizedGestureSound())
@@ -978,7 +983,7 @@ namespace GestureSign.Daemon.Input
 
         private bool IsSinglePointTap()
         {
-            return _pointsCaptured.Count == 1 && _pointsCaptured.Values.First().Count == 1;
+            return InputContacts.Count == 1 && InputContacts[0].Points.Count == 1;
         }
 
         private static List<int> CapturePressedVirtualKeysSnapshot()
