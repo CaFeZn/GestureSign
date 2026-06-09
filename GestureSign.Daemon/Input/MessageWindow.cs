@@ -85,7 +85,24 @@ namespace GestureSign.Daemon.Input
 
         protected override void OnHandleChange()
         {
-            UpdateRegistration();
+            try
+            {
+                UpdateRegistration();
+            }
+            catch (Exception ex)
+            {
+                Logging.LogException(ex);
+                try
+                {
+                    _validDevices.Clear();
+                    _touchScreenDeviceScreens.Clear();
+                    ResetSourceDevice(true);
+                }
+                catch (Exception resetException)
+                {
+                    Logging.LogException(resetException);
+                }
+            }
             base.OnHandleChange();
         }
 
