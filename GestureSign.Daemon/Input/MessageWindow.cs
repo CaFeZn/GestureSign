@@ -18,6 +18,7 @@ namespace GestureSign.Daemon.Input
     {
         private Screen _currentScr;
         private const int SourceDeviceStaleTimeout = 1000;
+        private const int InvalidTouchSourceStaleTimeout = 250;
 
         private static readonly HandleRef HwndMessage = new HandleRef(null, new IntPtr(-3));
 
@@ -448,12 +449,16 @@ namespace GestureSign.Daemon.Input
                 return true;
             }
 
+            var captureState = Input.PointCapture.Instance.State;
+            int staleTimeout = captureState == Common.Input.CaptureState.CapturingInvalid
+                ? InvalidTouchSourceStaleTimeout
+                : SourceDeviceStaleTimeout;
             bool sourceTimedOut = _lastSourceDeviceInputTick != 0 &&
-                unchecked(Environment.TickCount - _lastSourceDeviceInputTick) > SourceDeviceStaleTimeout;
+                unchecked(Environment.TickCount - _lastSourceDeviceInputTick) > staleTimeout;
             bool touchSourceStillActive = (_sourceDevice & Devices.TouchDevice) != 0 &&
-                (Input.PointCapture.Instance.State == Common.Input.CaptureState.Capturing ||
-                 Input.PointCapture.Instance.State == Common.Input.CaptureState.CapturingInvalid ||
-                 Input.PointCapture.Instance.State == Common.Input.CaptureState.TriggerFired);
+                (captureState == Common.Input.CaptureState.Capturing ||
+                 captureState == Common.Input.CaptureState.CapturingInvalid ||
+                 captureState == Common.Input.CaptureState.TriggerFired);
             if (touchSourceStillActive && !sourceTimedOut)
                 return false;
 
