@@ -471,7 +471,8 @@ namespace GestureSign.Daemon.Input
 
             if (_sourceDevice == sourceDevice && _sourceDeviceHandle == sourceDeviceHandle)
             {
-                _lastSourceDeviceInputTick = Environment.TickCount;
+                // Keep ownership alive only when a full output frame completes; partial raw packets
+                // should still age out so another touch source can recover from a stuck stream.
                 return true;
             }
 
