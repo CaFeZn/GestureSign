@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using GestureSign.Common.Localization;
 using GestureSign.Common.Plugins;
 using System.Runtime.InteropServices;
@@ -74,28 +75,8 @@ namespace GestureSign.CorePlugins.LaunchApp
 
         public bool Gestured(PointInfo actionPoint)
         {
-            if (AppInfo.Key == null) return false;
-            ApplicationActivationManager appActiveManager = new ApplicationActivationManager();
-            try
-            {
-                uint pid;
-                appActiveManager.ActivateApplication(AppInfo.Key, null, ActivateOptions.None, out pid);
-            }
-            catch
-            {
-                // ignored
-            }
-            //IShellItemArray array = GetShellItemArray(@"C:\temp\somefile.xyz");
-            //appActiveManager.ActivateForFile("2c123c17-8b21-4eb8-8b7f-fdc35c8b7718_n2533ggrncqjt!App", array, "Open",
-            //    out pid);
-
-
-            //Process explorer = new Process();
-            //explorer.StartInfo.FileName = "explorer.exe";
-            //explorer.StartInfo.Arguments = @"shell:AppsFolder\" + AppInfo.Key;
-            //explorer.Start();
-
-            return true;
+            if (string.IsNullOrWhiteSpace(AppInfo.Key)) return false;
+            return TryActivateApplication(AppInfo.Key) || LaunchViaAppsFolder(AppInfo.Key);
         }
 
         public bool Deserialize(string serializedData)
@@ -179,6 +160,33 @@ namespace GestureSign.CorePlugins.LaunchApp
         {
             LaunchAppView newGui = new LaunchAppView() { DataContext = this };
             return newGui;
+        }
+
+        private static bool TryActivateApplication(string appUserModelId)
+        {
+            try
+            {
+                ApplicationActivationManager appActiveManager = new ApplicationActivationManager();
+                uint pid;
+                appActiveManager.ActivateApplication(appUserModelId, null, ActivateOptions.None, out pid);
+                return pid != 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool LaunchViaAppsFolder(string appUserModelId)
+        {
+            try
+            {
+                return Process.Start(new ProcessStartInfo("explorer.exe", @"shell:AppsFolder\" + appUserModelId)) != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
         //private static IShellItemArray GetShellItemArray(string sourceFile)
         //{
