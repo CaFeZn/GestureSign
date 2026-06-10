@@ -285,48 +285,60 @@ namespace GestureSign.Daemon.Input
                 if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
                     return true;
 
-                if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref pcbSize, "query device name size"))
-                    return false;
+                string deviceName = null;
+                bool hasDeviceName = false;
 
-                if (pcbSize <= 0)
-                    return false;
-
-                IntPtr pData = Marshal.AllocHGlobal((int)pcbSize);
-                using (new SafeUnmanagedMemoryHandle(pData))
+                if (TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref pcbSize, "query device name size") &&
+                    pcbSize > 0)
                 {
-                    if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, pData, ref pcbSize, "read device name"))
-                        return false;
-
-                    string deviceName = Marshal.PtrToStringAnsi(pData);
-                    ushort effectiveUsage = ResolveEffectiveDigitizerUsage(info.hid, deviceName);
-                    if (effectiveUsage == 0)
+                    IntPtr pData = Marshal.AllocHGlobal((int)pcbSize);
+                    using (new SafeUnmanagedMemoryHandle(pData))
                     {
-                        LogValidatedDevice(hDevice, info.hid, deviceName, "ignored unsupported digitizer usage");
-                        return true;
+                        if (TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, pData, ref pcbSize, "read device name"))
+                        {
+                            deviceName = Marshal.PtrToStringAnsi(pData);
+                            hasDeviceName = !string.IsNullOrEmpty(deviceName);
+                        }
                     }
+                }
 
-                    bool allowTouchSuppression = ShouldAllowPenTouchSuppression(effectiveUsage, deviceName);
-
-                    if (ShouldIgnoreValidatedDevice(effectiveUsage, deviceName))
-                    {
-                        LogValidatedDevice(hDevice, info.hid, deviceName, "ignored device path/name filter", effectiveUsage);
-                        return true;
-                    }
-
-                    if (effectiveUsage == NativeMethods.PenUsage)
-                        _touchSuppressingPenDevices[hDevice] = allowTouchSuppression;
-
-                    LogValidatedDevice(
-                        hDevice,
-                        info.hid,
-                        deviceName,
-                        effectiveUsage == NativeMethods.PenUsage && !allowTouchSuppression
-                            ? "accepted with touch-suppression disabled for this pen path"
-                            : "accepted",
-                        effectiveUsage);
-                    usage = effectiveUsage;
+                ushort effectiveUsage = ResolveEffectiveDigitizerUsage(info.hid, deviceName);
+                if (effectiveUsage == 0)
+                {
+                    LogValidatedDevice(hDevice, info.hid, deviceName, "ignored unsupported digitizer usage");
                     return true;
                 }
+
+                if (!hasDeviceName &&
+                    effectiveUsage != NativeMethods.TouchPadUsage &&
+                    effectiveUsage != NativeMethods.TouchScreenUsage)
+                {
+                    return false;
+                }
+
+                bool allowTouchSuppression = ShouldAllowPenTouchSuppression(effectiveUsage, deviceName);
+
+                if (ShouldIgnoreValidatedDevice(effectiveUsage, deviceName))
+                {
+                    LogValidatedDevice(hDevice, info.hid, deviceName, "ignored device path/name filter", effectiveUsage);
+                    return true;
+                }
+
+                if (effectiveUsage == NativeMethods.PenUsage)
+                    _touchSuppressingPenDevices[hDevice] = allowTouchSuppression;
+
+                LogValidatedDevice(
+                    hDevice,
+                    info.hid,
+                    deviceName,
+                    hasDeviceName
+                        ? (effectiveUsage == NativeMethods.PenUsage && !allowTouchSuppression
+                            ? "accepted with touch-suppression disabled for this pen path"
+                            : "accepted")
+                        : "accepted without device name",
+                    effectiveUsage);
+                usage = effectiveUsage;
+                return true;
             }
         }
 
