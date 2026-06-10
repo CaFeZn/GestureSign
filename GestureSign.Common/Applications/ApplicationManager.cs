@@ -474,17 +474,55 @@ namespace GestureSign.Common.Applications
         {
             try
             {
+                if (window == null || window.HWnd == IntPtr.Zero)
+                    return window;
+
                 if (VersionHelper.IsWindows10OrGreater() && "ApplicationFrameWindow".Equals(window.ClassName))
                 {
-                    var realWindow = window.AllDescendantWindows.FirstOrDefault(w => "Windows.UI.Core.CoreWindow".Equals(w.ClassName));
-                    if (realWindow != null)
-                        return realWindow;
+                    var descendants = window.AllDescendantWindows
+                        .Where(w => w != null && w.HWnd != IntPtr.Zero && !IsShellUiWindow(w))
+                        .ToList();
+
+                    var coreWindow = descendants.FirstOrDefault(w => "Windows.UI.Core.CoreWindow".Equals(w.ClassName));
+                    if (coreWindow != null)
+                        return coreWindow;
+
+                    int wrapperProcessId = window.ProcessId;
+                    var processSeparatedDescendants = descendants
+                        .Where(w => SafeGetProcessId(w) != wrapperProcessId)
+                        .ToList();
+
+                    if (processSeparatedDescendants.Count == 1)
+                        return processSeparatedDescendants[0];
+
+                    var visibleProcessSeparatedDescendants = processSeparatedDescendants
+                        .Where(w => w.Visible)
+                        .ToList();
+
+                    if (visibleProcessSeparatedDescendants.Count == 1)
+                        return visibleProcessSeparatedDescendants[0];
+
+                    var visibleDescendants = descendants.Where(w => w.Visible).ToList();
+                    if (visibleDescendants.Count == 1)
+                        return visibleDescendants[0];
                 }
                 return window;
             }
             catch (Exception)
             {
                 return window;
+            }
+        }
+
+        private static int SafeGetProcessId(SystemWindow window)
+        {
+            try
+            {
+                return window?.ProcessId ?? 0;
+            }
+            catch
+            {
+                return 0;
             }
         }
 
