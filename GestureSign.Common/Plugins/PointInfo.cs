@@ -95,7 +95,7 @@ namespace GestureSign.Common.Plugins
                 return _targetWindow;
             }
 
-            var foregroundWindow = SystemWindow.ForegroundWindow;
+            var foregroundWindow = ApplicationManager.Instance.GetCurrentOrLastNonShellForegroundWindow();
             if (foregroundWindow != null &&
                 foregroundWindow.HWnd != IntPtr.Zero &&
                 !ApplicationManager.IsShellUiWindow(foregroundWindow))

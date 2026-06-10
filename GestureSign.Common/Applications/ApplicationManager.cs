@@ -24,6 +24,7 @@ namespace GestureSign.Common.Applications
         private List<IApplication> _applications;
         IEnumerable<IApplication> _recognizedApplication;
         private Timer _timer;
+        private SystemWindow _lastNonShellForegroundWindow;
         #endregion
 
         #region Public Instance Properties
@@ -279,12 +280,12 @@ namespace GestureSign.Common.Applications
 
         public SystemWindow GetWindowFromPoint(Point point)
         {
-            var window = SystemWindow.FromPointEx(point.X, point.Y, true, true);
-            if (!IsShellUiWindow(window))
+            var window = GetRealWindow(SystemWindow.FromPointEx(point.X, point.Y, true, true));
+            if (RememberNonShellWindow(window) != null)
                 return window;
 
-            var foregroundWindow = SystemWindow.ForegroundWindow;
-            return foregroundWindow == null || IsShellUiWindow(foregroundWindow) ? window : foregroundWindow;
+            var foregroundWindow = GetCurrentOrLastNonShellForegroundWindow();
+            return foregroundWindow ?? window;
         }
 
         public IApplication[] GetApplicationFromWindow(SystemWindow window, bool userApplicationOnly = false)
@@ -426,9 +427,15 @@ namespace GestureSign.Common.Applications
 
         public SystemWindow GetForegroundApplications()
         {
-            CaptureWindow = SystemWindow.ForegroundWindow;
+            CaptureWindow = GetCurrentOrLastNonShellForegroundWindow() ?? SystemWindow.ForegroundWindow;
             _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
             return CaptureWindow;
+        }
+
+        public SystemWindow GetCurrentOrLastNonShellForegroundWindow()
+        {
+            var foregroundWindow = RememberNonShellWindow(SystemWindow.ForegroundWindow);
+            return foregroundWindow ?? GetLastKnownNonShellForegroundWindow();
         }
 
         public static string GetNextCommandName(string name, IAction action, int number = 1)
@@ -622,14 +629,36 @@ namespace GestureSign.Common.Applications
             if (appsToMatch == null || appsToMatch.Length == 0)
                 return false;
 
-            captureWindow = SystemWindow.ForegroundWindow;
-            if (captureWindow == null || captureWindow.HWnd == IntPtr.Zero)
+            captureWindow = GetCurrentOrLastNonShellForegroundWindow();
+            if (captureWindow == null || captureWindow.HWnd == IntPtr.Zero || IsShellUiWindow(captureWindow))
                 return false;
 
             string className, title, fileName;
             GetWindowInfo(captureWindow, out className, out title, out fileName);
             matchedForegroundApps = FindMatchApplications(appsToMatch, className, title, fileName);
             return matchedForegroundApps.Length != 0;
+        }
+
+        private SystemWindow RememberNonShellWindow(SystemWindow window)
+        {
+            if (window == null || window.HWnd == IntPtr.Zero || IsShellUiWindow(window))
+                return null;
+
+            _lastNonShellForegroundWindow = GetRealWindow(window);
+            return _lastNonShellForegroundWindow;
+        }
+
+        private SystemWindow GetLastKnownNonShellForegroundWindow()
+        {
+            if (_lastNonShellForegroundWindow == null ||
+                _lastNonShellForegroundWindow.HWnd == IntPtr.Zero ||
+                IsShellUiWindow(_lastNonShellForegroundWindow))
+            {
+                return null;
+            }
+
+            _lastNonShellForegroundWindow = GetRealWindow(_lastNonShellForegroundWindow);
+            return _lastNonShellForegroundWindow;
         }
 
         private static bool CompareString(string compareMatchString, string windowMatchString, bool useRegEx)
