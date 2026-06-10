@@ -15,17 +15,20 @@ namespace GestureSign.Daemon.Input
         {
         }
 
-        public bool TryGetFirstTipPoint(short numberOfChildren, Screen currentScr, out Point point)
+        public bool TryGetFirstTipPoint(IReadOnlyList<short> coordinateLinkCollections, Screen currentScr, out Point point)
         {
             point = Point.Empty;
             if (_physicalMax.X <= 0 || _physicalMax.Y <= 0)
+                return false;
+            if (coordinateLinkCollections == null || coordinateLinkCollections.Count == 0)
                 return false;
 
             for (int dwIndex = 0; dwIndex < _dwCount; dwIndex++)
             {
                 IntPtr pRawDataPacket = new IntPtr(_pRawData.ToInt64() + dwIndex * _dwSizHid);
-                for (short nodeIndex = 1; nodeIndex <= numberOfChildren; nodeIndex++)
+                for (int i = 0; i < coordinateLinkCollections.Count; i++)
                 {
+                    short nodeIndex = coordinateLinkCollections[i];
                     ushort[] usageList = GetButtonList(_hPreparsedData.DangerousGetHandle(), pRawDataPacket, nodeIndex, _dwSizHid);
                     if (Array.IndexOf(usageList, NativeMethods.TipId) < 0)
                         continue;
@@ -73,13 +76,17 @@ namespace GestureSign.Daemon.Input
             return null;
         }
 
-        public void GetRawDatas(short numberOfChildren, Screen currentScr, ref int requiringContactCount, ref List<RawData> _outputTouchs)
+        public void GetRawDatas(IReadOnlyList<short> coordinateLinkCollections, Screen currentScr, ref int requiringContactCount, ref List<RawData> _outputTouchs)
         {
+            if (coordinateLinkCollections == null || coordinateLinkCollections.Count == 0)
+                return;
+
             for (int dwIndex = 0; dwIndex < _dwCount; dwIndex++)
             {
                 IntPtr pRawDataPacket = new IntPtr(_pRawData.ToInt64() + dwIndex * _dwSizHid);
-                for (short nodeIndex = 1; nodeIndex <= numberOfChildren; nodeIndex++)
+                for (int i = 0; i < coordinateLinkCollections.Count; i++)
                 {
+                    short nodeIndex = coordinateLinkCollections[i];
                     int contactIdentifier = GetContactId(nodeIndex, pRawDataPacket);
                     Point point = GetCoordinate(nodeIndex, currentScr, pRawDataPacket);
 

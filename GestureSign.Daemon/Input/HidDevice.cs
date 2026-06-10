@@ -148,6 +148,43 @@ namespace GestureSign.Daemon.Input
             return Math.Max(0, _dwCount) * Math.Max(0, (int)numberOfChildren);
         }
 
+        public virtual List<short> GetCoordinateLinkCollections(HidNativeApi.HIDP_LINK_COLLECTION_NODE[] linkCollectionNodes)
+        {
+            var coordinateLinkCollections = new List<short>();
+            if (linkCollectionNodes == null || linkCollectionNodes.Length <= 1)
+                return coordinateLinkCollections;
+
+            for (short linkCollection = 1; linkCollection < linkCollectionNodes.Length; linkCollection++)
+            {
+                if (HasCoordinateLinkCollection(linkCollection))
+                    coordinateLinkCollections.Add(linkCollection);
+            }
+
+            return coordinateLinkCollections;
+        }
+
+        protected bool HasCoordinateLinkCollection(short linkCollection)
+        {
+            return HasSpecificValueCap(NativeMethods.GenericDesktopPage, linkCollection, NativeMethods.XCoordinateId) &&
+                   HasSpecificValueCap(NativeMethods.GenericDesktopPage, linkCollection, NativeMethods.YCoordinateId);
+        }
+
+        protected bool HasSpecificValueCap(ushort usagePage, short linkCollection, ushort usage)
+        {
+            short valueCapsLength = 1;
+            HidNativeApi.HidP_Value_Caps[] valueCaps = new HidNativeApi.HidP_Value_Caps[valueCapsLength];
+            int status = HidNativeApi.HidP_GetSpecificValueCaps(
+                HidReportType.Input,
+                usagePage,
+                (ushort)linkCollection,
+                usage,
+                valueCaps,
+                ref valueCapsLength,
+                _hPreparsedData.DangerousGetHandle());
+
+            return status == HidNativeApi.HIDP_STATUS_SUCCESS && valueCapsLength > 0;
+        }
+
         public static void GetCurrentScreenOrientation()
         {
             switch (SystemInformation.ScreenOrientation)

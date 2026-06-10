@@ -30,13 +30,17 @@ namespace GestureSign.Daemon.Input
             return new Point(x + currentScr.Bounds.X, y + currentScr.Bounds.Y);
         }
 
-        public void GetRawDatas(short numberOfChildren, Screen currentScr, ref int requiringContactCount, ref List<RawData> _outputTouchs)
+        public void GetRawDatas(IReadOnlyList<short> coordinateLinkCollections, Screen currentScr, ref int requiringContactCount, ref List<RawData> _outputTouchs)
         {
+            if (coordinateLinkCollections == null || coordinateLinkCollections.Count == 0)
+                return;
+
             for (int dwIndex = 0; dwIndex < _dwCount; dwIndex++)
             {
                 IntPtr pRawDataPacket = new IntPtr(_pRawData.ToInt64() + dwIndex * _dwSizHid);
-                for (short nodeIndex = 1; nodeIndex <= numberOfChildren; nodeIndex++)
+                for (int i = 0; i < coordinateLinkCollections.Count; i++)
                 {
+                    short nodeIndex = coordinateLinkCollections[i];
                     int contactIdentifier = GetContactId(nodeIndex, pRawDataPacket);
                     Point point = GetCoordinate(nodeIndex, currentScr, pRawDataPacket);
 

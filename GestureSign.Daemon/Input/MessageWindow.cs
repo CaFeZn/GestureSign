@@ -842,6 +842,12 @@ namespace GestureSign.Daemon.Input
                                 ResetSourceDevice(true);
                                 return;
                             }
+                            var coordinateLinkCollections = touchScreen.GetCoordinateLinkCollections(linkCollection);
+                            if (coordinateLinkCollections.Count == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
                             if (!touchScreen.TryGetPhysicalMax(linkCollection.Length))
                             {
                                 ResetSourceDevice(true);
@@ -849,7 +855,7 @@ namespace GestureSign.Daemon.Input
                             }
 
                             int contactCount;
-                            int inferredContactCount = touchScreen.InferContactCount(linkCollection[0].NumberOfChildren);
+                            int inferredContactCount = touchScreen.InferContactCount((short)coordinateLinkCollections.Count);
                             if (!touchScreen.TryGetContactCount(out contactCount) ||
                                 contactCount <= 0 ||
                                 contactCount > inferredContactCount ||
@@ -876,7 +882,7 @@ namespace GestureSign.Daemon.Input
                             if (_currentScr == null || !IsCurrentScreenValid())
                             {
                                 TouchScreenDevice.GetCurrentScreenOrientation();
-                                _currentScr = ResolveTouchScreen(raw.header.hDevice, touchScreen, linkCollection[0].NumberOfChildren);
+                                _currentScr = ResolveTouchScreen(raw.header.hDevice, touchScreen, coordinateLinkCollections);
                                 if (!IsUsableScreen(_currentScr))
                                 {
                                     ResetSourceDevice(true);
@@ -884,7 +890,7 @@ namespace GestureSign.Daemon.Input
                                 }
                             }
 
-                            touchScreen.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
+                            touchScreen.GetRawDatas(coordinateLinkCollections, _currentScr, ref _requiringContactCount, ref _outputTouchs);
                         }
                     }
                     else if (usage == NativeMethods.TouchPadUsage)
@@ -905,6 +911,12 @@ namespace GestureSign.Daemon.Input
                                 ResetSourceDevice(true);
                                 return;
                             }
+                            var coordinateLinkCollections = touchPad.GetCoordinateLinkCollections(linkCollection);
+                            if (coordinateLinkCollections.Count == 0)
+                            {
+                                ResetSourceDevice(true);
+                                return;
+                            }
                             if (!touchPad.TryGetPhysicalMax(linkCollection.Length))
                             {
                                 ResetSourceDevice(true);
@@ -912,7 +924,7 @@ namespace GestureSign.Daemon.Input
                             }
 
                             int contactCount;
-                            int inferredContactCount = touchPad.InferContactCount(linkCollection[0].NumberOfChildren);
+                            int inferredContactCount = touchPad.InferContactCount((short)coordinateLinkCollections.Count);
                             if (!touchPad.TryGetContactCount(out contactCount) ||
                                 contactCount <= 0 ||
                                 contactCount > inferredContactCount ||
@@ -935,7 +947,7 @@ namespace GestureSign.Daemon.Input
                                 return;
                             }
 
-                            touchPad.GetRawDatas(linkCollection[0].NumberOfChildren, _currentScr, ref _requiringContactCount, ref _outputTouchs);
+                            touchPad.GetRawDatas(coordinateLinkCollections, _currentScr, ref _requiringContactCount, ref _outputTouchs);
                         }
                     }
                 }
@@ -975,7 +987,7 @@ namespace GestureSign.Daemon.Input
             return false;
         }
 
-        private Screen ResolveTouchScreen(IntPtr hDevice, TouchScreenDevice touchScreen, short numberOfChildren)
+        private Screen ResolveTouchScreen(IntPtr hDevice, TouchScreenDevice touchScreen, IReadOnlyList<short> coordinateLinkCollections)
         {
             Screen[] screens;
             if (!TryGetScreens(out screens))
@@ -987,7 +999,7 @@ namespace GestureSign.Daemon.Input
                 if (screens.Length == 1)
                     return screen;
 
-                var foregroundMatchedScreen = GetTouchScreenFromForegroundTouchPoint(touchScreen, numberOfChildren, screens);
+                var foregroundMatchedScreen = GetTouchScreenFromForegroundTouchPoint(touchScreen, coordinateLinkCollections, screens);
                 if (foregroundMatchedScreen != null &&
                     (!string.Equals(foregroundMatchedScreen.DeviceName, screen.DeviceName, StringComparison.OrdinalIgnoreCase) ||
                      !foregroundMatchedScreen.Bounds.Equals(screen.Bounds)))
@@ -1014,7 +1026,7 @@ namespace GestureSign.Daemon.Input
                 return screens[0];
             }
 
-            screen = GetTouchScreenFromForegroundTouchPoint(touchScreen, numberOfChildren, screens);
+            screen = GetTouchScreenFromForegroundTouchPoint(touchScreen, coordinateLinkCollections, screens);
             if (screen != null)
             {
                 _touchScreenDeviceScreens[hDevice] = screen;
@@ -1059,7 +1071,7 @@ namespace GestureSign.Daemon.Input
             return false;
         }
 
-        private Screen GetTouchScreenFromForegroundTouchPoint(TouchScreenDevice touchScreen, short numberOfChildren, Screen[] screens)
+        private Screen GetTouchScreenFromForegroundTouchPoint(TouchScreenDevice touchScreen, IReadOnlyList<short> coordinateLinkCollections, Screen[] screens)
         {
             Rectangle foregroundBounds;
             if (!TryGetForegroundWindowBounds(out foregroundBounds))
@@ -1069,7 +1081,7 @@ namespace GestureSign.Daemon.Input
             foreach (Screen screen in screens)
             {
                 Point touchPoint;
-                if (!touchScreen.TryGetFirstTipPoint(numberOfChildren, screen, out touchPoint) || !foregroundBounds.Contains(touchPoint))
+                if (!touchScreen.TryGetFirstTipPoint(coordinateLinkCollections, screen, out touchPoint) || !foregroundBounds.Contains(touchPoint))
                     continue;
 
                 if (matchedScreen != null)
