@@ -212,7 +212,7 @@ namespace GestureSign.CorePlugins.HotKey
 
                 if (RequiresSystemModifierReset(_Settings))
                 {
-                    KeyboardHelper.ResetKeyStateWithoutWindowRestore(GetModifierResetKeys(_Settings));
+                    KeyboardHelper.ResetKeyStatePreserveForegroundWindow(GetModifierResetKeys(_Settings));
                 }
             }
             catch (Exception)
@@ -231,7 +231,7 @@ namespace GestureSign.CorePlugins.HotKey
 
                 if (RequiresSystemModifierReset(_Settings))
                 {
-                    KeyboardHelper.ResetKeyStateWithoutWindowRestore(keyList.ToArray());
+                    KeyboardHelper.ResetKeyStatePreserveForegroundWindow(keyList.ToArray());
                 }
                 else
                 {

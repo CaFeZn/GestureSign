@@ -61,11 +61,11 @@ namespace GestureSign.CorePlugins
             try
             {
                 KeyboardHelper.SwitchToNextApplication();
-                KeyboardHelper.ResetKeyStateWithoutWindowRestore(Keys.LMenu, Keys.RMenu);
+                KeyboardHelper.ResetKeyStatePreserveForegroundWindow(Keys.LMenu, Keys.RMenu);
             }
             catch (Exception)
             {
-                KeyboardHelper.ResetKeyStateWithoutWindowRestore(Keys.LMenu, Keys.RMenu);
+                KeyboardHelper.ResetKeyStatePreserveForegroundWindow(Keys.LMenu, Keys.RMenu);
 
                 return false;
             }

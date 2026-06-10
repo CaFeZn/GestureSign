@@ -59,12 +59,12 @@ namespace GestureSign.CorePlugins
             try
             {
                 KeyboardHelper.SwitchToPreviousDesktop();
-                KeyboardHelper.ResetKeyStateWithoutWindowRestore(Keys.LWin, Keys.RWin, Keys.LControlKey, Keys.RControlKey);
+                KeyboardHelper.ResetKeyStatePreserveForegroundWindow(Keys.LWin, Keys.RWin, Keys.LControlKey, Keys.RControlKey);
                 return true;
             }
             catch (Exception)
             {
-                KeyboardHelper.ResetKeyStateWithoutWindowRestore(Keys.LWin, Keys.RWin, Keys.LControlKey, Keys.RControlKey);
+                KeyboardHelper.ResetKeyStatePreserveForegroundWindow(Keys.LWin, Keys.RWin, Keys.LControlKey, Keys.RControlKey);
                 return false;
             }
         }

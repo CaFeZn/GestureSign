@@ -121,6 +121,11 @@ namespace GestureSign.CorePlugins
             ResetKeyStateInternal(null, false, keys);
         }
 
+        public static void ResetKeyStatePreserveForegroundWindow(params Keys[] keys)
+        {
+            ResetKeyStateInternal(SystemWindow.ForegroundWindow, true, keys);
+        }
+
         private static void ResetKeyStateInternal(SystemWindow targetWindow, bool restoreTargetWindow, params Keys[] keys)
         {
             if (keys == null || keys.Length == 0)
