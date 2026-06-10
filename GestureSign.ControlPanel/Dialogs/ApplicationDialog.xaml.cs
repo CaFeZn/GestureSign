@@ -47,7 +47,13 @@ namespace GestureSign.ControlPanel.Dialogs
         public ApplicationDialog()
         {
             InitializeComponent();
-            RuningApplicationsFlyout.RuningAppSelectionChanged += (o, e) => { if (e != null) ApplicationListViewItem = e; };
+            RuningApplicationsFlyout.RuningAppSelectionChanged += (o, e) =>
+            {
+                if (e == null) return;
+
+                ApplicationListViewItem = e;
+                ApplyRecommendedMatchUsing(e.WindowClass);
+            };
         }
 
         public ApplicationDialog(IApplication targetApplication, bool newApplication = false) : this()
@@ -152,6 +158,8 @@ namespace GestureSign.ControlPanel.Dialogs
             var realWindow = ApplicationManager.GetWindowInfo(window, out className, out title, out fileName);
             try
             {
+                ApplyRecommendedMatchUsing(className);
+
                 // Set application name from filename
                 ApplicationNameTextBox.Text = GetDescription(realWindow);
                 switch (matchUsingRadio.MatchUsing)
@@ -297,6 +305,15 @@ namespace GestureSign.ControlPanel.Dialogs
 
             SystemWindow window = SystemWindow.FromPointEx(cursorPosition.X, cursorPosition.Y, true, true);
             return window;
+        }
+
+        private void ApplyRecommendedMatchUsing(string windowClass)
+        {
+            if (_currentApplication != null && !_newApplication)
+                return;
+
+            if (string.Equals(windowClass, "Windows.UI.Core.CoreWindow", StringComparison.Ordinal))
+                matchUsingRadio.MatchUsing = MatchUsing.WindowClass;
         }
 
         private bool ShowErrorMessage(string title, string message)
