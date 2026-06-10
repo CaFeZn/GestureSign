@@ -284,8 +284,11 @@ namespace GestureSign.Common.Applications
             if (RememberNonShellWindow(window) != null)
                 return window;
 
-            var foregroundWindow = GetCurrentOrLastNonShellForegroundWindow();
-            return foregroundWindow ?? window;
+            var foregroundWindow = RememberNonShellWindow(SystemWindow.ForegroundWindow);
+            if (foregroundWindow != null)
+                return foregroundWindow;
+
+            return GetLastKnownNonShellForegroundWindow() ?? window;
         }
 
         public IApplication[] GetApplicationFromWindow(SystemWindow window, bool userApplicationOnly = false)
@@ -294,6 +297,8 @@ namespace GestureSign.Common.Applications
             {
                 return new[] { GetGlobalApplication() };
             }
+
+            RememberNonShellWindow(window);
 
             string className, title, fileName;
             GetWindowInfo(window, out className, out title, out fileName);
@@ -427,15 +432,10 @@ namespace GestureSign.Common.Applications
 
         public SystemWindow GetForegroundApplications()
         {
-            CaptureWindow = GetCurrentOrLastNonShellForegroundWindow() ?? SystemWindow.ForegroundWindow;
+            CaptureWindow = SystemWindow.ForegroundWindow;
+            RememberNonShellWindow(CaptureWindow);
             _recognizedApplication = GetApplicationFromWindow(CaptureWindow);
             return CaptureWindow;
-        }
-
-        public SystemWindow GetCurrentOrLastNonShellForegroundWindow()
-        {
-            var foregroundWindow = RememberNonShellWindow(SystemWindow.ForegroundWindow);
-            return foregroundWindow ?? GetLastKnownNonShellForegroundWindow();
         }
 
         public static string GetNextCommandName(string name, IAction action, int number = 1)
@@ -629,8 +629,12 @@ namespace GestureSign.Common.Applications
             if (appsToMatch == null || appsToMatch.Length == 0)
                 return false;
 
-            captureWindow = GetCurrentOrLastNonShellForegroundWindow();
-            if (captureWindow == null || captureWindow.HWnd == IntPtr.Zero || IsShellUiWindow(captureWindow))
+            captureWindow = SystemWindow.ForegroundWindow;
+            if (captureWindow == null || captureWindow.HWnd == IntPtr.Zero)
+                return false;
+
+            captureWindow = RememberNonShellWindow(captureWindow) ?? captureWindow;
+            if (IsShellUiWindow(captureWindow))
                 return false;
 
             string className, title, fileName;
