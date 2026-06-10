@@ -252,6 +252,7 @@ namespace GestureSign.Daemon.Input
             _pointEventTranslator.PointDown += (PointEventTranslator_PointDown);
             _pointEventTranslator.PointUp += (PointEventTranslator_PointUp);
             _pointEventTranslator.PointMove += (PointEventTranslator_PointMove);
+            ModeChanged += (o, e) => _inputProvider.RefreshMouseHookState();
 
             _currentContext = SynchronizationContext.Current;
 

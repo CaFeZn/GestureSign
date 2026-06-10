@@ -181,9 +181,16 @@ namespace GestureSign.Daemon.Input
                 LowLevelMouseHook.Unhook();
         }
 
+        internal void RefreshMouseHookState()
+        {
+            ScheduleMouseHookUpdate();
+        }
+
         private static bool ShouldUseMouseHook()
         {
-            return AppConfig.DrawingButton != MouseActions.None || HasConditionedStandaloneWheelAction();
+            return AppConfig.DrawingButton != MouseActions.None ||
+                PointCapture.Instance.Mode == CaptureMode.Training ||
+                HasConditionedStandaloneWheelAction();
         }
 
         private static bool HasConditionedStandaloneWheelAction()

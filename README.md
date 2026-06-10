@@ -77,7 +77,8 @@ Default gesture examples:
 Gesture creation notes:
 
 - Create or edit gestures from the `Gestures` tab or from the gesture picker in an action, then draw the gesture on the screen when the gesture definition window is open.
-- Mouse gestures are disabled by default. To draw gestures with a mouse, open `Options`, turn on `Mouse Gesture`, and select one or more drawing buttons. The default when enabling this option is the right mouse button.
+- Mouse gestures are disabled by default for normal runtime use. To draw gestures with a mouse outside gesture training, open `Options`, turn on `Mouse Gesture`, and select one or more drawing buttons. The default when enabling this option is the right mouse button.
+- In the gesture-training window, GestureSign also accepts a temporary right-button mouse stroke even when the global `Mouse Gesture` option is still off, so you can record a mouse sample without first changing the global mouse setting.
 - When a mouse drawing button is configured, hold that button, move the mouse to draw the gesture, then release the button to finish the sample or run the gesture.
 - Mouse drawing buttons are trigger buttons, not output actions. `Mouse Actions` can send wheel input after a gesture matches. Wheel rotation by itself does not draw a mouse gesture, but it can be used as a conditioned standalone mouse trigger as described below.
 - Multi-finger gestures require simultaneous contacts. A three-finger gesture is not the same as drawing one line three times.
