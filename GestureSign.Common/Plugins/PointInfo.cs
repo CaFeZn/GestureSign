@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
 using GestureSign.Common.Applications;
+using GestureSign.Common.Input;
 using GestureSign.Common.Log;
 using ManagedWinapi.Windows;
 
@@ -15,17 +16,19 @@ namespace GestureSign.Common.Plugins
         private List<Point> _pointLocation;
         private SystemWindow _targetWindow;
         private SynchronizationContext _syncContext;
+        private CaptureState _captureStateAtTrigger;
 
         #endregion
 
         #region Constructors
 
-        public PointInfo(List<Point> pointLocation, List<List<Point>> points, SystemWindow target, SynchronizationContext syncContext)
+        public PointInfo(List<Point> pointLocation, List<List<Point>> points, SystemWindow target, SynchronizationContext syncContext, CaptureState captureStateAtTrigger = CaptureState.Ready)
         {
             _pointLocation = pointLocation;
             Points = points;
             _targetWindow = target;
             _syncContext = syncContext;
+            _captureStateAtTrigger = captureStateAtTrigger;
         }
 
         #endregion
@@ -52,6 +55,8 @@ namespace GestureSign.Common.Plugins
         }
 
         public List<List<Point>> Points { get; set; }
+
+        public CaptureState CaptureStateAtTrigger => _captureStateAtTrigger;
 
         #endregion
 

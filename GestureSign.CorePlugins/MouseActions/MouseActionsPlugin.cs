@@ -114,7 +114,7 @@ namespace GestureSign.CorePlugins.MouseActions
                     case MouseActions.XButton1Down:
                     case MouseActions.XButton2Down:
                         simulator.Mouse.XButtonDown(buttonId).Sleep(30);
-                        TrackHeldButtonIfCapturing(_settings.MouseAction.GetButtons());
+                        TrackHeldButtonIfCapturing(_settings.MouseAction.GetButtons(), actionPoint);
                         break;
                     case MouseActions.XButton1Up:
                     case MouseActions.XButton2Up:
@@ -126,7 +126,7 @@ namespace GestureSign.CorePlugins.MouseActions
                             MethodInfo clickMethod = typeof(IMouseSimulator).GetMethod(_settings.MouseAction.ToString());
                             clickMethod.Invoke(simulator.Mouse, null);
                             Thread.Sleep(30);
-                            TrackHeldButtonChangeIfNeeded(_settings.MouseAction);
+                            TrackHeldButtonChangeIfNeeded(_settings.MouseAction, actionPoint);
                             break;
                         }
                 }
@@ -210,12 +210,12 @@ namespace GestureSign.CorePlugins.MouseActions
             return newGUI;
         }
 
-        private void TrackHeldButtonChangeIfNeeded(MouseActions action)
+        private void TrackHeldButtonChangeIfNeeded(MouseActions action, PointInfo actionPoint)
         {
             switch (action.GetActions())
             {
                 case MouseActions.Down:
-                    TrackHeldButtonIfCapturing(action.GetButtons());
+                    TrackHeldButtonIfCapturing(action.GetButtons(), actionPoint);
                     break;
                 case MouseActions.Up:
                     ForgetHeldButton(action.GetButtons());
@@ -223,10 +223,10 @@ namespace GestureSign.CorePlugins.MouseActions
             }
         }
 
-        private void TrackHeldButtonIfCapturing(MouseActions button)
+        private void TrackHeldButtonIfCapturing(MouseActions button, PointInfo actionPoint)
         {
             if (button == MouseActions.None ||
-                HostControl?.PointCapture?.State != GestureSign.Common.Input.CaptureState.Capturing)
+                !WasTriggeredDuringActiveCapture(actionPoint))
                 return;
 
             lock (_heldButtonsLock)
@@ -253,6 +253,22 @@ namespace GestureSign.CorePlugins.MouseActions
             HostControl.PointCapture.CaptureEnded += PointCapture_CaptureEnded;
             HostControl.PointCapture.CaptureCanceled += PointCapture_CaptureCanceled;
             _captureReleaseHandlersAttached = true;
+        }
+
+        private static bool WasTriggeredDuringActiveCapture(PointInfo actionPoint)
+        {
+            if (actionPoint == null)
+                return false;
+
+            switch (actionPoint.CaptureStateAtTrigger)
+            {
+                case GestureSign.Common.Input.CaptureState.Capturing:
+                case GestureSign.Common.Input.CaptureState.CapturingInvalid:
+                case GestureSign.Common.Input.CaptureState.TriggerFired:
+                    return true;
+            }
+
+            return false;
         }
 
         private void PointCapture_CaptureEnded(object sender, EventArgs e)

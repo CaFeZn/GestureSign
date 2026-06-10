@@ -83,7 +83,8 @@ namespace GestureSign.Daemon.Triggers
                 point,
                 points,
                 conditionContactIdentifiers,
-                conditionPoints);
+                conditionPoints,
+                captureStateAtTrigger: PointCapture.Instance.State);
         }
 
         #endregion

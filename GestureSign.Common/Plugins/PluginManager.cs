@@ -68,7 +68,7 @@ namespace GestureSign.Common.Plugins
 
         #region Public Methods
 
-        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points, List<int> conditionContactIdentifiers = null, List<List<Point>> conditionPoints = null, List<int> pressedVirtualKeys = null)
+        public void ExecuteAction(List<IAction> executableActions, CaptureMode mode, Devices devices, List<int> contactIdentifiers, List<Point> firstCapturedPoints, List<List<Point>> points, List<int> conditionContactIdentifiers = null, List<List<Point>> conditionPoints = null, List<int> pressedVirtualKeys = null, CaptureState? captureStateAtTrigger = null)
         {
             // Exit if we're teaching
             if (mode == CaptureMode.Training)
@@ -79,7 +79,7 @@ namespace GestureSign.Common.Plugins
             var resolvedActions = GetExecutableActions(executableActions, mode, devices, contactIdentifiersForCondition, pointsForCondition, pressedVirtualKeys);
             if (resolvedActions.Count == 0)
                 return;
-            var pointInfo = new PointInfo(firstCapturedPoints, points, target, _mainContext);
+            var pointInfo = new PointInfo(firstCapturedPoints, points, target, _mainContext, captureStateAtTrigger ?? CaptureState.Ready);
             var action = new Action<object>(o =>
             {
                 foreach (IAction executableAction in resolvedActions)
