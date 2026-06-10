@@ -99,9 +99,7 @@ namespace GestureSign.Common.Applications
                         allowSingleFingerTouch = HasConditionedSingleFingerTouchAction(_recognizedApplication, Devices.TouchPad);
                         break;
                     case Devices.TouchScreen:
-                        allowSingleFingerTouch = HasConditionedSingleFingerTouchAction(_recognizedApplication, Devices.TouchScreen) ||
-                            (_recognizedApplication.Any(app => app is UserApp) &&
-                             HasSingleFingerTouchActionInApplications(_recognizedApplication, Devices.TouchScreen));
+                        allowSingleFingerTouch = HasSingleFingerTouchAction(_recognizedApplication, Devices.TouchScreen);
                         break;
                 }
             }

@@ -272,7 +272,7 @@ Windows 11 触摸/手势冲突：
 | Issue | 覆盖情况 |
 | --- | --- |
 | [#139](https://github.com/TransposonY/GestureSign/issues/139) | 文档说明了复制动作的流程，可把多个手势绑定到同一组命令。 |
-| [#138](https://github.com/TransposonY/GestureSign/issues/138), [#95](https://github.com/TransposonY/GestureSign/issues/95), [#62](https://github.com/TransposonY/GestureSign/issues/62) | 支持单指触摸屏手势和单指触摸屏点击训练。应用专属的单指触摸屏动作现在不再需要额外条件才能越过默认的每应用手指数限制；如果你只希望其中一部分起手进入单指捕获，仍然可以继续用带条件的单指触摸屏动作来显式开闸。 |
+| [#138](https://github.com/TransposonY/GestureSign/issues/138), [#95](https://github.com/TransposonY/GestureSign/issues/95), [#62](https://github.com/TransposonY/GestureSign/issues/62) | 支持单指触摸屏手势和单指触摸屏点击训练。应用专属的单指触摸屏动作现在不再需要额外条件才能越过默认的每应用手指数限制；在正常 global fallback 允许时，全局的一指触摸屏动作现在也可以如此；如果你只希望其中一部分起手进入单指捕获，仍然可以继续用带条件的单指触摸屏动作来显式开闸。 |
 | [#137](https://github.com/TransposonY/GestureSign/issues/137) | 添加未识别手势提示音，并支持自定义 `.wav` 文件。 |
 | [#136](https://github.com/TransposonY/GestureSign/issues/136), [#90](https://github.com/TransposonY/GestureSign/issues/90) | 手势训练帮助会说明可用输入来源。即使全局“鼠标手势”处于关闭状态，训练模式下现在也可以临时使用鼠标右键直接录制手势，降低新用户“完全画不出来”的门槛；如果需要长期启用鼠标手势，训练界面仍可一键打开默认的右键绘制配置。 |
 | [#134](https://github.com/TransposonY/GestureSign/issues/134), [#122](https://github.com/TransposonY/GestureSign/issues/122) | 连续手势距离可配置、已文档化，修复了刚到阈值时首个触发被丢弃的问题，让距离阈值按手势所在屏幕 DPI 缩放；当横纵位移恰好打平时，也不再默认按垂直方向触发连续手势；并且只有当前确实可执行的连续动作真正触发后，才会压掉同一段输入的普通手势，包括 capture-end 事件已经先跑完之后的最终抬手识别路径。 |
