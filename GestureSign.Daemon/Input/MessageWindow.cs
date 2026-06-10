@@ -26,6 +26,7 @@ namespace GestureSign.Daemon.Input
         private List<RawData> _lastSourceDeviceOutput = new List<RawData>(1);
         private int _requiringContactCount;
         private Dictionary<IntPtr, ushort> _validDevices = new Dictionary<IntPtr, ushort>();
+        private Dictionary<IntPtr, bool> _touchSuppressingPenDevices = new Dictionary<IntPtr, bool>();
         private Dictionary<IntPtr, Screen> _touchScreenDeviceScreens = new Dictionary<IntPtr, Screen>();
         private readonly SynchronizationContext _messageContext;
 
@@ -98,6 +99,7 @@ namespace GestureSign.Daemon.Input
                 try
                 {
                     _validDevices.Clear();
+                    _touchSuppressingPenDevices.Clear();
                     _touchScreenDeviceScreens.Clear();
                     ResetSourceDevice(true);
                 }
@@ -152,6 +154,7 @@ namespace GestureSign.Daemon.Input
             _penGestureButton = penSetting & (DeviceStates.Invert | DeviceStates.RightClickButton);
 
             _validDevices.Clear();
+            _touchSuppressingPenDevices.Clear();
             _touchScreenDeviceScreens.Clear();
 
             UpdateRegisterState(AppConfig.RegisterTouchScreen, NativeMethods.TouchScreenUsage);
@@ -226,6 +229,7 @@ namespace GestureSign.Daemon.Input
         private bool ValidateDevice(IntPtr hDevice, out ushort usage)
         {
             usage = 0;
+            _touchSuppressingPenDevices.Remove(hDevice);
             uint pcbSize = 0;
             if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICEINFO, IntPtr.Zero, ref pcbSize, "query device info size"))
                 return false;
@@ -268,6 +272,7 @@ namespace GestureSign.Daemon.Input
                         return false;
 
                     string deviceName = Marshal.PtrToStringAnsi(pData);
+                    bool allowTouchSuppression = ShouldAllowPenTouchSuppression(info.hid.usUsage, deviceName);
 
                     if (ShouldIgnoreValidatedDevice(info.hid.usUsage, deviceName))
                     {
@@ -275,7 +280,17 @@ namespace GestureSign.Daemon.Input
                         return true;
                     }
 
-                    LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, deviceName, "accepted");
+                    if (info.hid.usUsage == NativeMethods.PenUsage)
+                        _touchSuppressingPenDevices[hDevice] = allowTouchSuppression;
+
+                    LogValidatedDevice(
+                        hDevice,
+                        info.hid.usUsagePage,
+                        info.hid.usUsage,
+                        deviceName,
+                        info.hid.usUsage == NativeMethods.PenUsage && !allowTouchSuppression
+                            ? "accepted with touch-suppression disabled for this pen path"
+                            : "accepted");
                     usage = info.hid.usUsage;
                     return true;
                 }
@@ -293,16 +308,32 @@ namespace GestureSign.Daemon.Input
             if (string.IsNullOrEmpty(deviceName))
                 return true;
 
-            // Some Win11 tablet and third-party drivers expose standard HID touchscreen or
-            // touchpad collections through a ROOT/VIRTUAL_DIGITIZER device path. Allow those
-            // standard usages to continue into the normal raw-input pipeline instead of
-            // rejecting them purely by path. Keep pen filtering as-is because pen packets
-            // also participate in touch-suppression logic and need a narrower trust boundary.
-            if (usage == NativeMethods.TouchPadUsage || usage == NativeMethods.TouchScreenUsage)
+            // Some Win11 tablet and third-party drivers expose standard HID touchpad,
+            // touchscreen, or pen collections through a ROOT/VIRTUAL_DIGITIZER
+            // device path. Allow those standard usages to continue into gesture capture
+            // instead of rejecting them purely by path. Pen-triggered touch suppression
+            // keeps its own narrower trust boundary below.
+            if (usage == NativeMethods.TouchPadUsage ||
+                usage == NativeMethods.TouchScreenUsage ||
+                usage == NativeMethods.PenUsage)
                 return false;
 
             return deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) >= 0 ||
                    deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool ShouldAllowPenTouchSuppression(ushort usage, string deviceName)
+        {
+            if (usage != NativeMethods.PenUsage || string.IsNullOrEmpty(deviceName))
+                return false;
+
+            return deviceName.IndexOf("VIRTUAL_DIGITIZER", StringComparison.OrdinalIgnoreCase) < 0 &&
+                   deviceName.IndexOf("ROOT", StringComparison.OrdinalIgnoreCase) < 0;
+        }
+
+        private bool CanSuppressTouchForPenDevice(IntPtr hDevice)
+        {
+            return _touchSuppressingPenDevices.TryGetValue(hDevice, out bool canSuppress) && canSuppress;
         }
 
         private static string GetUsageName(ushort usage)
@@ -350,6 +381,7 @@ namespace GestureSign.Daemon.Input
                 case NativeMethods.WM_INPUT_DEVICE_CHANGE:
                     {
                         _validDevices.Clear();
+                        _touchSuppressingPenDevices.Clear();
                         _touchScreenDeviceScreens.Clear();
                         ResetSourceDevice(true);
                         break;
@@ -678,7 +710,7 @@ namespace GestureSign.Daemon.Input
                         using (PenDevice penDevice = new PenDevice(buffer, ref raw))
                         {
                             DeviceStates state = penDevice.GetPenState();
-                            if (_ignoreTouchInputWhenUsingPen)
+                            if (_ignoreTouchInputWhenUsingPen && CanSuppressTouchForPenDevice(raw.header.hDevice))
                                 _penLastActivity = ShouldSuppressTouchForPenState(state) ? Environment.TickCount : (int?)null;
                             else
                                 _penLastActivity = null;
