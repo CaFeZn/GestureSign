@@ -119,7 +119,8 @@ namespace GestureSign.ControlPanel.Flyouts
                         WindowClass = className,
                         WindowTitle = title,
                         WindowFilename = fileName,
-                        ApplicationIcon = iconSource
+                        ApplicationIcon = iconSource,
+                        PreferWindowClassMatch = "ApplicationFrameWindow".Equals(sWind.ClassName, StringComparison.Ordinal)
                     };
 
                     //lItem.ApplicationName = sWind.Process.MainModule.FileVersionInfo.FileDescription;

@@ -52,7 +52,7 @@ namespace GestureSign.ControlPanel.Dialogs
                 if (e == null) return;
 
                 ApplicationListViewItem = e;
-                ApplyRecommendedMatchUsing(e.WindowClass);
+                ApplyRecommendedMatchUsing(e.WindowClass, e.PreferWindowClassMatch);
             };
         }
 
@@ -158,7 +158,7 @@ namespace GestureSign.ControlPanel.Dialogs
             var realWindow = ApplicationManager.GetWindowInfo(window, out className, out title, out fileName);
             try
             {
-                ApplyRecommendedMatchUsing(className);
+                ApplyRecommendedMatchUsing(className, string.Equals(window.ClassName, "ApplicationFrameWindow", StringComparison.Ordinal));
 
                 // Set application name from filename
                 ApplicationNameTextBox.Text = GetDescription(realWindow);
@@ -307,12 +307,13 @@ namespace GestureSign.ControlPanel.Dialogs
             return window;
         }
 
-        private void ApplyRecommendedMatchUsing(string windowClass)
+        private void ApplyRecommendedMatchUsing(string windowClass, bool preferWindowClass = false)
         {
             if (_currentApplication != null && !_newApplication)
                 return;
 
-            if (string.Equals(windowClass, "Windows.UI.Core.CoreWindow", StringComparison.Ordinal))
+            if (preferWindowClass ||
+                string.Equals(windowClass, "Windows.UI.Core.CoreWindow", StringComparison.Ordinal))
                 matchUsingRadio.MatchUsing = MatchUsing.WindowClass;
         }
 

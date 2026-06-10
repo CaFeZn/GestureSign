@@ -14,6 +14,7 @@ namespace GestureSign.ControlPanel.Common
         public string WindowClass { get; set; }
         public string WindowFilename { get; set; }
         public string ApplicationName { get; set; }
+        public bool PreferWindowClassMatch { get; set; }
 
         #endregion
 
