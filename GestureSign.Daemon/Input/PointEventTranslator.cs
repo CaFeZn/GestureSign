@@ -325,7 +325,10 @@ namespace GestureSign.Daemon.Input
 
             if (hasNewContacts &&
                 !PointCapture.Instance.InputContacts.Any(contact => contact.Points.Count > 10) &&
-                unchecked(Environment.TickCount - _lastTouchRestartTick) > 30)
+                // Allow genuine finger-count increases to rebuild immediately, while
+                // still debouncing very short same-count restart bursts.
+                (activeRawData.Count > _lastPointsCount ||
+                 unchecked(Environment.TickCount - _lastTouchRestartTick) > 30))
             {
                 OnPointUp(new InputPointsEventArgs(releasedTrackedRawData.Count != 0 ? releasedTrackedRawData : e.RawData, e.SourceDevice, e.DeviceHandle));
                 ClearActiveTouchContacts();
