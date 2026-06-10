@@ -62,6 +62,8 @@ namespace GestureSign.Daemon.Native
         internal const uint ANRUS_TOUCH_MODIFICATION_ACTIVE = 0x0000002;
 
         internal const int RIDEV_REMOVE = 0x00000001;
+        internal const int RIDEV_EXCLUDE = 0x00000010;
+        internal const int RIDEV_PAGEONLY = 0x00000020;
         internal const int RIDEV_INPUTSINK = 0x00000100;
         internal const int RIDEV_DEVNOTIFY = 0x00002000;
         internal const int RID_INPUT = 0x10000003;

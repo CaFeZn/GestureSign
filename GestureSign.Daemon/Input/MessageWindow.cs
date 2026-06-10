@@ -16,9 +16,27 @@ namespace GestureSign.Daemon.Input
 {
     public class MessageWindow : NativeWindow, IDisposable
     {
+        private struct RawInputRegistration : IEquatable<RawInputRegistration>
+        {
+            public RawInputRegistration(ushort usage, int flags)
+            {
+                Usage = usage;
+                Flags = flags;
+            }
+
+            public ushort Usage { get; }
+            public int Flags { get; }
+
+            public bool Equals(RawInputRegistration other)
+            {
+                return Usage == other.Usage && Flags == other.Flags;
+            }
+        }
+
         private Screen _currentScr;
         private const int SourceDeviceStaleTimeout = 1000;
         private const int InvalidTouchSourceStaleTimeout = 250;
+        private const uint AppleVendorId = 0x05AC;
 
         private static readonly HandleRef HwndMessage = new HandleRef(null, new IntPtr(-3));
 
@@ -33,7 +51,7 @@ namespace GestureSign.Daemon.Input
         private Devices _sourceDevice;
         private IntPtr _sourceDeviceHandle;
         private int _lastSourceDeviceInputTick;
-        private List<ushort> _registeredDeviceList = new List<ushort>(1);
+        private List<RawInputRegistration> _registeredDeviceList = new List<RawInputRegistration>(4);
         private int? _penLastActivity;
         private bool _ignoreTouchInputWhenUsingPen;
         private DeviceStates _penGestureButton;
@@ -157,9 +175,9 @@ namespace GestureSign.Daemon.Input
             _touchSuppressingPenDevices.Clear();
             _touchScreenDeviceScreens.Clear();
 
+            UpdateTouchPadRegistrationState(AppConfig.RegisterTouchPad);
             UpdateRegisterState(AppConfig.RegisterTouchScreen, NativeMethods.TouchScreenUsage);
             UpdateRegisterState(_ignoreTouchInputWhenUsingPen || (penSetting & (DeviceStates.InRange | DeviceStates.Tip)) != 0, NativeMethods.PenUsage);
-            UpdateRegisterState(AppConfig.RegisterTouchPad, NativeMethods.TouchPadUsage);
         }
 
         public void ReleaseCurrentTouchSource()
@@ -172,15 +190,20 @@ namespace GestureSign.Daemon.Input
 
         private void UpdateRegisterState(bool register, ushort usage)
         {
+            UpdateRegisterState(register, usage, 0);
+        }
+
+        private void UpdateRegisterState(bool register, ushort usage, int flags)
+        {
             try
             {
                 if (register)
                 {
-                    RegisterDevice(usage);
+                    RegisterDevice(usage, flags);
                 }
                 else
                 {
-                    UnregisterDevice(usage);
+                    UnregisterDevice(usage, flags);
                 }
             }
             catch (Exception ex)
@@ -189,27 +212,41 @@ namespace GestureSign.Daemon.Input
             }
         }
 
-        private void RegisterDevice(ushort usage)
+        private void UpdateTouchPadRegistrationState(bool register)
         {
-            UnregisterDevice(usage);
+            UpdateRegisterState(register, NativeMethods.TouchPadUsage);
+            UpdateRegisterState(register, 0, NativeMethods.RIDEV_PAGEONLY);
+            UpdateRegisterState(register, NativeMethods.TouchPadUsage, NativeMethods.RIDEV_EXCLUDE);
+            UpdateRegisterState(register, NativeMethods.TouchScreenUsage, NativeMethods.RIDEV_EXCLUDE);
+            UpdateRegisterState(register, NativeMethods.PenUsage, NativeMethods.RIDEV_EXCLUDE);
+        }
+
+        private void RegisterDevice(ushort usage, int flags)
+        {
+            UnregisterDevice(usage, flags);
+
+            var registration = new RawInputRegistration(usage, flags);
 
             RAWINPUTDEVICE[] rid = new RAWINPUTDEVICE[1];
 
             rid[0].usUsagePage = NativeMethods.DigitizerUsagePage;
             rid[0].usUsage = usage;
-            rid[0].dwFlags = NativeMethods.RIDEV_INPUTSINK | NativeMethods.RIDEV_DEVNOTIFY;
-            rid[0].hwndTarget = Handle;
+            rid[0].dwFlags = flags == NativeMethods.RIDEV_EXCLUDE
+                ? NativeMethods.RIDEV_EXCLUDE
+                : flags | NativeMethods.RIDEV_INPUTSINK | NativeMethods.RIDEV_DEVNOTIFY;
+            rid[0].hwndTarget = flags == NativeMethods.RIDEV_EXCLUDE ? IntPtr.Zero : Handle;
 
             if (!NativeMethods.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])))
             {
-                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to register raw input device usage 0x{usage:X2}.");
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to register raw input device usage 0x{usage:X2} with flags 0x{rid[0].dwFlags:X8}.");
             }
-            _registeredDeviceList.Add(usage);
+            _registeredDeviceList.Add(registration);
         }
 
-        private void UnregisterDevice(ushort usage)
+        private void UnregisterDevice(ushort usage, int flags)
         {
-            if (_registeredDeviceList.Contains(usage))
+            var registration = new RawInputRegistration(usage, flags);
+            if (_registeredDeviceList.Contains(registration))
             {
                 RAWINPUTDEVICE[] rid = new RAWINPUTDEVICE[1];
 
@@ -220,9 +257,9 @@ namespace GestureSign.Daemon.Input
 
                 if (!NativeMethods.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])))
                 {
-                    throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to unregister raw input device usage 0x{usage:X2}.");
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to unregister raw input device usage 0x{usage:X2} with flags 0x{rid[0].dwFlags:X8}.");
                 }
-                _registeredDeviceList.Remove(usage);
+                _registeredDeviceList.Remove(registration);
             }
         }
 
@@ -248,17 +285,6 @@ namespace GestureSign.Daemon.Input
                 if (info.dwType != NativeMethods.RIM_TYPEHID || info.hid.usUsagePage != NativeMethods.DigitizerUsagePage)
                     return true;
 
-                switch (info.hid.usUsage)
-                {
-                    case NativeMethods.TouchPadUsage:
-                    case NativeMethods.TouchScreenUsage:
-                    case NativeMethods.PenUsage:
-                        break;
-                    default:
-                        LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, null, "ignored unsupported digitizer usage");
-                        return true;
-                }
-
                 if (!TryGetRawInputDeviceInfo(hDevice, NativeMethods.RIDI_DEVICENAME, IntPtr.Zero, ref pcbSize, "query device name size"))
                     return false;
 
@@ -272,35 +298,77 @@ namespace GestureSign.Daemon.Input
                         return false;
 
                     string deviceName = Marshal.PtrToStringAnsi(pData);
-                    bool allowTouchSuppression = ShouldAllowPenTouchSuppression(info.hid.usUsage, deviceName);
-
-                    if (ShouldIgnoreValidatedDevice(info.hid.usUsage, deviceName))
+                    ushort effectiveUsage = ResolveEffectiveDigitizerUsage(info.hid, deviceName);
+                    if (effectiveUsage == 0)
                     {
-                        LogValidatedDevice(hDevice, info.hid.usUsagePage, info.hid.usUsage, deviceName, "ignored device path/name filter");
+                        LogValidatedDevice(hDevice, info.hid, deviceName, "ignored unsupported digitizer usage");
                         return true;
                     }
 
-                    if (info.hid.usUsage == NativeMethods.PenUsage)
+                    bool allowTouchSuppression = ShouldAllowPenTouchSuppression(effectiveUsage, deviceName);
+
+                    if (ShouldIgnoreValidatedDevice(effectiveUsage, deviceName))
+                    {
+                        LogValidatedDevice(hDevice, info.hid, deviceName, "ignored device path/name filter", effectiveUsage);
+                        return true;
+                    }
+
+                    if (effectiveUsage == NativeMethods.PenUsage)
                         _touchSuppressingPenDevices[hDevice] = allowTouchSuppression;
 
                     LogValidatedDevice(
                         hDevice,
-                        info.hid.usUsagePage,
-                        info.hid.usUsage,
+                        info.hid,
                         deviceName,
-                        info.hid.usUsage == NativeMethods.PenUsage && !allowTouchSuppression
+                        effectiveUsage == NativeMethods.PenUsage && !allowTouchSuppression
                             ? "accepted with touch-suppression disabled for this pen path"
-                            : "accepted");
-                    usage = info.hid.usUsage;
+                            : "accepted",
+                        effectiveUsage);
+                    usage = effectiveUsage;
                     return true;
                 }
             }
         }
 
-        private static void LogValidatedDevice(IntPtr hDevice, ushort usagePage, ushort usage, string deviceName, string result)
+        private static void LogValidatedDevice(IntPtr hDevice, RID_DEVICE_INFO_HID hidInfo, string deviceName, string result, ushort? effectiveUsage = null)
         {
             Logging.LogMessage(
-                $"Raw digitizer device validation: result={result}, hDevice=0x{hDevice.ToInt64():X}, usagePage=0x{usagePage:X2}, usage={GetUsageName(usage)} (0x{usage:X2}), deviceName={FormatDeviceName(deviceName)}");
+                $"Raw digitizer device validation: result={result}, hDevice=0x{hDevice.ToInt64():X}, vendorId=0x{hidInfo.dwVendorId:X4}, productId=0x{hidInfo.dwProductId:X4}, usagePage=0x{hidInfo.usUsagePage:X2}, rawUsage={GetUsageName(hidInfo.usUsage)} (0x{hidInfo.usUsage:X2}), effectiveUsage={GetUsageName(effectiveUsage ?? hidInfo.usUsage)} (0x{(effectiveUsage ?? hidInfo.usUsage):X2}), deviceName={FormatDeviceName(deviceName)}");
+        }
+
+        private static ushort ResolveEffectiveDigitizerUsage(RID_DEVICE_INFO_HID hidInfo, string deviceName)
+        {
+            switch (hidInfo.usUsage)
+            {
+                case NativeMethods.TouchPadUsage:
+                    return hidInfo.usUsage;
+                case NativeMethods.TouchScreenUsage:
+                    return IsLikelyTrackpadAliasCandidate(hidInfo, deviceName)
+                        ? NativeMethods.TouchPadUsage
+                        : hidInfo.usUsage;
+                case NativeMethods.PenUsage:
+                    return hidInfo.usUsage;
+            }
+
+            return IsLikelyTrackpadAliasCandidate(hidInfo, deviceName)
+                ? NativeMethods.TouchPadUsage
+                : (ushort)0;
+        }
+
+        private static bool IsLikelyTrackpadAliasCandidate(RID_DEVICE_INFO_HID hidInfo, string deviceName)
+        {
+            if (hidInfo.usUsagePage != NativeMethods.DigitizerUsagePage)
+                return false;
+
+            string normalizedName = deviceName ?? string.Empty;
+            if (normalizedName.IndexOf("TRACKPAD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalizedName.IndexOf("TOUCHPAD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                normalizedName.IndexOf("PRECISION_TOUCHPAD", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            return hidInfo.dwVendorId == AppleVendorId;
         }
 
         private static bool ShouldIgnoreValidatedDevice(ushort usage, string deviceName)
