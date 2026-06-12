@@ -1,5 +1,9 @@
 # GestureSign
 
+> **GestureSign（CaFeZn fork）**
+>
+> 这是 [TransposonY/GestureSign](https://github.com/TransposonY/GestureSign) 的社区维护 fork，在上游 GestureSign 基础上加入了选择性的缺陷修复、文档和构建/发布自动化。如果你需要未修改的上游版本，请使用上游仓库。如果你需要带当前 Windows 说明，并针对触摸屏、触控笔、触摸板和鼠标手势行为做过定向修复的维护版，请继续阅读。
+
 GestureSign 是一款 Windows 平板手势识别软件。你可以用手指或鼠标画出手势来自动执行重复操作。
 
 [English README](README.md)

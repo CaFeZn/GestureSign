@@ -1,5 +1,9 @@
 # GestureSign
 
+> **GestureSign (CaFeZn fork)**
+>
+> This is a community-maintained fork of [TransposonY/GestureSign](https://github.com/TransposonY/GestureSign) with selected fixes, documentation, and build/release automation on top of upstream GestureSign. If you want the unmodified upstream app, go there. If you want the maintained fork with current Windows notes and targeted touch, pen, touchpad, and mouse gesture fixes, keep reading.
+
 GestureSign is a gesture recognition software for Windows tablet. You can automate repetitive tasks by simply drawing a gesture with your fingers or mouse.
 
 [中文说明](README.zh-CN.md)
